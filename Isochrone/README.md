@@ -38,3 +38,15 @@ dependencies:
 - [GFS grib2 filter](https://nomads.ncep.noaa.gov/)
 - [Boat polars - 1](https://jieter.github.io/orc-data/site/)
 - [Boat polars - 2](https://l-36.com/polar_polars.php)
+- https://en.wikisource.org/wiki/The_American_Practical_Navigator/Chapter_1
+- https://gist.github.com/jeromer/2005586
+- https://towardsdatascience.com/calculating-the-bearing-between-two-geospatial-coordinates-66203f57e4b4
+- https://www.youtube.com/watch?v=DeFZ6AHtYxg
+- https://www.movable-type.co.uk/scripts/latlong.html
+- https://gis.stackexchange.com/questions/425515/converting-between-lat-long-azimuth-and-distance-heading
+- https://geopy.readthedocs.io/en/stable/
+- https://www.siranah.de/html/sail020f.html
+- https://github.com/hakola/marine-traffic-modelling
+- http://www.movable-type.co.uk/scripts/latlong.html?from=48.955550,-122.05169&to=48.965496,-122.072989
+- https://geographiclib.sourceforge.io/html/python/code.html#geographiclib.geodesic.Geodesic.Inverse
+- https://mathsathome.com/calculating-bearings/ 
