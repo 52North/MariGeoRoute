@@ -24,11 +24,8 @@ dependencies:
 * Python 3.7+
 
 ## Instructions 
-* Step-1:-First Run the isochrone.py file 
-* Step-2:-Then run polars.py
-* Step-3:-Then run weather.py file
-* Step-4:-Then run the router.py file
-* Step-5:-Then run console.py
+* Step 1 - Change the path of the datasets in all files
+* Step 2 - Run the App.py file 
 
 ## References
 - [Henry H.T. Chen's PhD Thesis](http://resolver.tudelft.nl/uuid:a6112879-4298-40a6-91c7-d9a431a674c7)
