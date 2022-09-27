@@ -18,7 +18,7 @@ def grib_to_wind_function(filepath):
 
     #u, _, _ = grbs[1].data() # U for Initial
     #v, _, _ = grbs[2].data() # V for Final
-    #filepath = 'C:/wind-router-master/386fa86c-b801-11ec-bf54-0242ac120003.nc'
+    #filepath = 'wind-router-master/386fa86c-b801-11ec-bf54-0242ac120003.nc'
     nc = netCDF4.Dataset(filepath, mode='r')
     masku = nc.variables['10u'][:]
     maskv = nc.variables['10v'][:]
@@ -61,7 +61,7 @@ def grib_to_wind_function(filepath):
 
 def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
     """Return u-v components for given rect for visualization."""
-    #filepath='C:/wind-router-master/386fa86c-b801-11ec-bf54-0242ac120003.nc'
+    #filepath='wind-router-master/386fa86c-b801-11ec-bf54-0242ac120003.nc'
     nc = netCDF4.Dataset(filepath, mode='r')
     # masku = nc.variables['10u'][:]
     # maskv = nc.variables['10v'][:]
@@ -87,12 +87,6 @@ def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
     lat = nc.variables['10u'][:]
     latitude = nc.variables['10v'][:]
 
-    o = int(lat2 - lat1 + 1)
-    lat2pluso=int(o + lat2)
-
-    lastlongrid = int(lon2 + 1)
-
-
     # print('latitude',latitude)
     a = lat.tolist()
     # print('printing lat0',lat[0])
@@ -102,14 +96,13 @@ def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
     # print("c",c)
     # print("c type",type(c))
     #print('ndim',ndim(d[0]))
-    vare = d[0]
+    e = d[0]
     # print('e',e[45:61],'end e')
 
     c = 0
     v = []
-    print(lat2,lat2pluso)
-    for i in vare[int(lat2):lat2pluso]:
-        v.append(i[:lastlongrid])
+    for i in e[45:61]:
+        v.append(i[:41])
     #print('printing u', (np.array(v)))
     u=np.array((v))
 
@@ -126,20 +119,21 @@ def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
 
     # c=0
     v1 = []
-    for i in vare[int(lat2):lat2pluso]:
-        v1.append(i[:lastlongrid])
+    for i in e[45:61]:
+        v1.append(i[:41])
     #print('printing v', (np.array(v1)))
     v=np.array(v1)
 
-
+    h = 45
+    k = 30
     z = []
-    while (lat2 >= lat1):
-        x = np.array(np.repeat(lat2, lastlongrid), np.float32)
+    while (h >= k):
+        x = np.array(np.repeat(h, 41), np.float32)
 
         z.append(x)
         # print('*',np.array(z))
         # print(x)
-        lat2 = lat2 - 1
+        h = h - 1
         # o=np.reshape(x, (1, x.size))
         # print('h',np.asarray(h))
         # con = np.vstack((arr, arr1))
@@ -148,12 +142,12 @@ def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
     lats_u=np.array(z)
 
     a = []
-    for i in range(0, lastlongrid):
+    for i in range(0, 41):
         a.append(i)
     print(a)
     lst = []
     # (np.array(np.repeat(a, repeats = 1),np.float32)
-    for i in range(0, o):
+    for i in range(0, 16):
         lst.append((np.array(np.repeat(a, repeats=1), np.float32)))
     #print(len(np.array(lst)))
     lons_u=np.array(lst)
@@ -197,8 +191,8 @@ def read_wind_vectors(model, hours_ahead, lat1, lon1, lat2, lon2):
     wind_vectors['model'] = model
 
     for i in range(hours_ahead + 1):
-        filename='G/Users/eeshaahluwalia/Downloads/wind-router-master 3/data/2019122212/test.nc'
-            #filename = 'C:/wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
+        filename='wind-router-master/wind-router-master/data/2019122212/test.nc'
+            #filename = 'wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
         wind_vectors[i] = grib_to_wind_vectors(filename, lat1, lon1, lat2, lon2)
 
     return wind_vectors
@@ -221,8 +215,8 @@ def read_wind_functions(model, hours_ahead):
 
     for i in range(hours_ahead + 1):
 
-        filename='/Users/eeshaahluwalia/Downloads/wind-router-master 3/data/2019122212/test.nc'
-            #filename = 'C:/wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
+        filename='wind-router-master/wind-router-master/data/2019122212/test.nc'
+            #filename = 'wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
         wind_functions[i] = grib_to_wind_function(filename)
     return wind_functions
 

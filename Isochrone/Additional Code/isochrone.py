@@ -9,7 +9,9 @@ class Isochrone(NamedTuple):
     finish: tuple               
     gcr_azi: float              
     lats1: np.ndarray           
-    lons1: np.ndarray           
+    lons1: np.ndarray
+    lats1:np.ndarray
+    lats1:np.ndarray
     azi12: np.ndarray           
     s12: np.ndarray             
     azi02: np.ndarray         

@@ -66,6 +66,7 @@ def boat_speed_function(boat, wind):
 
     # init boat speed vector
     boat_speed = func((tws, twa))
+    #boat_speed=abs(boat_speed)
     return boat_speed
 
 
