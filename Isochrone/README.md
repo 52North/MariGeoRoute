@@ -28,6 +28,7 @@ dependencies:
 * Step 2 - Run the App.py file 
 
 ## References
+- https://github.com/omdv/wind-router
 - [Henry H.T. Chen's PhD Thesis](http://resolver.tudelft.nl/uuid:a6112879-4298-40a6-91c7-d9a431a674c7)
 - Modeling and Optimization Algorithms in Ship Weather Routing, doi:10.1016/j.enavi.2016.06.004
 - Optimal Ship Weather Routing Using Isochrone Method on the Basis of Weather Changes, doi:10.1061/40932(246)435
