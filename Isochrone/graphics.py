@@ -57,8 +57,6 @@ def create_maps(lat1, lon1, lat2, lon2, dpi, winds, n_maps):
 
         lats = [x[0] for x in path]
         lons = [x[1] for x in path]
-        print("graphics lat",lats)
-        print("graphcs lon",lons)
         ax = fig.get_axes()[0]
         ax.plot(lons, lats, 'r-', transform=ccrs.PlateCarree())
     return fig
@@ -80,7 +78,7 @@ def create_map(lat1, lon1, lat2, lon2, dpi):
         top=1,
         wspace=0,
         hspace=0)
-    ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
+    #ax.set_extent([lon1, lon2, lat1, lat2], crs=ccrs.PlateCarree())
     ax.add_feature(cf.LAND)
     ax.add_feature(cf.OCEAN)
     ax.add_feature(cf.COASTLINE)
@@ -119,26 +117,16 @@ def plot_isochrones(fig, iso3):
     """
     ax = fig.get_axes()[0]
     idx = np.argmax(iso3.s02)
-    print('printing iso.so2 ',type(iso3.s02),iso3.s02)
     # idx=np.int64(69)
     sortidx=np.sort(iso3.s02)
     idx2=sortidx[-5]
-    print('second highest idx',idx2)
-    print('idx of index 2',np.where(iso3.s02==idx2))
     idx3=np.where(iso3.s02==idx2)
 
-    print('printing',idx3[0])
     idx4=idx3[0]
 
-    print('max ids/distance',np.argmin(iso3.s02))
-
-    print(type(idx))
     lats = iso3.lats1[:,idx4]
-    print('im from graphisc iso1.lats1',iso3.lats1[:,81])
-    print('im from graphisc iso1.lons1',iso3.lons1[:,1])
     type(lats)
     #print(len(lats))
-    print(lats,'lats=im from graphics')
     #idx = np.int64(90)
    # idx = np.argmax(iso3.s02)
     lons = iso3.lons1[:,idx4]
@@ -147,8 +135,6 @@ def plot_isochrones(fig, iso3):
     flag2=iso3.lats1
     latsndtolist=flag2.tolist()
 
-    print("list of latitude ", latsndtolist) #34.5
-    print('list of longitude',lonndarraytolist) #35.9
 
      # converting 2d list into 1d
      # using chain.from_iterables
@@ -161,10 +147,10 @@ def plot_isochrones(fig, iso3):
 
     #
 
-    print(lons, 'lons=im from graphics')  #59.6,28.4
-    print('type of iso3.lons',type(iso3.lats1))
-    geeky_file = open('/Users/eeshaahluwalia/Downloads/wind-router-master 3/windrouter/dict4.txt', 'wt')
-    geeky_file.write(str(iso3.lons1[:,1]))
+    #print(lons, 'lons=im from graphics')  #59.6,28.4
+    #print('type of iso3.lons',type(iso3.lats1))
+    geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict4.txt', 'wt')
+    #geeky_file.write(str(iso3.lons1[:,1]))
 
     geeky_file.close()
     ax = fig.get_axes()[0]

@@ -1,0 +1,6 @@
+Data/Screenshots/*
+Data/Screenshots/*.png
+*.png
+Dicts/*
+*pycache*
+*idea/*

@@ -21,6 +21,11 @@ state = {}
 state['hour'] = 0
 
 
+@app.route('/')
+def hello():    #create dummy page here
+    return 'Hello World!'
+
+'''
 # Controllers.
 @app.route('/', methods=["GET", "POST"])
 def home():
@@ -44,6 +49,8 @@ def home():
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/ico'),
                                'favicon.png', mimetype='image/vnd.microsoft.icon')
+
+'''
 
 
 @app.route('/map')
@@ -86,7 +93,7 @@ def plot_map():
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
     delta_time = 3600
-    hours = 60
+    hours = 110
 
     vct_winds = weather.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
@@ -94,10 +101,14 @@ def plot_map():
 
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
 
+    print('*************** SETTINGS *************')
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
-    print('startfinih',start,finish)
-    start_time = dt.datetime.strptime('2020111607', '%Y%m%d%H')
+    print('start coordinates',start,finish)
+    start_time = dt.datetime.strptime('2020111600', '%Y%m%d%H')
+    print('start date', start_time)
+    print('***************************************')
+
 
     boat = polars.boat_properties(boatfile)
     params = app.config
@@ -115,13 +126,12 @@ def plot_map():
     fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
     fig = graphics.plot_isochrones(fig, iso3)
-    print('hellow2', iso3.lats1, iso3.lons1,)
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
 
     # Write the file as well
-    with open('/Users/eeshaahluwalia/Downloads/wind-router-master 3/screenshots/map8.png', 'wb') as f:
+    with open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/Screenshots/map8.png', 'wb') as f:
         f.write(output.getbuffer())
 
     return Response(output.getvalue(), mimetype='image/png')
@@ -131,13 +141,15 @@ def plot_map():
 @app.errorhandler(500)
 def internal_error(error):
     """Error handling."""
-    return render_template('errors/500.html'), 500
+    #return render_template('errors/500.html'), 500
+    return 'Error 500'
 
 
 @app.errorhandler(404)
 def not_found_error(error):
     """Error handling."""
-    return render_template('errors/404.html'), 404
+    #return render_template('errors/404.html'), 404
+    return 'Error 404'
 
 
 if not app.debug:
