@@ -4,3 +4,7 @@ Data/Screenshots/*.png
 Dicts/*
 *pycache*
 *idea/*
+*.idx
+Data/ENC_example_files/*
+Data/2019122212/*.nc
+*.csv*

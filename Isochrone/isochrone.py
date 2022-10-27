@@ -19,7 +19,7 @@ class Isochrone(NamedTuple):
     count: int              #routing step
     start: tuple            #lat, lon at start
     finish: tuple           #lat, lon at end
-    gcr_azi: float          #initial azimuth
+    gcr_azi: float          #azimut of great circle route
     lats1: np.ndarray       #lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons1: np.ndarray       #longs: (M,N) array, N=headings+1, M=steps
     azi12: np.ndarray       #azimuth: (M,N) array, N=headings+1, M=steps

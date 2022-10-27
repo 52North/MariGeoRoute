@@ -194,7 +194,7 @@ def recursive_routing(iso1,
     #     print(is_on_land)
 
     gcrs['s12'][is_on_land] = 0   #to check
-    azi02 = gcrs['azi1'] +1
+    azi02 = gcrs['azi1']
     s02 = gcrs['s12']
 
     iso2 = Isochrone(

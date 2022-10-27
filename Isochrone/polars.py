@@ -34,7 +34,7 @@ def boat_properties(filepath):
     ws = knots_to_mps(ws)
     values = knots_to_mps(values)
 
-    f = RegularGridInterpolator(
+    f = RegularGridInterpolator(    #returns interpolated grid
         (ws, wa), values.T,
         bounds_error=False,
         fill_value=None
@@ -60,13 +60,11 @@ def boat_speed_function(boat, wind):
     func = boat['func']
 
     # get rid of negative and above 180
-    twa = np.abs(twa)# mathematical function helps user to calculate absolute value of each element
+    twa = np.abs(twa)
     twa[twa > 180] = 360. - twa[twa > 180]
-    #twa[twa > 27] = 56. - twa[twa > 27]
 
     # init boat speed vector
     boat_speed = func((tws, twa))
-    #boat_speed=abs(boat_speed)
     return boat_speed
 
 

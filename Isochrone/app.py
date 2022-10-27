@@ -92,11 +92,11 @@ def plot_map():
 
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
+    windfile = app.config['DEFAULT_GFS_FILE']
     delta_time = 3600
     hours = 110
 
-    vct_winds = weather.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
-
+    vct_winds = weather.read_wind_vectors(windfile, model, hours, lat1, lon1, lat2, lon2)
     fct_winds = weather.read_wind_functions(model, hours)
 
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']

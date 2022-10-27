@@ -109,50 +109,15 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     return fig
 
 
-def plot_isochrones(fig, iso3):
+def plot_isochrones(fig, iso):
     """
     Add isochrone to the map figure.
-
     Input: dictionary from move_boat_direct
     """
     ax = fig.get_axes()[0]
-    idx = np.argmax(iso3.s02)
-    # idx=np.int64(69)
-    sortidx=np.sort(iso3.s02)
-    idx2=sortidx[-5]
-    idx3=np.where(iso3.s02==idx2)
-
-    idx4=idx3[0]
-
-    lats = iso3.lats1[:,idx4]
-    type(lats)
-    #print(len(lats))
-    #idx = np.int64(90)
-   # idx = np.argmax(iso3.s02)
-    lons = iso3.lons1[:,idx4]
-    flag1=iso3.lons1
-    lonndarraytolist=flag1.tolist()
-    flag2=iso3.lats1
-    latsndtolist=flag2.tolist()
-
-
-     # converting 2d list into 1d
-     # using chain.from_iterables
-    # flatten_list = list(chain.from_iterable(a))
-    #
-    # # printing flatten_list
-    # print("final_result", str(flatten_list))
-    # print('ppppp',flatten_list.index('35.18810965867689'))
-    #print('========nd araay of latitude ========',a)
-
-    #
-
-    #print(lons, 'lons=im from graphics')  #59.6,28.4
-    #print('type of iso3.lons',type(iso3.lats1))
-    geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict4.txt', 'wt')
-    #geeky_file.write(str(iso3.lons1[:,1]))
-
-    geeky_file.close()
+    idx = np.argmax(iso.s02)
+    lats = iso.lats1[:, idx]
+    lons = iso.lons1[:, idx]
     ax = fig.get_axes()[0]
     # for i in range(len(lats)):
     #     ax.plot(lons[i], lats[i], 'ro')
