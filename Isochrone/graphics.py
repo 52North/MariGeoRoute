@@ -7,11 +7,14 @@ import cartopy.feature as cf
 from itertools import chain
 from geovectorslib import geod
 from matplotlib.figure import Figure
+from routeparams import RouteParams
 
 """lat1 : initial latitude 
    lat2 : Final latitude
    lon1 : initial longitude 
    lon2 : Final Longitude """
+
+
 def get_gcr_points(lat1, lon1, lat2, lon2, n_points=10):
     """Discretize gcr between two scalar coordinate points."""
     points = [(lat1, lon1)]
@@ -109,17 +112,22 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     return fig
 
 
-def plot_isochrones(fig, iso):
+def plot_isochrones(fig, route: RouteParams):
     """
     Add isochrone to the map figure.
     Input: dictionary from move_boat_direct
     """
     ax = fig.get_axes()[0]
-    idx = np.argmax(iso.s02)
-    lats = iso.lats1[:, idx]
-    lons = iso.lons1[:, idx]
+    lats = route.lats_per_step
+    lons = route.lons_per_step
     ax = fig.get_axes()[0]
     # for i in range(len(lats)):
     #     ax.plot(lons[i], lats[i], 'ro')
-    ax.plot(lons, lats, 'magenta', transform=ccrs.PlateCarree())
+    legend_entry = route.route_type + ' (fuel: ' +  '%0.2f' % route.fuel + 't, time: ' + '%.f' % route.time + 'h)'
+    ax.plot(lons, lats, 'magenta', label=legend_entry, transform=ccrs.PlateCarree())
+    return fig
+
+def plot_legend(fig):
+    ax = fig.get_axes()[0]
+    ax.legend()
     return fig

@@ -7,6 +7,8 @@ import os
 from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from polars import Boat
+from routeparams import RouteParams
 
 import polars
 import graphics
@@ -22,7 +24,7 @@ state['hour'] = 0
 
 
 @app.route('/')
-def hello():    #create dummy page here
+def hello():  #create dummy page here
     return 'Hello World!'
 
 '''
@@ -109,11 +111,11 @@ def plot_map():
     print('start date', start_time)
     print('***************************************')
 
-
-    boat = polars.boat_properties(boatfile)
+    boat = Boat(rpm=-99, filepath=boatfile)
+    boat.set_rpm(60)
     params = app.config
 
-    iso3 = router.routing(
+    min_time_route = router.routing(
         start, finish,
         boat, fct_winds,
         start_time,
@@ -125,7 +127,8 @@ def plot_map():
 
     fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
-    fig = graphics.plot_isochrones(fig, iso3)
+    fig = graphics.plot_isochrones(fig, min_time_route)
+    fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)

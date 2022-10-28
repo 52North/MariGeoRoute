@@ -5,12 +5,13 @@ from global_land_mask import globe
 import numpy as np
 import datetime as dt
 from isochrone import Isochrone
-from polars import boat_speed_function
+from polars import Boat
+from routeparams import RouteParams
 from weather import wind_function
 from scipy.stats import binned_statistic
 
 
-def move_boat_direct(lats, lons, hdgs, boat, winds,start_time, delta_time, verbose=False):
+def move_boat_direct(lats, lons, hdgs, boat : Boat, winds,start_time, delta_time, verbose=False):
     """
         calculate new boat position for current time step based on wind and boat function
     """
@@ -19,7 +20,7 @@ def move_boat_direct(lats, lons, hdgs, boat, winds,start_time, delta_time, verbo
     tws = winds['tws']
     wind = {'tws': tws, 'twa': twa - hdgs}
 
-    bs = boat_speed_function(boat, wind)
+    bs = boat.boat_speed_function(wind)
 
     if verbose:
         print('TWA: ', twa)
@@ -112,7 +113,7 @@ def prune_isochrone(iso: Isochrone, x, y, bins, trim=True):
 
 # For Routing with isochron
 def recursive_routing(iso1,
-                      boat,
+                      boat : Boat,
                       winds,
                       delta_time,
                       params,
@@ -246,6 +247,9 @@ def recursive_routing(iso1,
     geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict6.txt', 'wt')
     geeky_file.write(str(iso2.lons1[:]))
 
+    #print("rpm = ",boat.get_rpm())
+    #print("Used fuel", boat.get_fuel_per_time(delta_time))
+
     try:
         geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict2.txt', 'wt')
         geeky_file.write(str(iso2))
@@ -259,7 +263,7 @@ def recursive_routing(iso1,
 
 def routing(start, #r_la1, r_lo1
             finish, #r_la2, r_lo2
-            boat,   #dict containing boat polars, function
+            boat : Boat,   #class containing boat polars, function
             winds,  #dict containing wind functinos (model timestamp, vector of functions per hour)
             start_time,
             delta_time,
@@ -287,7 +291,7 @@ def routing(start, #r_la1, r_lo1
     gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [finish[1]])  #calculate distance between start and end according to Vincents approach, return dictionary
 
     #iso.lats1,iso.lons1=iso.lons1,iso.lats1
-    iso3 = Isochrone(
+    iso = Isochrone(
         count=0,
         start=start,
         finish=finish,
@@ -308,19 +312,35 @@ def routing(start, #r_la1, r_lo1
         print('------------------------------')
         print('Step ',i)
 
-        iso3 = recursive_routing(
-            iso3, boat, winds,
+        iso = recursive_routing(
+            iso, boat, winds,
             delta_time, params,
             verbose=False)
 
-    try:
-        geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict1.txt', 'wt')
-        geeky_file.write(str(iso3))
-        geeky_file.close()
+    idx = np.argmax(iso.s02)
+    min_time_route=RouteParams(
+      count = iso.count,
+      start = iso.start,
+      finish = iso.finish,
+      fuel = boat.get_fuel_per_time(delta_time*steps),
+      rpm = boat.get_rpm(),
+      time = steps*delta_time,
+      route_type= 'minimal time route',
+      lats_per_step = iso.lats1[:, idx],
+      lons_per_step = iso.lons1[:, idx],
+      azimuths_per_step= iso.azi12[:, idx],
+      dists_per_step = iso.s12[:, idx],
+      full_dist_travelled = iso.s12[:, idx],
+    )
 
-    except:
-        print("Unable to write to file")
-    return iso3
+    #try:
+    #    geeky_file = open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Dicts/dict1.txt', 'wt')
+    #    geeky_file.write(str(iso))
+    #    geeky_file.close()
+
+    #except:
+    #    print("Unable to write to file")
+    return min_time_route
 
 
 #
