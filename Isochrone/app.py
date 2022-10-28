@@ -115,19 +115,25 @@ def plot_map():
     boat.set_rpm(60)
     params = app.config
 
-    min_time_route = router.routing(
+    min_time_route = router.modified_isochrone_routing(
         start, finish,
         boat, fct_winds,
         start_time,
         delta_time, hours,
         params
     )
+    min_fuel_route = router.min_fuel_routing(
+        min_time_route,
+        boat,
+        fct_winds
+    )
 
     fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
     fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
-    fig = graphics.plot_isochrones(fig, min_time_route)
+    fig = graphics.plot_route(fig, min_time_route, graphics.get_colour(5))
+    #fig = graphics.plot_route(fig, min_fuel_route, graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()

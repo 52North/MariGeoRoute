@@ -112,7 +112,7 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     return fig
 
 
-def plot_isochrones(fig, route: RouteParams):
+def plot_route(fig, route: RouteParams, colour):
     """
     Add isochrone to the map figure.
     Input: dictionary from move_boat_direct
@@ -124,10 +124,16 @@ def plot_isochrones(fig, route: RouteParams):
     # for i in range(len(lats)):
     #     ax.plot(lons[i], lats[i], 'ro')
     legend_entry = route.route_type + ' (fuel: ' +  '%0.2f' % route.fuel + 't, time: ' + '%.f' % route.time + 'h)'
-    ax.plot(lons, lats, 'magenta', label=legend_entry, transform=ccrs.PlateCarree())
+    ax.plot(lons, lats, colour, label=legend_entry, transform=ccrs.PlateCarree())
     return fig
 
 def plot_legend(fig):
     ax = fig.get_axes()[0]
     ax.legend()
     return fig
+
+def get_colour(i):
+    colours = ['darkred', 'gold', 'seagreen', 'peachpuff', 'darkviolet']
+    if(i>4):
+        raise ValueError('currently only 5 colours available, asking for' + str(i))
+

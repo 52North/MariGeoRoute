@@ -261,7 +261,7 @@ def recursive_routing(iso1,
     return iso2
 
 
-def routing(start, #r_la1, r_lo1
+def modified_isochrone_routing(start, #r_la1, r_lo1
             finish, #r_la2, r_lo2
             boat : Boat,   #class containing boat polars, function
             winds,  #dict containing wind functinos (model timestamp, vector of functions per hour)
@@ -290,7 +290,6 @@ def routing(start, #r_la1, r_lo1
     """
     gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [finish[1]])  #calculate distance between start and end according to Vincents approach, return dictionary
 
-    #iso.lats1,iso.lons1=iso.lons1,iso.lats1
     iso = Isochrone(
         count=0,
         start=start,
@@ -298,8 +297,6 @@ def routing(start, #r_la1, r_lo1
         gcr_azi=gcr['azi1'],
         lats1=np.array([[start[0]]]),
         lons1=np.array([[start[1]]]),
-       #lats2=np.array([[finish[0]]]),
-       #lons2=np.array([[finish[1]]]),
         azi12=np.array([[None]]),
         s12=np.array([[0]]),
         azi02=gcr['azi1'],
@@ -341,6 +338,8 @@ def routing(start, #r_la1, r_lo1
     #except:
     #    print("Unable to write to file")
     return min_time_route
+
+def min_fuel_routing(route : RouteParams, boat : Boat, wind):
 
 
 #
