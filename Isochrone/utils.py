@@ -28,3 +28,7 @@ def round_time(dt=None, round_to=60):
     rounding = (seconds + round_to / 2) // round_to * round_to
     return dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond)
 
+
+
+def print_line():
+    print('---------------------------------------------------')

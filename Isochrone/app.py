@@ -14,6 +14,7 @@ import polars
 import graphics
 import weather
 import router
+import utils as ut
 
 # App Config.
 app = Flask(__name__)
@@ -96,20 +97,16 @@ def plot_map():
     boatfile = app.config['DEFAULT_BOAT']
     windfile = app.config['DEFAULT_GFS_FILE']
     delta_time = 3600
+
     hours = 110
 
     vct_winds = weather.read_wind_vectors(windfile, model, hours, lat1, lon1, lat2, lon2)
     fct_winds = weather.read_wind_functions(model, hours)
 
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
-
-    print('*************** SETTINGS *************')
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
-    print('start coordinates',start,finish)
     start_time = dt.datetime.strptime('2020111600', '%Y%m%d%H')
-    print('start date', start_time)
-    print('***************************************')
 
     boat = Boat(rpm=-99, filepath=boatfile)
     boat.set_rpm(60)
@@ -122,17 +119,18 @@ def plot_map():
         delta_time, hours,
         params
     )
+    '''
     min_fuel_route = router.min_fuel_routing(
         min_time_route,
         boat,
         fct_winds
-    )
+    )'''
 
     fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
     fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
-    fig = graphics.plot_route(fig, min_time_route, graphics.get_colour(5))
+    fig = graphics.plot_route(fig, min_time_route, graphics.get_colour(1))
     #fig = graphics.plot_route(fig, min_fuel_route, graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
