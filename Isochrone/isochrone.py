@@ -39,6 +39,12 @@ class RoutingAlg():
     time: dt.datetime  # current datetime
     full_time_travelled: dt.timedelta  # time elapsed since start
 
+    variant_segments: int       # number of variant segments in the range of -180° to 180°
+    variant_increments_deg: int
+    expected_speed_kts: int
+    prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
+    prune_segments: int    # number of azimuth bins that are used for pruning
+
     def __init__(self, start, finish, time):
         self.count = 0
         self.start = start
@@ -63,6 +69,17 @@ class RoutingAlg():
     def set_steps(self, steps):
         self.ncount=steps
 
+    def set_variant_segments(self,segments):
+        self.variant_segments=segments
+
+    def set_pruning_settings(self, sector_deg_half, seg):
+        self.prune_sector_deg_half=sector_deg_half
+        self.prune_segments=seg
+
+    def set_variant_segments(self, seg, inc):
+        self.variant_segments = seg
+        self.variant_increments_deg = inc
+
     def calculate_gcr(self, start, finish):
         gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
@@ -78,7 +95,7 @@ class RoutingAlg():
         print('time = ', self.time)
         print('full_time_traveled = ', self.full_time_traveled)
 
-    def recursive_routing(self, boat: Boat, winds, delta_time, params, verbose=False):
+    def recursive_routing(self, boat: Boat, winds, delta_time, verbose=False):
         """
             Progress one isochrone with pruning/optimising route for specific time segment
 
@@ -101,9 +118,9 @@ class RoutingAlg():
             utils.print_line()
             print('Step ', i)
 
-            vars = self.define_variants(params)
+            vars = self.define_variants()
             gcrs = self.move_boat_direct(winds, vars, boat, delta_time)
-            self.pruning(params, gcrs['azi1'], gcrs['s12'], True)
+            self.pruning(gcrs['azi1'], gcrs['s12'], True)
 
             #self.print_current_step()
             self.count+=1
@@ -111,15 +128,14 @@ class RoutingAlg():
         route = self.terminate()
         return route
 
-    def define_variants(self, params):
+    def define_variants(self):
         # branch out for multiple headings
-
         nof_routes = self.lats_per_step.shape[1]
 
-        self.lats_per_step = np.repeat(self.lats_per_step, params['ROUTER_HDGS_SEGMENTS'] + 1, axis=1)
-        self.lons_per_step = np.repeat(self.lons_per_step, params['ROUTER_HDGS_SEGMENTS'] + 1, axis=1)
-        self.variants = np.repeat(self.variants, params['ROUTER_HDGS_SEGMENTS'] + 1, axis=1)
-        self.dist_per_step = np.repeat(self.dist_per_step, params['ROUTER_HDGS_SEGMENTS'] + 1, axis=1)
+        self.lats_per_step = np.repeat(self.lats_per_step, self.variant_segments + 1, axis=1)
+        self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
+        self.variants = np.repeat(self.variants, self.variant_segments + 1, axis=1)
+        self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
 
         if(not ((self.lats_per_step.shape[1]==self.lons_per_step.shape[1]) and
             (self.lats_per_step.shape[1]==self.variants.shape[1]) and
@@ -135,11 +151,11 @@ class RoutingAlg():
         # determine new headings - centered around gcrs X0 -> X_prev_step
         hdgs = self.last_azimuth
         delta_hdgs = np.linspace(
-            -params['ROUTER_HDGS_SEGMENTS'] * params['ROUTER_HDGS_INCREMENTS_DEG'],
-            +params['ROUTER_HDGS_SEGMENTS'] * params['ROUTER_HDGS_INCREMENTS_DEG'],
-            params['ROUTER_HDGS_SEGMENTS'] + 1)
+            -self.variant_segments * self.variant_increments_deg,
+            +self.variant_segments * self.variant_increments_deg,
+            self.variant_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_routes)
-        hdgs = np.repeat(hdgs, params['ROUTER_HDGS_SEGMENTS'] + 1)
+        hdgs = np.repeat(hdgs, self.variant_segments + 1)
 
         hdgs = hdgs - delta_hdgs
 
@@ -205,7 +221,7 @@ class RoutingAlg():
 
         return gcrs
 
-    def pruning(self, params, x, y, trim=True):
+    def pruning(self,  x, y, trim=True):
         """
               generate view of the iso that only contains the longests route per azimuth segment
 
@@ -238,13 +254,13 @@ class RoutingAlg():
 
         azi0s = np.repeat(
             new_azi['azi1'],
-            params['ISOCHRONE_PRUNE_SEGMENTS'] + 1)
+            self.prune_segments + 1)
 
         # determine bins
         delta_hdgs = np.linspace(
-            -params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],
-            +params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],
-            params['ISOCHRONE_PRUNE_SEGMENTS'] + 1)  # -90,+90,181
+            -self.prune_sector_deg_half,
+            +self.prune_sector_deg_half,
+            self.prune_segments + 1)  # -90,+90,181
 
         bins = azi0s - delta_hdgs
         bins = np.sort(bins)
