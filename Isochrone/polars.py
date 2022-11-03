@@ -9,6 +9,7 @@ import numpy as np
 The data must be defined on a regular grid; the grid spacing however may be uneven. Linear and nearest-neighbor
  interpolation are supported """
 from scipy.interpolate import RegularGridInterpolator
+import datetime as dt
 
 from utils import knots_to_mps #Convert  knot value in meter per second
 
@@ -26,7 +27,7 @@ class Boat:
 
     def get_fuel_per_time(self, delta_time):
         f = 0.0007 * self.rpm**3 + 0.0297 * self.rpm**2 + 2.8414 * self.rpm - 19.359  # fuel [kg/h]
-        f *=  delta_time/3600 * 1/1000      # amount of fuel for this time interval
+        f *= delta_time/3600 * 1/1000      # amount of fuel for this time interval
         return f
 
     def get_speed_dict(self):

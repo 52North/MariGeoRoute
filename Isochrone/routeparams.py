@@ -33,8 +33,8 @@ class RouteParams():
         self.count = count,  # routing step
         self.start = start,  # lat, lon at start
         self.finish = finish,  # lat, lon at end
-        self.fuel = -999,  # sum of fuel consumption [t]
-        self.rpm = -999,  # propeller [revolutions per minute]
+        self.fuel = fuel,  # sum of fuel consumption [t]
+        self.rpm = rpm,  # propeller [revolutions per minute]
         self.route_type = route_type,  # route name
         self.time = time,  # time needed for the route [seconds]
         self.lats_per_step = lats_per_step

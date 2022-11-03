@@ -37,7 +37,7 @@ class RoutingAlg():
     last_azimuth: np.ndarray  # current azimuth
     full_dist_travelled: np.ndarray  # full geodesic distance since start
     time: dt.datetime  # current datetime
-    full_time_travelled: dt.timedelta  # time elapsed since start
+    full_time_traveled: float  # time elapsed since start
 
     variant_segments: int       # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int
@@ -55,7 +55,7 @@ class RoutingAlg():
         self.dist_per_step = np.array([[0]])
         self.full_dist_travelled = np.array([])
         self.time = time
-        self.full_time_traveled = dt.timedelta(seconds=0)
+        self.full_time_traveled = 0
 
         gcr = self.calculate_gcr(start, finish)
         self.last_azimuth = gcr
@@ -65,6 +65,15 @@ class RoutingAlg():
         print('Initialising routing: ' + str(start) + ' to ' + str(finish))
         print('     route from ' + str(start) + ' to ' + str(finish))
         print('     start time ' + str(time))
+
+    def __str__(self):
+        print('step = ', self.count)
+        print('lats_per_step = ', self.lats_per_step)
+        print('lons_per_step = ', self.lons_per_step)
+        print('variants = ', self.variants)
+        print('dist_per_step = ', self.dist_per_step)
+        print('full_dist_travelled = ', self.full_dist_travelled)
+        print('time = ', self.time)
 
     def set_steps(self, steps):
         self.ncount=steps
@@ -85,15 +94,7 @@ class RoutingAlg():
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
         return gcr['azi1']
 
-    def print_current_step(self):
-        print('step = ', self.count)
-        print('lats_per_step = ', self.lats_per_step)
-        print('lons_per_step = ', self.lons_per_step)
-        print('variants = ', self.variants)
-        print('dist_per_step = ', self.dist_per_step)
-        print('full_dist_travelled = ', self.full_dist_travelled)
-        print('time = ', self.time)
-        print('full_time_traveled = ', self.full_time_traveled)
+
 
     def recursive_routing(self, boat: Boat, winds, delta_time, verbose=False):
         """
@@ -122,10 +123,12 @@ class RoutingAlg():
             gcrs = self.move_boat_direct(winds, vars, boat, delta_time)
             self.pruning(gcrs['azi1'], gcrs['s12'], True)
 
-            #self.print_current_step()
+            #print(self)
             self.count+=1
+            self.time+=dt.timedelta(seconds=delta_time)
+            self.full_time_traveled+=delta_time
 
-        route = self.terminate()
+        route = self.terminate(boat)
         return route
 
     def define_variants(self):
@@ -221,106 +224,26 @@ class RoutingAlg():
 
         return gcrs
 
-    def pruning(self,  x, y, trim=True):
-        """
-              generate view of the iso that only contains the longests route per azimuth segment
 
-              Binned statistic.
-              +            iso2 = prune_isochrone(iso2, 'azi02', 's02', bins, True)
-              print('iso2 ',iso2)  #
-
-                    Parameters:
-                    iso: isochrone dictionary
-                    x: values to binarize
-                    y: values to apply max to
-                    bins: bins edges, dimension is n_bins + 1
-                    trim: whether return just one of max values
-                    Returns:
-                        pruned isochrone dictionary with max values in each bin
-                   """
-
-        mean_dist = np.mean(self.full_dist_travelled)
-        gcr_point = geod.direct(
-            [self.start[0]],
-            [self.start[1]],
-            self.gcr_azi, mean_dist)
-
-        new_azi = geod.inverse(
-            gcr_point['lat2'],
-            gcr_point['lon2'],
-            [self.finish[0]],
-            [self.finish[1]]
-        )
-
-        azi0s = np.repeat(
-            new_azi['azi1'],
-            self.prune_segments + 1)
-
-        # determine bins
-        delta_hdgs = np.linspace(
-            -self.prune_sector_deg_half,
-            +self.prune_sector_deg_half,
-            self.prune_segments + 1)  # -90,+90,181
-
-        bins = azi0s - delta_hdgs
-        bins = np.sort(bins)
-
-        idxs = []
-        bin_stat, bin_edges, bin_number = binned_statistic(
-            self.last_azimuth, self.full_dist_travelled, statistic=np.nanmax, bins=bins)
-
-        if trim:
-            for i in range(len(bin_edges) - 1):
-                try:
-                    idxs.append(
-                        np.where(self.full_dist_travelled == bin_stat[i])[0][0])
-                except IndexError:
-                    pass
-            idxs = list(set(idxs))
-        else:
-            for i in range(len(bin_edges) - 1):
-                idxs.append(np.where(self.full_dist_travelled == bin_stat[i])[0])
-            idxs = list(set([item for subl in idxs for item in subl]))
-
-
-        # Return a trimmed isochrone
-        lats_new = self.lats_per_step[:, idxs]
-        lons_new = self.lons_per_step[:, idxs]
-        var_new = self.variants[:, idxs]
-        dist_new = self.dist_per_step[:, idxs]
-        curr_azi_new = self.last_azimuth[idxs]
-        full_dist_new = self.full_dist_travelled[idxs]
-
-        self.lats_per_step = lats_new
-        self.lons_per_step = lons_new
-        self.variants = var_new
-        self.dist_per_step = dist_new
-        self.last_azimuth = curr_azi_new
-        self.full_dist_travelled = full_dist_new
-
-        #print('last_azimuth', self.last_azimuth)
-        #print('inx', idxs)
-
-        # print("rpm = ",boat.get_rpm())
-        # print("Used fuel", boat.get_fuel_per_time(delta_time))
-
-    def terminate(self):
+    def terminate(self, boat : Boat):
         idx = np.argmax(self.full_dist_travelled)
 
         route = RouteParams(
             count = self.count,  # routing step
             start = self.start,  # lat, lon at start
             finish = self.finish,  # lat, lon at end
-            fuel = -999.,  # sum of fuel consumption [t]
-            rpm = -999.,  # propeller [revolutions per minute]
+            fuel = boat.get_fuel_per_time(self.full_time_traveled),  # sum of fuel consumption [t]
+            rpm = boat.get_rpm(),  # propeller [revolutions per minute]
             route_type = 'min_time_route',  # route name
-            time = self.time,  # time needed for the route [seconds]
+            time = self.full_time_traveled/3600,  # time needed for the route [seconds]
             lats_per_step=self.lats_per_step[:, idx],
             lons_per_step=self.lons_per_step[:, idx],
             azimuths_per_step=self.variants[:, idx],
             dists_per_step=self.dist_per_step[:, idx],
             full_dist_travelled=self.full_dist_travelled[idx]
         )
+
+
         #route.print_route()
 
         return route

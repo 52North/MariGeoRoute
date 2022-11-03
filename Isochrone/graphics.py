@@ -8,6 +8,9 @@ from itertools import chain
 from geovectorslib import geod
 from matplotlib.figure import Figure
 from routeparams import RouteParams
+import datetime as dt
+from datetime import timedelta
+
 
 """lat1 : initial latitude 
    lat2 : Final latitude
@@ -123,6 +126,7 @@ def plot_route(fig, route: RouteParams, colour):
     ax = fig.get_axes()[0]
     # for i in range(len(lats)):
     #     ax.plot(lons[i], lats[i], 'ro')
+    print('time type', route.time)
     legend_entry = str(route.route_type) + ' (fuel: ' +  '%0.2f' % route.fuel + 't, time: ' + str(route.time) + 'h)'
 
     ax.plot(lons, lats, colour, label=legend_entry, transform=ccrs.PlateCarree())
