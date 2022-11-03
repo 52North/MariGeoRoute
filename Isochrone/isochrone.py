@@ -34,7 +34,8 @@ class RoutingAlg():
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
     variant: np.ndarray  # azimuth: (M,N) array, N=headings+1, M=steps
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
-    last_azimuth: np.ndarray  # current azimuth
+    current_azimuth: np.ndarray  # current azimuth
+    current_variant: np.ndarray  # current variant
     full_dist_travelled: np.ndarray  # full geodesic distance since start
     time: dt.datetime  # current datetime
     full_time_traveled: float  # time elapsed since start
@@ -58,7 +59,7 @@ class RoutingAlg():
         self.full_time_traveled = 0
 
         gcr = self.calculate_gcr(start, finish)
-        self.last_azimuth = gcr
+        self.current_azimuth = gcr
         self.gcr_azi = gcr
 
         ut.print_line()
@@ -66,8 +67,10 @@ class RoutingAlg():
         print('     route from ' + str(start) + ' to ' + str(finish))
         print('     start time ' + str(time))
 
-    def __str__(self):
+    def print_ra(self):
         print('step = ', self.count)
+        print('start', self.start)
+        print('finish', self.finish)
         print('lats_per_step = ', self.lats_per_step)
         print('lons_per_step = ', self.lons_per_step)
         print('variants = ', self.variants)
@@ -140,19 +143,8 @@ class RoutingAlg():
         self.variants = np.repeat(self.variants, self.variant_segments + 1, axis=1)
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
 
-        if(not ((self.lats_per_step.shape[1]==self.lons_per_step.shape[1]) and
-            (self.lats_per_step.shape[1]==self.variants.shape[1]) and
-            (self.lats_per_step.shape[1]==self.dist_per_step.shape[1]))):
-            raise 'define_variants: number of columns not matching!'
-
-        if(not ((self.lats_per_step.shape[0]==self.lons_per_step.shape[0]) and
-            (self.lats_per_step.shape[0]==self.variants.shape[0]) and
-            (self.lats_per_step.shape[0]==self.dist_per_step.shape[0]) and
-            (self.lats_per_step.shape[0]==(self.count+1)))):
-            raise ValueError('define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(self.lats_per_step.shape[0]))
-
         # determine new headings - centered around gcrs X0 -> X_prev_step
-        hdgs = self.last_azimuth
+        hdgs = self.current_variant
         delta_hdgs = np.linspace(
             -self.variant_segments * self.variant_increments_deg,
             +self.variant_segments * self.variant_increments_deg,
@@ -194,7 +186,7 @@ class RoutingAlg():
         # determine gcrs from start to new isochrone
         gcrs = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])
         self.full_dist_travelled=gcrs['s12']
-        self.last_azimuth=gcrs['azi1']
+        self.current_variant=gcrs['azi1']
 
         # remove those which ended on land
         is_on_land = globe.is_land(move['lat2'], move['lon2'])
@@ -229,20 +221,19 @@ class RoutingAlg():
         idx = np.argmax(self.full_dist_travelled)
 
         route = RouteParams(
-            count = self.count,  # routing step
-            start = self.start,  # lat, lon at start
-            finish = self.finish,  # lat, lon at end
-            fuel = boat.get_fuel_per_time(self.full_time_traveled),  # sum of fuel consumption [t]
-            rpm = boat.get_rpm(),  # propeller [revolutions per minute]
-            route_type = 'min_time_route',  # route name
-            time = self.full_time_traveled/3600,  # time needed for the route [seconds]
-            lats_per_step=self.lats_per_step[:, idx],
-            lons_per_step=self.lons_per_step[:, idx],
-            azimuths_per_step=self.variants[:, idx],
-            dists_per_step=self.dist_per_step[:, idx],
-            full_dist_travelled=self.full_dist_travelled[idx]
+            self.count,  # routing step
+            self.start,  # lat, lon at start
+            self.finish,  # lat, lon at end
+            boat.get_fuel_per_time(self.full_time_traveled),  # sum of fuel consumption [t]
+            boat.get_rpm(),  # propeller [revolutions per minute]
+            'min_time_route',  # route name
+            self.full_time_traveled/3600,  # time needed for the route [seconds]
+            self.lats_per_step[:, idx],
+            self.lons_per_step[:, idx],
+            self.variants[:, idx],
+            self.dist_per_step[:, idx],
+            self.full_dist_travelled[idx]
         )
-
 
         #route.print_route()
 

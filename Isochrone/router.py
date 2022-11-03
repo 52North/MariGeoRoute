@@ -7,6 +7,7 @@ import datetime as dt
 
 import utils
 from RoutingAlgTimeMin import RoutingAlgTimeMin
+from RoutingAlgFuelMin import RoutingAlgFuelMin
 from polars import Boat
 from routeparams import RouteParams
 from weather import wind_function
@@ -49,7 +50,41 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
     min_time_route.print_route()
     return min_time_route
 
+def min_fuel_routing(
+            route : RouteParams,
+            boat : Boat,   #class containing boat polars, function
+            winds,  #dict containing wind functinos (model timestamp, vector of functions per hour)
+            start_time,
+            delta_time,
+            params,
+            verbose=False):
+    """
+    Do full isochrone routing.
 
+            Parameters:
+                iso1 (Isochrone) - starting isochrone
+                start_point (tuple) - starting point of the route
+                end_point (tuple) - end point of the route
+                x1_coords (tuple) - tuple of arrays (lats, lons)
+                x2_coords (tuple) - tuple of arrays (lats, lons)
+                boat (dict) - boat profile
+                winds (dict) - wind functions
+                start_time (datetime) - start time
+                delta_time (float) - time to move in seconds
+                params (dict) - isochrone calculation parameters
+
+            Returns:
+                iso (Isochrone) - next isochrone
+    """
+
+    ra_fuel=RoutingAlgFuelMin(route, start_time)
+    ra_fuel.set_steps(route.count)
+    #ra.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],params['ISOCHRONE_PRUNE_SEGMENTS'])
+    ra_fuel.set_variant_segments(params['ROUTER_RPM_SEGMENTS'], params ['ROUTER_RPM_INCREMENTS_DEG'])
+    min_fuel_route=ra_fuel.recursive_routing(boat, winds, delta_time,  verbose)
+
+    min_fuel_route.print_route()
+    return min_fuel_route
 
 #
 # def Squat(h, T, V_max, LWL, WWL, ukc, WVPI):

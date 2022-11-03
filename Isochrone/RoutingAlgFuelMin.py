@@ -11,24 +11,19 @@ from routeparams import RouteParams
 from isochrone import RoutingAlg
 import utils
 
-class RoutingAlgTimeMin(RoutingAlg):
-    def __init__(self, start, finish, time):
-        RoutingAlg.__init__(self, start, finish, time)
-        self.current_variant=self.current_azimuth
+class RoutingAlgFuelMin(RoutingAlg):
 
-    def check_variant_def(self):
-        if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and
-                 (self.lats_per_step.shape[1] == self.variants.shape[1]) and
-                 (self.lats_per_step.shape[1] == self.dist_per_step.shape[1]))):
-            raise 'define_variants: number of columns not matching!'
+    def __init__(self, route : RouteParams, time):
+        RoutingAlg.__init__(self, route.start, route.finish, time)
+        self.lats_per_step = route.lats_per_step
+        self.lons_per_step = route.lons_per_step
+        self.dist_per_step = route.dists_per_step
+        self.full_dist_travelled = route.full_dist_travelled
+        self.current_variant = route.rpm
 
-        if (not ((self.lats_per_step.shape[0] == self.lons_per_step.shape[0]) and
-                 (self.lats_per_step.shape[0] == self.variants.shape[0]) and
-                 (self.lats_per_step.shape[0] == self.dist_per_step.shape[0]) and
-                 (self.lats_per_step.shape[0] == (self.count + 1)))):
-            raise ValueError(
-                'define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
-                    self.lats_per_step.shape[0]))
+        self.lats_per_step=np.tile(self.lats_per_step[:,np.newaxis],1)
+        self.lons_per_step = np.tile(self.lons_per_step[:, np.newaxis], 1)
+        self.dist_per_step = np.tile(self.dist_per_step[:, np.newaxis], 1)
 
     def pruning(self,  x, y, trim=True):
         """
@@ -76,7 +71,7 @@ class RoutingAlgTimeMin(RoutingAlg):
 
         idxs = []
         bin_stat, bin_edges, bin_number = binned_statistic(
-            self.current_variant, self.full_dist_travelled, statistic=np.nanmax, bins=bins)
+            self.last_azimuth, self.full_dist_travelled, statistic=np.nanmax, bins=bins)
 
         if trim:
             for i in range(len(bin_edges) - 1):
@@ -97,15 +92,14 @@ class RoutingAlgTimeMin(RoutingAlg):
         lons_new = self.lons_per_step[:, idxs]
         var_new = self.variants[:, idxs]
         dist_new = self.dist_per_step[:, idxs]
-        curr_azi_new = self.current_variant[idxs]
+        curr_azi_new = self.last_azimuth[idxs]
         full_dist_new = self.full_dist_travelled[idxs]
 
         self.lats_per_step = lats_new
         self.lons_per_step = lons_new
         self.variants = var_new
         self.dist_per_step = dist_new
-        self.current_azimuth = curr_azi_new
-        self.current_variant = curr_azi_new
+        self.last_azimuth = curr_azi_new
         self.full_dist_travelled = full_dist_new
 
         #print('last_azimuth', self.last_azimuth)

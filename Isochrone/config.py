@@ -30,6 +30,8 @@ DEFAULT_GFS_MODEL = '2020111600'
 # Isochrone routing parameters
 ROUTER_HDGS_SEGMENTS = 180              #number of heading segments in the range of -180° to 180°
 ROUTER_HDGS_INCREMENTS_DEG = 1
+ROUTER_RPM_SEGMENTS = 20
+ROUTER_RPM_INCREMENTS_DEG = 1
 ISOCHRONE_EXPECTED_SPEED_KTS = 8
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 90    #angular range of azimuth that is considered for pruning (only one half)
 ISOCHRONE_PRUNE_SEGMENTS = 180          #number of azimuth bins that are used for pruning

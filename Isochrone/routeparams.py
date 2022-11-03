@@ -30,13 +30,13 @@ class RouteParams():
     full_dist_travelled: np.ndarray  # full geodesic distance since start
 
     def __init__(self, count, start, finish, fuel, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, full_dist_travelled):
-        self.count = count,  # routing step
-        self.start = start,  # lat, lon at start
-        self.finish = finish,  # lat, lon at end
-        self.fuel = fuel,  # sum of fuel consumption [t]
-        self.rpm = rpm,  # propeller [revolutions per minute]
-        self.route_type = route_type,  # route name
-        self.time = time,  # time needed for the route [seconds]
+        self.count = count  # routing step
+        self.start = start  # lat, lon at start
+        self.finish = finish  # lat, lon at end
+        self.fuel = fuel  # sum of fuel consumption [t]
+        self.rpm = rpm  # propeller [revolutions per minute]
+        self.route_type = route_type  # route name
+        self.time = time  # time needed for the route [seconds]
         self.lats_per_step = lats_per_step
         self.lons_per_step = lons_per_step
         self.azimuths_per_step = azimuths_per_step
