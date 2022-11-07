@@ -118,43 +118,44 @@ class RoutingAlg():
                     Returns:
                         iso (Isochrone) - next isochrone
             """
+        self.define_initial_variants()
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
 
-            vars = self.define_variants()
-            gcrs = self.move_boat_direct(winds, vars, boat, delta_time)
-            self.pruning(gcrs['azi1'], gcrs['s12'], True)
+            self.define_variants_per_step()
+            hdgs = self.get_current_azimuth()
+            gcrs = self.move_boat_direct(winds,hdgs, boat, delta_time)
+            self.pruning_per_step(gcrs['azi1'], gcrs['s12'], True)
 
             #print(self)
             self.count+=1
             self.time+=dt.timedelta(seconds=delta_time)
             self.full_time_traveled+=delta_time
 
+        self.final_pruning()
         route = self.terminate(boat)
         return route
 
     def define_variants(self):
         # branch out for multiple headings
+        print('self type', type(self).__name__)
         nof_routes = self.lats_per_step.shape[1]
 
         self.lats_per_step = np.repeat(self.lats_per_step, self.variant_segments + 1, axis=1)
         self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
         self.variants = np.repeat(self.variants, self.variant_segments + 1, axis=1)
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
+        self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
-        hdgs = self.current_variant
         delta_hdgs = np.linspace(
             -self.variant_segments * self.variant_increments_deg,
             +self.variant_segments * self.variant_increments_deg,
             self.variant_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_routes)
-        hdgs = np.repeat(hdgs, self.variant_segments + 1)
-
-        hdgs = hdgs - delta_hdgs
-
-        return hdgs
+        self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
+        self.current_variant = self.current_variant - delta_hdgs
 
     def move_boat_direct(self, winds, hdgs, boat: Boat, delta_time):
         """
@@ -238,3 +239,24 @@ class RoutingAlg():
         #route.print_route()
 
         return route
+
+    def check_variant_def(self):
+        pass
+
+    def define_initial_variants(self):
+        pass
+
+    def define_variants_per_step(self):
+        pass
+
+    def pruning_per_step(self, x, y, trim=True):
+        pass
+
+    def variants_per_step(self):
+        pass
+
+    def final_pruning(self):
+        pass
+
+    def get_current_azimuth(self):
+        pass

@@ -30,7 +30,7 @@ class RoutingAlgTimeMin(RoutingAlg):
                 'define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-    def pruning(self,  x, y, trim=True):
+    def pruning_per_step(self,  x, y, trim=True):
         """
               generate view of the iso that only contains the longests route per azimuth segment
 
@@ -113,3 +113,9 @@ class RoutingAlgTimeMin(RoutingAlg):
 
         # print("rpm = ",boat.get_rpm())
         # print("Used fuel", boat.get_fuel_per_time(delta_time))
+
+    def define_variants_per_step(self):
+        self.define_variants()
+
+    def get_current_azimuth(self):
+        return self.current_variant

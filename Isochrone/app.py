@@ -117,6 +117,7 @@ def plot_map():
         start_time,
         delta_time, hours,
         params)
+
     '''
     min_fuel_route = router.min_fuel_routing(
         min_time_route,
@@ -125,7 +126,8 @@ def plot_map():
         start_time,
         delta_time,
         params
-    )'''
+    )
+    '''
 
     fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 

@@ -107,3 +107,8 @@ class RoutingAlgFuelMin(RoutingAlg):
 
         # print("rpm = ",boat.get_rpm())
         # print("Used fuel", boat.get_fuel_per_time(delta_time))
+    def define_initial_variants(self):
+        self.define_variants()
+
+    def get_current_azimuth(self):
+        return self.current_azimuth
