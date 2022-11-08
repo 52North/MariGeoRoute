@@ -11,7 +11,6 @@ from routeparams import RouteParams
 import utils
 
 
-
 class RoutingAlg():
     """
         Isochrone data structure with typing.
@@ -25,26 +24,31 @@ class RoutingAlg():
                     time1: current datetime
                     elapsed: complete elapsed timedelta
         """
-    ncount: int # total number of routing steps
+    ncount: int  # total number of routing steps
     count: int  # current routing step
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     gcr_azi: float  # azimut of great circle route
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    variant: np.ndarray  # azimuth: (M,N) array, N=headings+1, M=steps
+
+    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)    #
+    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps                  #
+    azimuth_per_step: np.ndarray  # azimuth: (M,N) array, N=headings+1, M=steps
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
+
+    current_lats: np.ndarray
+    current_lons: np.ndarray
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
-    full_dist_travelled: np.ndarray  # full geodesic distance since start
-    time: dt.datetime  # current datetime
-    full_time_traveled: float  # time elapsed since start
 
-    variant_segments: int       # number of variant segments in the range of -180° to 180°
+    full_dist_traveled: np.ndarray  # full geodesic distance since start
+    time: dt.datetime  # current datetime
+    full_time_traveled: np.ndarray  # time elapsed since start
+
+    variant_segments: int  # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int
     expected_speed_kts: int
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
-    prune_segments: int    # number of azimuth bins that are used for pruning
+    prune_segments: int  # number of azimuth bins that are used for pruning
 
     def __init__(self, start, finish, time):
         self.count = 0
@@ -52,12 +56,14 @@ class RoutingAlg():
         self.finish = finish
         self.lats_per_step = np.array([[start[0]]])
         self.lons_per_step = np.array([[start[1]]])
-        self.variants = np.array([[None]])
+        self.azimuth_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
-        self.full_dist_travelled = np.array([])
+        self.full_dist_traveled = np.array([])
         self.time = time
-        self.full_time_traveled = 0
+        self.full_time_traveled = np.array([])
 
+        self.current_lats = np.array([start[0]])
+        self.current_lons = np.array([start[1]])
         gcr = self.calculate_gcr(start, finish)
         self.current_azimuth = gcr
         self.gcr_azi = gcr
@@ -68,25 +74,35 @@ class RoutingAlg():
         print('     start time ' + str(time))
 
     def print_ra(self):
+        print('PRINTING ALG SETTINGS')
         print('step = ', self.count)
         print('start', self.start)
         print('finish', self.finish)
         print('lats_per_step = ', self.lats_per_step)
         print('lons_per_step = ', self.lons_per_step)
-        print('variants = ', self.variants)
+        print('variants = ', self.azimuth_per_step)
         print('dist_per_step = ', self.dist_per_step)
-        print('full_dist_travelled = ', self.full_dist_travelled)
+        print('full_dist_traveled = ', self.full_dist_traveled)
         print('time = ', self.time)
 
-    def set_steps(self, steps):
-        self.ncount=steps
+    def print_shape(self):
+        print('PRINTING SHAPE')
+        print('lats_per_step = ', self.lats_per_step.shape)
+        print('lons_per_step = ', self.lons_per_step.shape)
+        print('azimuths = ', self.azimuth_per_step.shape)
+        print('dist_per_step = ', self.dist_per_step.shape)
+        print('full_dist_traveled = ', self.full_dist_traveled.shape)
+        print('full_time_traveled = ', self.full_time_traveled.shape)
 
-    def set_variant_segments(self,segments):
-        self.variant_segments=segments
+    def set_steps(self, steps):
+        self.ncount = steps
+
+    def set_variant_segments(self, segments):
+        self.variant_segments = segments
 
     def set_pruning_settings(self, sector_deg_half, seg):
-        self.prune_sector_deg_half=sector_deg_half
-        self.prune_segments=seg
+        self.prune_sector_deg_half = sector_deg_half
+        self.prune_segments = seg
 
     def set_variant_segments(self, seg, inc):
         self.variant_segments = seg
@@ -96,8 +112,6 @@ class RoutingAlg():
         gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
         return gcr['azi1']
-
-
 
     def recursive_routing(self, boat: Boat, winds, delta_time, verbose=False):
         """
@@ -119,19 +133,19 @@ class RoutingAlg():
                         iso (Isochrone) - next isochrone
             """
         self.define_initial_variants()
+        # self.print_shape()
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
+            # self.current_position()
+            # self.print_shape()
+            # self.print_ra()
 
             self.define_variants_per_step()
-            hdgs = self.get_current_azimuth()
-            gcrs = self.move_boat_direct(winds,hdgs, boat, delta_time)
-            self.pruning_per_step(gcrs['azi1'], gcrs['s12'], True)
+            self.move_boat_direct(winds, boat, delta_time)
+            self.pruning_per_step(True)
 
-            #print(self)
-            self.count+=1
-            self.time+=dt.timedelta(seconds=delta_time)
-            self.full_time_traveled+=delta_time
+            print('full_time_traveled:', self.full_time_traveled)
 
         self.final_pruning()
         route = self.terminate(boat)
@@ -139,13 +153,12 @@ class RoutingAlg():
 
     def define_variants(self):
         # branch out for multiple headings
-        print('self type', type(self).__name__)
-        nof_routes = self.lats_per_step.shape[1]
+        nof_input_routes = self.lats_per_step.shape[1]
 
         self.lats_per_step = np.repeat(self.lats_per_step, self.variant_segments + 1, axis=1)
         self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
-        self.variants = np.repeat(self.variants, self.variant_segments + 1, axis=1)
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
+        self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
@@ -153,90 +166,58 @@ class RoutingAlg():
             -self.variant_segments * self.variant_increments_deg,
             +self.variant_segments * self.variant_increments_deg,
             self.variant_segments + 1)
-        delta_hdgs = np.tile(delta_hdgs, nof_routes)
+        delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
 
-    def move_boat_direct(self, winds, hdgs, boat: Boat, delta_time):
+    def move_boat_direct(self, winds, boat: Boat, delta_time):
         """
                 calculate new boat position for current time step based on wind and boat function
             """
-        current_lats = self.lats_per_step[0, :]
-        current_lons = self.lons_per_step[0, :]
-        start_lats = np.repeat(self.start[0], self.lats_per_step.shape[1])
-        start_lons = np.repeat(self.start[1], self.lons_per_step.shape[1])
 
-        #get wind speed (tws) and angle (twa)
-        winds = wind_function(winds, (current_lats, current_lons), self.time)
+        # get wind speed (tws) and angle (twa)
+        print('lats', self.current_lats)
+        print('lons', self.current_lons)
+        print('time', self.time)
+        winds = wind_function(winds, (self.current_lats, self.current_lons), self.time)
         twa = winds['twa']
         tws = winds['tws']
-        wind = {'tws': tws, 'twa': twa - hdgs}
+        wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
+        print('twa= ' + str(twa) + 'tws= ' + str(tws))
 
-        #get boat speed
+        # get boat speed
         bs = boat.boat_speed_function(wind)
 
         # update boat position
-        dist = delta_time * bs
-        move = geod.direct(current_lats, current_lons, hdgs, dist)
+        self.update_position()
+        self.update_dist(delta_time, bs, self.current_lats, self.current_lons)
+        self.update_time(delta_time, bs)
+        self.count += 1
 
-        self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
-        self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
-        self.variants = np.vstack((hdgs, self.variants))
-        self.dist_per_step = np.vstack((dist, self.dist_per_step))
+    def terminate(self, boat: Boat):
+        utils.print_line()
+        print('Terminating...')
 
-        # determine gcrs from start to new isochrone
-        gcrs = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])
-        self.full_dist_travelled=gcrs['s12']
-        self.current_variant=gcrs['azi1']
-
-        # remove those which ended on land
-        is_on_land = globe.is_land(move['lat2'], move['lon2'])
-        gcrs['s12'][is_on_land] = 0  # to check
-        # for i in range(int((x2 - x1) / STEP) + 1): #62.3, 17.6, 59.5, 24.6
-        #     try:
-        #         x = x1 + i * STEP
-        #         y = (y1 - y2) / (x1 - x2) * (x - x1) + y1
-        #     except:
-        #         continue
-        #     is_on_land = globe.is_land(float(x), float(y))
-        #     print(is_on_land)
-        #     # if not is_on_land:
-        #     # print("in water")
-        #
-        #     if is_on_land:
-        #         # print("crosses land")
-        #
-        #         return True
-
-        # print('isonland',is_on_land)
-        # z = globe.is_land(lats, lons)
-        # print('value of z',type(z))
-        # if z=='True':
-        #     is_on_land = globe.is_land(move['lats2'], move['lons2'])
-        #     print(is_on_land)
-
-        return gcrs
-
-
-    def terminate(self, boat : Boat):
-        idx = np.argmax(self.full_dist_travelled)
+        idx = self.get_final_index()
+        fuel = round(boat.get_fuel_per_time(self.full_time_traveled[idx]), 2)
+        time = round(self.full_time_traveled[idx] / 3600,2 )
 
         route = RouteParams(
             self.count,  # routing step
             self.start,  # lat, lon at start
             self.finish,  # lat, lon at end
-            boat.get_fuel_per_time(self.full_time_traveled),  # sum of fuel consumption [t]
+            fuel,  # sum of fuel consumption [t]
             boat.get_rpm(),  # propeller [revolutions per minute]
             'min_time_route',  # route name
-            self.full_time_traveled/3600,  # time needed for the route [seconds]
+            time,  # time needed for the route [seconds]
             self.lats_per_step[:, idx],
             self.lons_per_step[:, idx],
-            self.variants[:, idx],
+            self.azimuth_per_step[:, idx],
             self.dist_per_step[:, idx],
-            self.full_dist_travelled[idx]
+            self.full_dist_traveled[idx]
         )
 
-        #route.print_route()
+        route.print_route()
 
         return route
 
@@ -249,7 +230,7 @@ class RoutingAlg():
     def define_variants_per_step(self):
         pass
 
-    def pruning_per_step(self, x, y, trim=True):
+    def pruning_per_step(self, trim=True):
         pass
 
     def variants_per_step(self):
@@ -259,4 +240,13 @@ class RoutingAlg():
         pass
 
     def get_current_azimuth(self):
+        pass
+
+    def update_dist(self, delta_time, bs):
+        pass
+
+    def update_time(self, delta_time, bs, current_lats, current_lons):
+        pass
+
+    def get_final_index(self):
         pass

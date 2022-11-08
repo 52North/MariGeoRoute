@@ -47,7 +47,7 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
     ra.set_variant_segments(params['ROUTER_HDGS_SEGMENTS'], params ['ROUTER_HDGS_INCREMENTS_DEG'])
     min_time_route=ra.recursive_routing(boat, winds, delta_time,  verbose)
 
-    min_time_route.print_route()
+    #min_time_route.print_route()
     return min_time_route
 
 def min_fuel_routing(

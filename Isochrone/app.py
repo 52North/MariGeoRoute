@@ -24,9 +24,9 @@ state = {}
 state['hour'] = 0
 
 
-@app.route('/')
-def hello():  #create dummy page here
-    return 'Hello World!'
+#@app.route('/')
+#def hello():  #create dummy page here
+#    return 'Hello World!'
 
 '''
 # Controllers.
@@ -56,7 +56,7 @@ def favicon():
 '''
 
 
-@app.route('/map')
+@app.route('/')
 def plot_map():
     """Route handling."""
     try:
@@ -118,7 +118,7 @@ def plot_map():
         delta_time, hours,
         params)
 
-    '''
+
     min_fuel_route = router.min_fuel_routing(
         min_time_route,
         boat,
@@ -127,7 +127,9 @@ def plot_map():
         delta_time,
         params
     )
-    '''
+
+    if not (min_fuel_route.__eq__(min_time_route)):
+        raise ValueError('Routes not matching!')
 
     fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
