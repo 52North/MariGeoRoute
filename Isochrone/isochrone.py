@@ -93,6 +93,12 @@ class RoutingAlg():
         print('dist_per_step = ', self.dist_per_step.shape)
         print('full_dist_traveled = ', self.full_dist_traveled.shape)
         print('full_time_traveled = ', self.full_time_traveled.shape)
+    def current_position(self):
+        print('CURRENT POSITION')
+        print('lats = ', self.current_lats)
+        print('lons = ', self.current_lons)
+        print('azimuth = ', self.current_azimuth)
+        print('full_time_traveled = ', self.full_time_traveled)
 
     def set_steps(self, steps):
         self.ncount = steps
@@ -137,7 +143,7 @@ class RoutingAlg():
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
-            # self.current_position()
+            #self.current_position()
             # self.print_shape()
             # self.print_ra()
 
@@ -145,7 +151,7 @@ class RoutingAlg():
             self.move_boat_direct(winds, boat, delta_time)
             self.pruning_per_step(True)
 
-            print('full_time_traveled:', self.full_time_traveled)
+            #print('full_time_traveled:', self.full_time_traveled)
 
         self.final_pruning()
         route = self.terminate(boat)
@@ -176,14 +182,11 @@ class RoutingAlg():
             """
 
         # get wind speed (tws) and angle (twa)
-        print('lats', self.current_lats)
-        print('lons', self.current_lons)
-        print('time', self.time)
+
         winds = wind_function(winds, (self.current_lats, self.current_lons), self.time)
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
-        print('twa= ' + str(twa) + 'tws= ' + str(tws))
 
         # get boat speed
         bs = boat.boat_speed_function(wind)

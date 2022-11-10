@@ -28,7 +28,7 @@ DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/201
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters
-ROUTER_HDGS_SEGMENTS =  0 #number of heading segments in the range of -180° to 180°
+ROUTER_HDGS_SEGMENTS =  180 #number of heading segments in the range of -180° to 180°
 ROUTER_HDGS_INCREMENTS_DEG = 1
 ROUTER_RPM_SEGMENTS = 20
 ROUTER_RPM_INCREMENTS_DEG = 1

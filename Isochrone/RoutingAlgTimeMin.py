@@ -16,16 +16,6 @@ class RoutingAlgTimeMin(RoutingAlg):
         RoutingAlg.__init__(self, start, finish, time)
         self.current_variant=self.current_azimuth
 
-    def current_position(self):
-        pass
-        #print('CURRENT POSITION')
-        #print('lats = ', self.lats_per_step[0,:])
-        #print('lons = ', self.lons_per_step[0,:])
-        #print('azimuth = ', self.current_azimuth)
-        #print('dist = ', self.dist_per_step[0,:])
-        #print('full_dist_traveled = ', self.full_dist_traveled)
-        #print('full_time_traveled = ', self.full_time_traveled)
-
     def check_variant_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and
                  (self.lats_per_step.shape[1] == self.azimuth_per_step.shape[1]) and
@@ -126,6 +116,7 @@ class RoutingAlgTimeMin(RoutingAlg):
 
     def define_variants_per_step(self):
         self.define_variants()
+        self.update_position()
 
     def define_initial_variants(self):
         self.full_time_traveled = np.repeat(0., self.variant_segments + 1, axis=0)
@@ -136,12 +127,12 @@ class RoutingAlgTimeMin(RoutingAlg):
     def update_position(self):
         self.current_lats=self.lats_per_step[0, :]
         self.current_lons=self.lons_per_step[0, :]
+
     def update_time(self, delta_time, bs):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
 
     def update_dist(self, delta_time, bs, current_lats, current_lons):
-        print('bs=',bs)
         dist = delta_time * bs
         move = geod.direct(current_lats, current_lons, self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))

@@ -27,13 +27,6 @@ class RoutingAlgFuelMin(RoutingAlg):
         self.lons_per_step = self.lons_per_step[:, np.newaxis]
         self.dist_per_step = self.dist_per_step[:, np.newaxis]
 
-    def current_position(self):
-        print('CURRENT POSITION')
-        print('lats = ', self.current_lats)
-        print('lons = ', self.current_lons)
-        print('azimuth = ', self.current_azimuth)
-        print('full_time_traveled = ', self.full_time_traveled)
-
     def pruning(self,  x, y, trim=True):
         """
               generate view of the iso that only contains the longests route per azimuth segment
@@ -122,9 +115,6 @@ class RoutingAlgFuelMin(RoutingAlg):
         self.full_time_traveled = np.repeat(0., self.variant_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
 
-        print('az after repeat', self.azimuth_per_step.shape)
-
-
     def get_current_azimuth(self):
         return self.current_azimuth[0]
 
@@ -138,15 +128,13 @@ class RoutingAlgFuelMin(RoutingAlg):
         dist = gcrs['s12']
         #self.time += dt.timedelta(seconds=dist/bs)
 
-        print('dist=', dist)
-        print('bs=', bs)
-
         delta_time_calc=dist/bs
-        print('dt=', delta_time_calc)
+
         delta_time_calc=np.round(delta_time_calc/100)*100
         if not (delta_time == delta_time_calc[0]):
             raise ValueError('delta_time=' + str(delta_time) + ' delta_time_calc=' + str(delta_time_calc))
         self.full_time_traveled += delta_time_calc
+        self.time += dt.timedelta(seconds=delta_time_calc)
 
     def update_dist(self, delta_time, bs, current_lats, current_lons):
         #return {'lat2' : self.lats_per_step[self.count,:], 'lon2' : self.lons_per_step[self.count,:]}

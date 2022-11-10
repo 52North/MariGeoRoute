@@ -77,6 +77,7 @@ class Boat:
         """
         twa = wind['twa']
         tws = wind['tws']
+
         # Assert to check the condition if false give assertion error
         assert twa.shape == tws.shape, "Input shape mismatch"
         # func = boat['func']

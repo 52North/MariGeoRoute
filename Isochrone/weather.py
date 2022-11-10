@@ -26,6 +26,8 @@ def nc_to_wind_function(filepath):
     """Vectorized wind functions from NetCDF file."""
     ds_wind = xr.open_dataset(filepath)
 
+    #print('ds_wind', ds_wind)
+
     tws = np.sqrt(ds_wind.u10**2+ds_wind.v10**2)
     twa = 180.0 / np.pi * np.arctan2(ds_wind.u10, ds_wind.v10) + 180.0
 

@@ -119,7 +119,7 @@ def plot_map():
         params)
 
 
-    min_fuel_route = router.min_fuel_routing(
+    '''min_fuel_route = router.min_fuel_routing(
         min_time_route,
         boat,
         fct_winds,
@@ -129,7 +129,7 @@ def plot_map():
     )
 
     if not (min_fuel_route.__eq__(min_time_route)):
-        raise ValueError('Routes not matching!')
+        raise ValueError('Routes not matching!')'''
 
     fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
