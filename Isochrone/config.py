@@ -18,13 +18,15 @@ DEFAULT_MAP = [30, 0, 45, 40]
 DEFAULT_ROUTE = [43.5,7.2, 33.8,35.5]
 TIME_FORECAST = 110     # [hours]
 DELTA_TIME_FORECAST = 3600 # [seconds]
-DEFAULT_GFS_DATETIME = '2020111600'
+#DEFAULT_GFS_DATETIME = '2020111600' #NCEP
+DEFAULT_GFS_DATETIME = '2019060209' #CMEMS
 DEFAULT_GFS_HOUR = '06'
 DEFAULT_GFS_FCST = '000'
 DEFAULT_GFS_RESOLUTION = '1p00'
 #DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/20205150000_split13.grb'
 #DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/2019122212f000'
-DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/20205150000_split13.nc'
+#DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/20205150000_split13.nc'
+DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/45d7b138-61a8-11ed-bdaf-0242ac120003.nc'
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters

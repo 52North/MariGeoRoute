@@ -8,7 +8,7 @@ from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from polars import Boat
-from weather import WeatherCond
+from weather import WeatherCond, WeatherCondNCEP, WeatherCondCMEMS
 from routeparams import RouteParams
 
 import graphics
@@ -98,6 +98,7 @@ def plot_map():
     windfile = app.config['DEFAULT_GFS_FILE']
     delta_time = app.config['DELTA_TIME_FORECAST']
     hours = app.config['TIME_FORECAST']
+    lat1, lon1, lat2, lon2 = app.config['DEFAULT_MAP']
 
 
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
@@ -109,7 +110,10 @@ def plot_map():
     boat.set_rpm(60)
     params = app.config
 
-    wt = WeatherCond(windfile, model, start_time, hours,3)
+    wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    wt.check_ds_format()
+    wt.set_map_size(lat1, lon1, lat2, lon2)
+    wt.init_wind_functions()
     vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
     min_time_route = router.modified_isochrone_routing(

@@ -2,6 +2,8 @@
 import numpy as np
 import datetime as dt
 import xarray as xr
+import bbox as bbox
+from bbox import BBox2D, XYXY
 
 import pygrib as pg
 
@@ -15,6 +17,7 @@ class WeatherCond():
     time_steps: int
     time_res: dt.timedelta
     time_start: dt.datetime
+    map_size: bbox.BBox2D
     ds: xr.Dataset
     wind_functions: None
 
@@ -25,7 +28,6 @@ class WeatherCond():
         self.time_start = time
 
         self.read_dataset(filepath)
-        self.init_wind_functions()
 
     @property
     def time_res(self):
@@ -37,11 +39,18 @@ class WeatherCond():
         self._time_res = dt.timedelta(hours=value)
         print('Setting time resolution to ' + str(self.time_res) + ' hours')
 
+
+    def set_map_size(self, lat1, lon1, lat2, lon2):
+        self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
+
+
     def read_dataset(self, filepath):
         print('Reading dataset from', filepath)
         self.ds = xr.open_dataset(filepath)
         # print('dataset', self.ds)
 
+    def check_ds_format(self):
+        print('Printing dataset', self.ds)
     '''
     def grib_to_wind_function(filepath):
         """Vectorized wind functions from grib file.GRIB is a file format for the storage and transport of gridded meteorological data,
@@ -56,37 +65,6 @@ class WeatherCond():
 
         return {'twa': twa, 'tws': tws}     
     '''
-
-    def nc_to_wind_function(self):
-        """Vectorized wind functions from NetCDF file."""
-
-        tws = np.sqrt(self.ds.u10 ** 2 + self.ds.v10 ** 2)
-        twa = 180.0 / np.pi * np.arctan2(self.ds.u10, self.ds.v10) + 180.0
-
-        tws = tws.to_numpy()
-        twa = twa.to_numpy()
-
-        return {'twa': twa, 'tws': tws}
-
-    def get_wind_function(self, iTime):
-        wind = self.nc_to_wind_function()
-
-        lats_grid = np.linspace(-90, 90, 181)
-        lons_grid = np.linspace(0, 360, 361)
-
-        f_twa = RegularGridInterpolator(
-            (lats_grid, lons_grid),
-            np.flip(np.hstack((wind['twa'], wind['twa'][:, 0].reshape(181, 1))), axis=0),
-        )
-
-        f_tws = RegularGridInterpolator(
-            (lats_grid, lons_grid),
-            np.flip(np.hstack((wind['tws'], wind['tws'][:, 0].reshape(181, 1))), axis=0),
-        )
-
-        time = self.time_start + self.time_res*iTime
-
-        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
     def nc_to_wind_vectors(self, lat1, lon1, lat2, lon2):
         """Return u-v components for given rect for visualization."""
@@ -180,3 +158,80 @@ class WeatherCond():
         tws = wind['tws'](coordinate)
 
         return {'twa': twa, 'tws': tws}
+
+class WeatherCondNCEP(WeatherCond):
+    def __init__(self, filepath, model, time, hours, time_res):
+        WeatherCond.__init__(self, filepath, model, time, hours, time_res)
+        print('WARNING: not well maintained. Currently one data file for one particular times is read several times')
+        
+    def nc_to_wind_function(self):
+        """Vectorized wind functions from NetCDF file."""
+
+        tws = np.sqrt(self.ds.u10 ** 2 + self.ds.v10 ** 2)
+        twa = 180.0 / np.pi * np.arctan2(self.ds.u10, self.ds.v10) + 180.0
+
+        tws = tws.to_numpy()
+        twa = twa.to_numpy()
+
+        return {'twa': twa, 'tws': tws}
+
+    def get_wind_function(self, iTime):
+        time = self.time_start + self.time_res*iTime
+
+        wind = self.nc_to_wind_function()
+
+        lats_grid = np.linspace(-90, 90, 181)
+        lons_grid = np.linspace(0, 360, 361)
+
+        f_twa = RegularGridInterpolator(
+            (lats_grid, lons_grid),
+            np.flip(np.hstack((wind['twa'], wind['twa'][:, 0].reshape(181, 1))), axis=0),
+        )
+
+        f_tws = RegularGridInterpolator(
+            (lats_grid, lons_grid),
+            np.flip(np.hstack((wind['tws'], wind['tws'][:, 0].reshape(181, 1))), axis=0),
+        )
+
+        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
+
+class WeatherCondCMEMS(WeatherCond):
+    def nc_to_wind_function(self, time):
+        time_str=time.strftime('%Y-%m-%d %H:%M:%S')
+        print('Reading time', time_str)
+
+        u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
+        v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
+
+        tws = np.sqrt(u ** 2 + v ** 2)
+        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0
+
+        tws = tws.to_numpy()
+        twa = twa.to_numpy()
+
+        return {'twa': twa, 'tws': tws}
+
+    def get_wind_function(self, iTime):
+        time = self.time_start + self.time_res*iTime
+        #wind = self.nc_to_wind_function_old_format()
+        wind = self.nc_to_wind_function(time)
+
+        if not (wind['twa'].shape==wind['tws'].shape): raise ValueError('Shape of twa and tws not matching!')
+
+        lat_shape = wind['twa'].shape[0]
+        lon_shape = wind['twa'].shape[1]
+        #print('lat_shape', lat_shape)
+        #print('long_shape', lon_shape)
+        lats_grid = np.linspace(self.map_size.x1, self.map_size.x2, lat_shape)
+        lons_grid = np.linspace(self.map_size.y1, self.map_size.y2, lon_shape)
+        #print('lons shape', lons_grid.shape)
+
+        f_twa = RegularGridInterpolator(
+            (lats_grid, lons_grid), wind['twa'],
+        )
+
+        f_tws = RegularGridInterpolator(
+            (lats_grid, lons_grid), wind['tws'],
+        )
+
+        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
