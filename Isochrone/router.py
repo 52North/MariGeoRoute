@@ -10,13 +10,13 @@ from RoutingAlgTimeMin import RoutingAlgTimeMin
 from RoutingAlgFuelMin import RoutingAlgFuelMin
 from polars import Boat
 from routeparams import RouteParams
-from weather import wind_function
+from weather import WeatherCond
 from scipy.stats import binned_statistic
 
 def modified_isochrone_routing(start, #r_la1, r_lo1
             finish, #r_la2, r_lo2
             boat : Boat,   #class containing boat polars, function
-            winds,  #dict containing wind functinos (model timestamp, vector of functions per hour)
+            wt : WeatherCond,  #dict containing wind functinos (model timestamp, vector of functions per hour)
             start_time,
             delta_time,
             steps,
@@ -45,7 +45,7 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
     ra.set_steps(steps)
     ra.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],params['ISOCHRONE_PRUNE_SEGMENTS'])
     ra.set_variant_segments(params['ROUTER_HDGS_SEGMENTS'], params ['ROUTER_HDGS_INCREMENTS_DEG'])
-    min_time_route=ra.recursive_routing(boat, winds, delta_time,  verbose)
+    min_time_route=ra.recursive_routing(boat, wt, delta_time,  verbose)
 
     #min_time_route.print_route()
     return min_time_route

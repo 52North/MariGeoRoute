@@ -4,7 +4,7 @@ import utils as ut
 from polars import Boat
 from typing import NamedTuple
 from geovectorslib import geod
-from weather import wind_function
+from weather import WeatherCond
 from global_land_mask import globe
 from scipy.stats import binned_statistic
 from routeparams import RouteParams

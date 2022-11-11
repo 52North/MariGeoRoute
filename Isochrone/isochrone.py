@@ -4,7 +4,7 @@ import utils as ut
 from polars import Boat
 from typing import NamedTuple
 from geovectorslib import geod
-from weather import wind_function
+from weather import WeatherCond
 from global_land_mask import globe
 from scipy.stats import binned_statistic
 from routeparams import RouteParams
@@ -119,7 +119,7 @@ class RoutingAlg():
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
         return gcr['azi1']
 
-    def recursive_routing(self, boat: Boat, winds, delta_time, verbose=False):
+    def recursive_routing(self, boat: Boat, wt : WeatherCond, delta_time, verbose=False):
         """
             Progress one isochrone with pruning/optimising route for specific time segment
 
@@ -148,7 +148,7 @@ class RoutingAlg():
             # self.print_ra()
 
             self.define_variants_per_step()
-            self.move_boat_direct(winds, boat, delta_time)
+            self.move_boat_direct(wt, boat, delta_time)
             self.pruning_per_step(True)
 
             #print('full_time_traveled:', self.full_time_traveled)
@@ -176,14 +176,14 @@ class RoutingAlg():
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
 
-    def move_boat_direct(self, winds, boat: Boat, delta_time):
+    def move_boat_direct(self, wt : WeatherCond, boat: Boat, delta_time):
         """
                 calculate new boat position for current time step based on wind and boat function
             """
 
         # get wind speed (tws) and angle (twa)
 
-        winds = wind_function(winds, (self.current_lats, self.current_lons), self.time)
+        winds = wt.wind_function((self.current_lats, self.current_lons), self.time)
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
