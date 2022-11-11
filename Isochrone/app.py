@@ -109,7 +109,7 @@ def plot_map():
     boat.set_rpm(60)
     params = app.config
 
-    wt = WeatherCond(windfile, model, hours)
+    wt = WeatherCond(windfile, model, start_time, hours,3)
     vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
     min_time_route = router.modified_isochrone_routing(

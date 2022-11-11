@@ -9,23 +9,38 @@ from scipy.interpolate import RegularGridInterpolator
 
 from utils import round_time
 
-class WeatherCond():
-    ds : xarray.Dataset
-    model : str
-    time_steps : tuple
-    wind_functions :  None
 
-    def __init__(self, filepath, model, hours):
+class WeatherCond():
+    model: str
+    time_steps: int
+    time_res: dt.timedelta
+    time_start: dt.datetime
+    ds: xr.Dataset
+    wind_functions: None
+
+    def __init__(self, filepath, model, time, hours, time_res):
         self.model = model
         self.time_steps = hours
+        self.time_res = time_res
+        self.time_start = time
 
         self.read_dataset(filepath)
         self.init_wind_functions()
 
+    @property
+    def time_res(self):
+        return self._time_res
+
+    @time_res.setter
+    def time_res(self, value):
+        if (value < 3): raise ValueError('Resolution below 3h not possible')
+        self._time_res = dt.timedelta(hours=value)
+        print('Setting time resolution to ' + str(self.time_res) + ' hours')
+
     def read_dataset(self, filepath):
         print('Reading dataset from', filepath)
         self.ds = xr.open_dataset(filepath)
-        #print('dataset', self.ds)
+        # print('dataset', self.ds)
 
     '''
     def grib_to_wind_function(filepath):
@@ -45,7 +60,7 @@ class WeatherCond():
     def nc_to_wind_function(self):
         """Vectorized wind functions from NetCDF file."""
 
-        tws = np.sqrt(self.ds.u10**2+self.ds.v10**2)
+        tws = np.sqrt(self.ds.u10 ** 2 + self.ds.v10 ** 2)
         twa = 180.0 / np.pi * np.arctan2(self.ds.u10, self.ds.v10) + 180.0
 
         tws = tws.to_numpy()
@@ -53,7 +68,7 @@ class WeatherCond():
 
         return {'twa': twa, 'tws': tws}
 
-    def get_wind_function(self):
+    def get_wind_function(self, iTime):
         wind = self.nc_to_wind_function()
 
         lats_grid = np.linspace(-90, 90, 181)
@@ -69,22 +84,28 @@ class WeatherCond():
             np.flip(np.hstack((wind['tws'], wind['tws'][:, 0].reshape(181, 1))), axis=0),
         )
 
-        return {'twa': f_twa, 'tws': f_tws}
+        time = self.time_start + self.time_res*iTime
+
+        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
     def nc_to_wind_vectors(self, lat1, lon1, lat2, lon2):
         """Return u-v components for given rect for visualization."""
 
-        u = self.ds['u10'].where((self.ds.latitude>=lat1) & (self.ds.latitude<=lat2) & (self.ds.longitude>=lon1) & (self.ds.longitude<=lon2), drop=True)
-        v = self.ds['v10'].where((self.ds.latitude>=lat1) & (self.ds.latitude<=lat2) & (self.ds.longitude>=lon1) & (self.ds.longitude<=lon2), drop=True)
-        lats_u_1D = self.ds['latitude'].where((self.ds.latitude>=lat1) & (self.ds.latitude<=lat2), drop=True)
-        lons_u_1D = self.ds['longitude'].where((self.ds.longitude>=lon1) & (self.ds.longitude<=lon2), drop=True)
+        u = self.ds['u10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        v = self.ds['v10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
+        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
 
         u = u.to_numpy()
         v = v.to_numpy()
         lats_u_1D = lats_u_1D.to_numpy()
         lons_u_1D = lons_u_1D.to_numpy()
-        lats_u=np.tile(lats_u_1D[:,np.newaxis],u.shape[1])
-        lons_u=np.tile(lons_u_1D,(u.shape[0],1))
+        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
+        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
 
         return u, v, lats_u, lons_u
 
@@ -113,10 +134,9 @@ class WeatherCond():
         wind_vectors['model'] = model
 
         for i in range(hours_ahead + 1):
-            wind_vectors[i] = self.nc_to_wind_vectors(lat1, lon1, lat2,lon2)
+            wind_vectors[i] = self.nc_to_wind_vectors(lat1, lon1, lat2, lon2)
 
         return wind_vectors
-
 
     def init_wind_functions(self):
         """
@@ -132,7 +152,7 @@ class WeatherCond():
         wind_function['model'] = self.model
 
         for i in range(self.time_steps + 1):
-            wind_function[i] = self.get_wind_function()
+            wind_function[i] = self.get_wind_function(i)
 
         self.wind_functions = wind_function
 
@@ -148,17 +168,15 @@ class WeatherCond():
                         twa (array): array of TWA
                         tws (array): array of TWS
         """
-        model_time = dt.datetime.strptime(self.wind_functions['model'], "%Y%m%d%H")
-        rounded_time = round_time(time, 3600 * 3)
+        rounded_time = round_time(time, int(self.time_res.total_seconds()))
+        time_passed = rounded_time-self.time_start
+        time_steps_passed = (time_passed.total_seconds()/self.time_res.total_seconds())
+        if not (rounded_time==self.wind_functions[time_steps_passed]['timestamp']):
+            ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[time_steps_passed]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
+            raise Exception(ex)
 
-        timedelta = rounded_time - model_time
-        forecast = int(timedelta.seconds / 3600)
-
-        wind = self.wind_functions[forecast]
+        wind = self.wind_functions[time_steps_passed]
         twa = wind['twa'](coordinate)
         tws = wind['tws'](coordinate)
 
         return {'twa': twa, 'tws': tws}
-
-
-
