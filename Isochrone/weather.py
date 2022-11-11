@@ -9,6 +9,7 @@ import pygrib as pg
 
 from scipy.interpolate import RegularGridInterpolator
 
+import utils
 from utils import round_time
 
 
@@ -17,17 +18,28 @@ class WeatherCond():
     time_steps: int
     time_res: dt.timedelta
     time_start: dt.datetime
+    time_end: dt.timedelta
     map_size: bbox.BBox2D
     ds: xr.Dataset
     wind_functions: None
 
     def __init__(self, filepath, model, time, hours, time_res):
-        self.model = model
-        self.time_steps = hours
-        self.time_res = time_res
-        self.time_start = time
+        utils.print_line()
+        print('Initialising weather')
 
         self.read_dataset(filepath)
+
+        self.model = model
+        self.time_res = time_res
+        self.time_start = time
+        self.time_end = time + dt.timedelta(hours=hours)
+
+        time_passed = self.time_end - self.time_start
+        self.time_steps = int(time_passed.total_seconds()/self.time_res.total_seconds())
+
+        print('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end))
+        print('nof time steps', self.time_steps)
+        utils.print_line()
 
     @property
     def time_res(self):
@@ -37,12 +49,30 @@ class WeatherCond():
     def time_res(self, value):
         if (value < 3): raise ValueError('Resolution below 3h not possible')
         self._time_res = dt.timedelta(hours=value)
-        print('Setting time resolution to ' + str(self.time_res) + ' hours')
+        print('time resolution: ' + str(self._time_res) + ' hours')
 
+    @property
+    def time_start(self):
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self,value):
+        rounded_time = value - self.time_res/2
+        rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
+        self._time_start = rounded_time
+
+    @property
+    def time_end(self):
+        return self._time_end
+
+    @time_end.setter
+    def time_end(self, value):
+        rounded_time = value + self.time_res / 2
+        rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
+        self._time_end = rounded_time
 
     def set_map_size(self, lat1, lon1, lat2, lon2):
         self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
-
 
     def read_dataset(self, filepath):
         print('Reading dataset from', filepath)
@@ -66,26 +96,7 @@ class WeatherCond():
         return {'twa': twa, 'tws': tws}     
     '''
 
-    def nc_to_wind_vectors(self, lat1, lon1, lat2, lon2):
-        """Return u-v components for given rect for visualization."""
 
-        u = self.ds['u10'].where(
-            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
-                    self.ds.longitude <= lon2), drop=True)
-        v = self.ds['v10'].where(
-            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
-                    self.ds.longitude <= lon2), drop=True)
-        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
-        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
-
-        u = u.to_numpy()
-        v = v.to_numpy()
-        lats_u_1D = lats_u_1D.to_numpy()
-        lons_u_1D = lons_u_1D.to_numpy()
-        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
-        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
-
-        return u, v, lats_u, lons_u
 
     '''
     def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
@@ -129,7 +140,7 @@ class WeatherCond():
         wind_function = {}
         wind_function['model'] = self.model
 
-        for i in range(self.time_steps + 1):
+        for i in range(self.time_steps):
             wind_function[i] = self.get_wind_function(i)
 
         self.wind_functions = wind_function
@@ -163,7 +174,7 @@ class WeatherCondNCEP(WeatherCond):
     def __init__(self, filepath, model, time, hours, time_res):
         WeatherCond.__init__(self, filepath, model, time, hours, time_res)
         print('WARNING: not well maintained. Currently one data file for one particular times is read several times')
-        
+
     def nc_to_wind_function(self):
         """Vectorized wind functions from NetCDF file."""
 
@@ -195,10 +206,31 @@ class WeatherCondNCEP(WeatherCond):
 
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
+    def nc_to_wind_vectors(self, lat1, lon1, lat2, lon2):
+        """Return u-v components for given rect for visualization."""
+
+        u = self.ds['u10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        v = self.ds['v10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
+        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
+
+        u = u.to_numpy()
+        v = v.to_numpy()
+        lats_u_1D = lats_u_1D.to_numpy()
+        lons_u_1D = lons_u_1D.to_numpy()
+        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
+        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
+
+        return u, v, lats_u, lons_u
+
 class WeatherCondCMEMS(WeatherCond):
     def nc_to_wind_function(self, time):
         time_str=time.strftime('%Y-%m-%d %H:%M:%S')
-        print('Reading time', time_str)
+        #print('Reading time', time_str)
 
         u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
         v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
@@ -235,3 +267,36 @@ class WeatherCondCMEMS(WeatherCond):
         )
 
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
+
+    def nc_to_wind_vectors(self, time):
+        """Return u-v components for given rect for visualization."""
+
+        lat1 = self.map_size.x1
+        lat2 = self.map_size.x2
+        lon1 = self.map_size.y1
+        lon2 = self.map_size.y2
+
+        u = self.ds['u-component_of_wind_maximum_wind'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        v = self.ds['v-component_of_wind_maximum_wind'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
+        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
+
+        u = u.to_numpy()
+        v = v.to_numpy()
+        lats_u_1D = lats_u_1D.to_numpy()
+        lons_u_1D = lons_u_1D.to_numpy()
+        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
+        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
+
+        print('u=', u.shape)
+        print('v=', v.shape)
+        print('lats=', lats_u.shape)
+        print('lons=', lons_u.shape)
+
+        raise Exception('Stop')
+
+        return u, v, lats_u, lons_u

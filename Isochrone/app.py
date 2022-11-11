@@ -111,7 +111,7 @@ def plot_map():
     params = app.config
 
     wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
-    wt.check_ds_format()
+    #wt.check_ds_format()
     wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.init_wind_functions()
     vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
