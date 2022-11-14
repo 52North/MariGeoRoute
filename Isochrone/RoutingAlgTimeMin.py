@@ -180,7 +180,6 @@ class RoutingAlgTimeMin(RoutingAlg):
         idx = np.argmax(self.full_dist_traveled)
         return idx
 
-
     def terminate(self, boat : Boat):
         self.lats_per_step=np.flip(self.lats_per_step,0)
         self.lons_per_step=np.flip(self.lons_per_step,0)

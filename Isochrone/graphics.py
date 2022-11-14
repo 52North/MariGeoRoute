@@ -92,19 +92,17 @@ def create_map(lat1, lon1, lat2, lon2, dpi):
     return fig
 
 
-def plot_barbs(fig, winds, hour):
+def plot_barbs(fig, winds):
     """Add barbs to the map figure."""
-    u, v, lats, lons = winds[int(hour)]
+    u = winds['u']
+    v = winds['v']
+    lats = winds['lats_u']
+    lons = winds['lons_u']
 
     u = np.delete(u,1, 0)
     v = np.delete(v, 1, 0)
     lats = np.delete(lats, 1, 0)
     lons = np.delete(lons, 1, 0)
-
-    print('u shape', u.shape)
-    print('v shape', v.shape)
-    print('lons shape', lons.shape)
-    print('lats shape', lats.shape)
 
     rebinx=5
     rebiny=11
@@ -112,9 +110,6 @@ def plot_barbs(fig, winds, hour):
     v = rebin(v, rebinx, rebiny)
     lats = rebin(lats, rebinx, rebiny)
     lons = rebin(lons, rebinx, rebiny)
-
-    print('u shape after', u.shape)
-    print('v shape after', v.shape)
 
     ax = fig.get_axes()[0]
     ax.barbs(lons, lats, u, v, length=4,

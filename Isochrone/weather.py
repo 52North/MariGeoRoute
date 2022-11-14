@@ -22,6 +22,7 @@ class WeatherCond():
     map_size: bbox.BBox2D
     ds: xr.Dataset
     wind_functions: None
+    wind_vectors: None
 
     def __init__(self, filepath, model, time, hours, time_res):
         utils.print_line()
@@ -80,6 +81,9 @@ class WeatherCond():
     def set_map_size(self, lat1, lon1, lat2, lon2):
         self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
 
+    def get_map_size(self):
+        return self.map_size
+
     def read_dataset(self, filepath):
         print('Reading dataset from', filepath)
         self.ds = xr.open_dataset(filepath)
@@ -113,7 +117,7 @@ class WeatherCond():
         return u, v, lats_u, lons_u
     '''
 
-    def read_wind_vectors(self, model, hours_ahead, lat1, lon1, lat2, lon2):
+    def init_wind_vectors(self):
         """Return wind vectors for given number of hours.
             Parameters:
                     model (dict): available forecast wind functions
@@ -126,13 +130,14 @@ class WeatherCond():
             """
 
         wind_vectors = {}
-        wind_vectors['model'] = model
+        wind_vectors['model'] = self.model
 
         for i in range(self.time_steps):
             time = self.time_start + self.time_res * i
-            wind_vectors[i] = self.nc_to_wind_vectors(time)
+            wind_vectors[i] = self.read_wind_vectors(time)
+            print('reading wind wector time', time)
 
-        return wind_vectors
+        self.wind_vectors = wind_vectors
 
     def init_wind_functions(self):
         """
@@ -148,11 +153,11 @@ class WeatherCond():
         wind_function['model'] = self.model
 
         for i in range(self.time_steps):
-            wind_function[i] = self.get_wind_function(i)
+            wind_function[i] = self.read_wind_functions(i)
 
         self.wind_functions = wind_function
 
-    def wind_function(self, coordinate, time):
+    def get_wind_function(self, coordinate, time):
         """
         Vectorized TWA and TWS function from forecast.
             Parameters:
@@ -178,12 +183,25 @@ class WeatherCond():
 
         return {'twa': twa, 'tws': tws}
 
+    def get_wind_vector(self, time):
+        time_passed = self.get_time_step_index(time)
+        rounded_time = time_passed['rounded_time']
+        idx = time_passed['idx']
+
+        if not (rounded_time == self.wind_vectors[idx]['timestamp']):
+            ex = 'Accessing wrong weather forecast. Accessing element ' + str(
+                self.wind_vectors[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
+            raise Exception(ex)
+
+        return self.wind_vectors[idx]
+
+
 class WeatherCondNCEP(WeatherCond):
     def __init__(self, filepath, model, time, hours, time_res):
         WeatherCond.__init__(self, filepath, model, time, hours, time_res)
         print('WARNING: not well maintained. Currently one data file for one particular times is read several times')
 
-    def nc_to_wind_function(self):
+    def calculate_wind_function(self):
         """Vectorized wind functions from NetCDF file."""
 
         tws = np.sqrt(self.ds.u10 ** 2 + self.ds.v10 ** 2)
@@ -194,10 +212,10 @@ class WeatherCondNCEP(WeatherCond):
 
         return {'twa': twa, 'tws': tws}
 
-    def get_wind_function(self, iTime):
+    def read_wind_functions(self, iTime):
         time = self.time_start + self.time_res*iTime
 
-        wind = self.nc_to_wind_function()
+        wind = self.calculate_wind_function()
 
         lats_grid = np.linspace(-90, 90, 181)
         lons_grid = np.linspace(0, 360, 361)
@@ -214,7 +232,7 @@ class WeatherCondNCEP(WeatherCond):
 
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
-    def nc_to_wind_vectors(self, time):
+    def read_wind_vectors(self, time):
         """Return u-v components for given rect for visualization."""
         lat1 = self.map_size.x1
         lat2 = self.map_size.x2
@@ -237,10 +255,10 @@ class WeatherCondNCEP(WeatherCond):
         lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
         lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
 
-        return u, v, lats_u, lons_u
+        return {'u': u,'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'time': time}
 
 class WeatherCondCMEMS(WeatherCond):
-    def nc_to_wind_function(self, time):
+    def calculate_wind_function(self, time):
         time_str=time.strftime('%Y-%m-%d %H:%M:%S')
         #print('Reading time', time_str)
 
@@ -255,10 +273,10 @@ class WeatherCondCMEMS(WeatherCond):
 
         return {'twa': twa, 'tws': tws}
 
-    def get_wind_function(self, iTime):
+    def read_wind_functions(self, iTime):
         time = self.time_start + self.time_res*iTime
         #wind = self.nc_to_wind_function_old_format()
-        wind = self.nc_to_wind_function(time)
+        wind = self.calculate_wind_function(time)
 
         if not (wind['twa'].shape==wind['tws'].shape): raise ValueError('Shape of twa and tws not matching!')
 
@@ -280,7 +298,7 @@ class WeatherCondCMEMS(WeatherCond):
 
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
-    def nc_to_wind_vectors(self, time):
+    def read_wind_vectors(self, time):
         """Return u-v components for given rect for visualization."""
 
         lat1 = self.map_size.x1
@@ -307,4 +325,4 @@ class WeatherCondCMEMS(WeatherCond):
         lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
         lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
 
-        return u, v, lats_u, lons_u
+        return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}

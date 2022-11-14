@@ -114,7 +114,10 @@ def plot_map():
     #wt.check_ds_format()
     wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.init_wind_functions()
-    vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
+    wt.init_wind_vectors()
+    #vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
+
+    fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
     min_time_route = router.modified_isochrone_routing(
         start, finish,
@@ -122,27 +125,29 @@ def plot_map():
         wt,
         start_time,
         delta_time, hours,
-        params)
+        params,
+        fig
+    )
+    fig = min_time_route['fig']
 
 
-    '''min_fuel_route = router.min_fuel_routing(
+    min_fuel_route = router.min_fuel_routing(
         min_time_route,
         boat,
-        fct_winds,
+        wt,
         start_time,
         delta_time,
         params
     )
 
     if not (min_fuel_route.__eq__(min_time_route)):
-        raise ValueError('Routes not matching!')'''
+        raise ValueError('Routes not matching!')
 
-    fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
-    fig = graphics.plot_barbs(fig, vct_winds, 0)
-    fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
-    fig = graphics.plot_route(fig, min_time_route, graphics.get_colour(1))
-    #fig = graphics.plot_route(fig, min_fuel_route, graphics.get_colour(1))
+
+    #fig = graphics.plot_barbs(fig, vct_winds, 0)
+    #fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
+    fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()

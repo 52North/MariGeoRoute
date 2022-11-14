@@ -8,6 +8,9 @@ from weather import WeatherCond
 from global_land_mask import globe
 from scipy.stats import binned_statistic
 from routeparams import RouteParams
+from matplotlib.figure import Figure
+import graphics
+
 import utils
 
 
@@ -50,6 +53,8 @@ class RoutingAlg():
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
 
+    fig: Figure
+
     def __init__(self, start, finish, time):
         self.count = 0
         self.start = start
@@ -72,6 +77,9 @@ class RoutingAlg():
         print('Initialising routing: ' + str(start) + ' to ' + str(finish))
         print('     route from ' + str(start) + ' to ' + str(finish))
         print('     start time ' + str(time))
+
+    def set_fig(self, fig):
+        self.fig = fig
 
     def print_ra(self):
         print('PRINTING ALG SETTINGS')
@@ -143,6 +151,7 @@ class RoutingAlg():
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
+            if(i==self.ncount):  self.update_weather(wt)
             #self.current_position()
             # self.print_shape()
             # self.print_ra()
@@ -155,7 +164,14 @@ class RoutingAlg():
 
         self.final_pruning()
         route = self.terminate(boat)
-        return route
+        return {'route' : route, 'fig' : self.fig}
+
+    def update_weather(self, wt):
+        self.fig.clear()
+        map_size = wt.get_map_size()
+        self.fig = graphics.create_map(map_size.x1, map_size.y1, map_size.x2, map_size.y2, 96)
+        self.fig = graphics.plot_gcr(self.fig, self.start[0], self.start[1], self.finish[0], self.finish[1])
+        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time))
 
     def define_variants(self):
         # branch out for multiple headings
@@ -183,7 +199,7 @@ class RoutingAlg():
 
         # get wind speed (tws) and angle (twa)
 
-        winds = wt.wind_function((self.current_lats, self.current_lons), self.time)
+        winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time)
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
