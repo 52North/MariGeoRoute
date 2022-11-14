@@ -148,6 +148,7 @@ class RoutingAlgTimeMin(RoutingAlg):
 
         # remove those which ended on land
         is_on_land = globe.is_land(move['lat2'], move['lon2'])
+        #print('is_on_land', is_on_land)
         gcrs['s12'][is_on_land] = 0  # to check
         self.full_dist_traveled = gcrs['s12']
         # for i in range(int((x2 - x1) / STEP) + 1): #62.3, 17.6, 59.5, 24.6

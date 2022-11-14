@@ -71,6 +71,12 @@ class WeatherCond():
         rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
         self._time_end = rounded_time
 
+    def get_time_step_index(self, time):
+        rounded_time = round_time(time, int(self.time_res.total_seconds()))
+        time_passed = rounded_time - self.time_start
+        idx = (time_passed.total_seconds() / self.time_res.total_seconds())
+        return {'rounded_time' : rounded_time, 'idx' : idx}
+
     def set_map_size(self, lat1, lon1, lat2, lon2):
         self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
 
@@ -122,8 +128,9 @@ class WeatherCond():
         wind_vectors = {}
         wind_vectors['model'] = model
 
-        for i in range(hours_ahead + 1):
-            wind_vectors[i] = self.nc_to_wind_vectors(lat1, lon1, lat2, lon2)
+        for i in range(self.time_steps):
+            time = self.time_start + self.time_res * i
+            wind_vectors[i] = self.nc_to_wind_vectors(time)
 
         return wind_vectors
 
@@ -157,14 +164,15 @@ class WeatherCond():
                         twa (array): array of TWA
                         tws (array): array of TWS
         """
-        rounded_time = round_time(time, int(self.time_res.total_seconds()))
-        time_passed = rounded_time-self.time_start
-        time_steps_passed = (time_passed.total_seconds()/self.time_res.total_seconds())
-        if not (rounded_time==self.wind_functions[time_steps_passed]['timestamp']):
-            ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[time_steps_passed]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
+        time_passed = self.get_time_step_index(time)
+        rounded_time= time_passed['rounded_time']
+        idx = time_passed['idx']
+
+        if not (rounded_time==self.wind_functions[idx]['timestamp']):
+            ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
             raise Exception(ex)
 
-        wind = self.wind_functions[time_steps_passed]
+        wind = self.wind_functions[idx]
         twa = wind['twa'](coordinate)
         tws = wind['tws'](coordinate)
 
@@ -206,8 +214,12 @@ class WeatherCondNCEP(WeatherCond):
 
         return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
 
-    def nc_to_wind_vectors(self, lat1, lon1, lat2, lon2):
+    def nc_to_wind_vectors(self, time):
         """Return u-v components for given rect for visualization."""
+        lat1 = self.map_size.x1
+        lat2 = self.map_size.x2
+        lon1 = self.map_size.y1
+        lon2 = self.map_size.y2
 
         u = self.ds['u10'].where(
             (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
@@ -275,15 +287,18 @@ class WeatherCondCMEMS(WeatherCond):
         lat2 = self.map_size.x2
         lon1 = self.map_size.y1
         lon2 = self.map_size.y2
+        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
 
-        u = self.ds['u-component_of_wind_maximum_wind'].where(
-            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
-                    self.ds.longitude <= lon2), drop=True)
-        v = self.ds['v-component_of_wind_maximum_wind'].where(
-            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
-                    self.ds.longitude <= lon2), drop=True)
-        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
-        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
+        ds_time=self.ds.sel(time = time_str)
+
+        u = ds_time['u-component_of_wind_maximum_wind'].where(
+            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
+                    ds_time.longitude <= lon2), drop=True)
+        v = ds_time['v-component_of_wind_maximum_wind'].where(
+            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
+                    ds_time.longitude <= lon2), drop=True)
+        lats_u_1D = ds_time['latitude'].where((ds_time.latitude >= lat1) & (ds_time.latitude <= lat2), drop=True)
+        lons_u_1D = ds_time['longitude'].where((ds_time.longitude >= lon1) & (ds_time.longitude <= lon2), drop=True)
 
         u = u.to_numpy()
         v = v.to_numpy()
@@ -291,12 +306,5 @@ class WeatherCondCMEMS(WeatherCond):
         lons_u_1D = lons_u_1D.to_numpy()
         lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
         lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
-
-        print('u=', u.shape)
-        print('v=', v.shape)
-        print('lats=', lats_u.shape)
-        print('lons=', lons_u.shape)
-
-        raise Exception('Stop')
 
         return u, v, lats_u, lons_u

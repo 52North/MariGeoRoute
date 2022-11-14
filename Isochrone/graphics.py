@@ -96,8 +96,28 @@ def plot_barbs(fig, winds, hour):
     """Add barbs to the map figure."""
     u, v, lats, lons = winds[int(hour)]
 
+    u = np.delete(u,1, 0)
+    v = np.delete(v, 1, 0)
+    lats = np.delete(lats, 1, 0)
+    lons = np.delete(lons, 1, 0)
+
+    print('u shape', u.shape)
+    print('v shape', v.shape)
+    print('lons shape', lons.shape)
+    print('lats shape', lats.shape)
+
+    rebinx=5
+    rebiny=11
+    u = rebin(u, rebinx, rebiny)
+    v = rebin(v, rebinx, rebiny)
+    lats = rebin(lats, rebinx, rebiny)
+    lons = rebin(lons, rebinx, rebiny)
+
+    print('u shape after', u.shape)
+    print('v shape after', v.shape)
+
     ax = fig.get_axes()[0]
-    ax.barbs(lons, lats, u, v, length=5,
+    ax.barbs(lons, lats, u, v, length=4,
              sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5),
              linewidth=0.95)
     # ax.quiver(lons, lats, u, v)
@@ -144,3 +164,12 @@ def get_colour(i):
         raise ValueError('currently only 5 colours available, asking for' + str(i))
     return colours[i]
 
+def rebin(a,rebinx, rebiny):
+    if not ((a.shape[0] % rebinx) == 0): raise ValueError('Invalid rebinx')
+    if not ((a.shape[1] % rebiny) == 0): raise ValueError('Invalid rebiny')
+
+    newshape_x = int(a.shape[0]/rebinx)
+    newshape_y = int(a.shape[1]/rebiny)
+
+    sh = newshape_x, rebinx, newshape_y, rebiny
+    return a.reshape(sh).mean(-1).mean(1)
