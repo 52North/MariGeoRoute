@@ -134,6 +134,48 @@ class RoutingAlgTimeMin(RoutingAlg):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
 
+
+
+    def crosses_land(self):
+        debug = False
+
+        LandCrossingSteps = 10
+        delta_lats = (self.lats_per_step[0, :] - self.lats_per_step[1, :]) / LandCrossingSteps
+        delta_lons = (self.lons_per_step[0, :] - self.lons_per_step[1, :]) / LandCrossingSteps
+        x0 = self.lats_per_step[1, :]
+        y0 = self.lons_per_step[1, :]
+        print('lats_per_step shape',  self.lats_per_step.shape[1] )
+        is_on_land = [False for i in range(0, self.lats_per_step.shape[1])]
+
+        if(debug):
+            print('Moving from (' + str(self.lats_per_step[1, :]) + ',' + str(self.lons_per_step[1, :]) + ') to (' + str(self.lats_per_step[0, :]) + ',' + str(self.lons_per_step[0, :]))
+            print('x0=' + str(x0) + ', y0=' + str(y0))
+            print('is_on_land', is_on_land)
+            print('delta_lats', delta_lats)
+            print('delta_lons', delta_lons)
+
+        for iStep in range(0, LandCrossingSteps):
+            x = x0 + delta_lats
+            y = y0 + delta_lons
+            if (debug):
+                print('     iStep=', iStep)
+                print('     x=', x)
+                print('     y=', y)
+
+            is_on_land_temp = globe.is_land(x,y)
+            print('is_on_land_temp', is_on_land_temp)
+            is_on_land = is_on_land + is_on_land_temp
+            print('is_on_land', is_on_land)
+            x0 = x
+            y0 = y
+
+
+        #if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
+        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
+        #    raise ValueError(exc)
+
+        return is_on_land
+
     def update_dist(self, delta_time,bs, current_lats, current_lons):
         debug = False
 
@@ -162,8 +204,16 @@ class RoutingAlgTimeMin(RoutingAlg):
         # remove those which ended on land
         is_on_land = globe.is_land(move['lat2'], move['lon2'])
         #print('is_on_land', is_on_land)
-        gcrs['s12'][is_on_land] = 0  # to check
+        gcrs['s12'][is_on_land] = 0
+        #crosses_land = self.crosses_land()
+        #gcrs['s12'][crosses_land] = 0
         self.full_dist_traveled = gcrs['s12']
+
+
+
+
+
+
         # for i in range(int((x2 - x1) / STEP) + 1): #62.3, 17.6, 59.5, 24.6
         #     try:
         #         x = x1 + i * STEP
@@ -191,7 +241,7 @@ class RoutingAlgTimeMin(RoutingAlg):
 
 
     def get_wind_functions(self, wt):
-        debug = True
+        debug = False
         winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time[0])
         if(debug):
             print('obtaining wind function for position: ', self.current_lats, self.current_lons)

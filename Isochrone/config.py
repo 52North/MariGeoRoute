@@ -16,7 +16,7 @@ DPI = 96
 # Defaults - self-explanatory
 DEFAULT_MAP = [30, 0, 45, 40]
 DEFAULT_ROUTE = [43.5,7.2, 33.8,35.5]
-TIME_FORECAST = 10     # [hours]
+TIME_FORECAST = 110     # [hours]
 DELTA_TIME_FORECAST = 3600 # [seconds]
 #DEFAULT_GFS_DATETIME = '2020111600' #NCEP
 DEFAULT_GFS_DATETIME = '2019060211' #CMEMS
@@ -30,9 +30,9 @@ DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/202
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters
-ROUTER_HDGS_SEGMENTS =  180 #number of heading segments in the range of -180° to 180°
+ROUTER_HDGS_SEGMENTS =  180            #number of heading segments in the range of -180° to 180°
 ROUTER_HDGS_INCREMENTS_DEG = 1
-ROUTER_RPM_SEGMENTS = 20
+ROUTER_RPM_SEGMENTS = 1
 ROUTER_RPM_INCREMENTS_DEG = 1
 ISOCHRONE_EXPECTED_SPEED_KTS = 8
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 90    #angular range of azimuth that is considered for pruning (only one half)

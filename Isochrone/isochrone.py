@@ -215,7 +215,7 @@ class RoutingAlg():
             """
 
         # get wind speed (tws) and angle (twa)
-        debug = True
+        debug = False
 
         winds = self.get_wind_functions(wt) #wind is always a function of the variants
         twa = winds['twa']

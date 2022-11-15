@@ -151,7 +151,7 @@ class RoutingAlgFuelMin(RoutingAlg):
         pass
 
     def get_wind_functions(self,wt):
-        debug = True
+        debug = False
         twa = np.zeros(self.variant_segments+1)
         tws = np.zeros(self.variant_segments+1)
 

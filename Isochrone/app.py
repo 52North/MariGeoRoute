@@ -131,7 +131,7 @@ def plot_map():
     fig = min_time_route['fig']
 
 
-    min_fuel_route = router.min_fuel_routing(
+    '''min_fuel_route = router.min_fuel_routing(
         min_time_route['route'],
         boat,
         wt,
@@ -142,11 +142,11 @@ def plot_map():
     )
 
     if not (min_fuel_route.__eq__(min_time_route)):
-        raise ValueError('Routes not matching!')
+        raise ValueError('Routes not matching!')'''
 
     #fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
-    fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
+    #fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()
