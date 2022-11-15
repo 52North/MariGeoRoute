@@ -97,6 +97,7 @@ class RoutingAlgTimeMin(RoutingAlg):
         lons_new = self.lons_per_step[:, idxs]
         var_new = self.azimuth_per_step[:, idxs]
         dist_new = self.dist_per_step[:, idxs]
+        speed_new = self.speed_per_step[:, idxs]
         curr_azi_new = self.current_variant[idxs]
         full_dist_new = self.full_dist_traveled[idxs]
 
@@ -107,6 +108,7 @@ class RoutingAlgTimeMin(RoutingAlg):
         self.current_azimuth = curr_azi_new
         self.current_variant = curr_azi_new
         self.full_dist_traveled = full_dist_new
+        self.speed_per_step = speed_new
 
         #print('last_azimuth', self.last_azimuth)
         #print('inx', idxs)
@@ -132,13 +134,24 @@ class RoutingAlgTimeMin(RoutingAlg):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
 
-    def update_dist(self, delta_time, bs, current_lats, current_lons):
+    def update_dist(self, delta_time,bs, current_lats, current_lons):
+        debug = False
+
         dist = delta_time * bs
         move = geod.direct(current_lats, current_lons, self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
         self.azimuth_per_step = np.vstack((self.current_variant, self.azimuth_per_step))
+
+        if (debug):
+            print('path of this step' +
+                 # str(move['lat1']) +
+                 # str(move['lon1']) +
+                  str(move['lat2']) +
+                  str(move['lon2']))
+            print('dist', dist)
+            print('bs=', self.speed_per_step)
 
         start_lats = np.repeat(self.start[0], self.lats_per_step.shape[1])
         start_lons = np.repeat(self.start[1], self.lons_per_step.shape[1])
@@ -176,6 +189,16 @@ class RoutingAlgTimeMin(RoutingAlg):
 
         # print(self)
 
+
+    def get_wind_functions(self, wt):
+        debug = True
+        winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time[0])
+        if(debug):
+            print('obtaining wind function for position: ', self.current_lats, self.current_lons)
+            print('time', self.time[0])
+            print('winds', winds)
+        return winds
+
     def get_final_index(self):
         idx = np.argmax(self.full_dist_traveled)
         return idx
@@ -185,5 +208,32 @@ class RoutingAlgTimeMin(RoutingAlg):
         self.lons_per_step=np.flip(self.lons_per_step,0)
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
+        self.speed_per_step=np.flip(self.speed_per_step,0)
         route = RoutingAlg.terminate(self, boat)
+
+        self.check_isochrones(route)
         return route
+
+    def check_isochrones(self, route : RouteParams):
+        debug=False
+        if(debug) : print('Checking route for equal time intervals')
+
+        route.print_route()
+        for step in range(1,route.count):
+            lat1=np.array([float(route.lats_per_step[step-1])])
+            lat2=np.array([float(route.lats_per_step[step])])
+            lon1=np.array([float(route.lons_per_step[step-1])])
+            lon2=np.array([float(route.lons_per_step[step])])
+            dist = geod.inverse(lat1, lon1, lat2, lon2)
+            time = round(dist['s12'][0]/route.speed_per_step[step])
+
+            if(debug):
+                print('Step', step)
+                print('lat1 ' + str(lat1) + ' lat2=' + str(lon1) + ' lat2=' + str(lat2) + 'lon2=' + str(lon2))
+                print('speed=', route.speed_per_step[step])
+                print('dist=', dist['s12'])
+                print('time for step ' + str(step) + ' = ' + str(time))
+
+            if not (time==3600):
+                exc = 'Timestep ' + str(step) + ' of min.-time route are not equal to ' + str(3600) + ' but ' + str(time)
+                raise ValueError(exc)

@@ -26,6 +26,7 @@ class RoutingAlgFuelMin(RoutingAlg):
         self.lats_per_step = self.lats_per_step[:, np.newaxis]
         self.lons_per_step = self.lons_per_step[:, np.newaxis]
         self.dist_per_step = self.dist_per_step[:, np.newaxis]
+        self.current_azimuth = np.array([self.azimuth_per_step[1]])
 
     def pruning(self,  x, y, trim=True):
         """
@@ -114,31 +115,58 @@ class RoutingAlgFuelMin(RoutingAlg):
         self.define_variants()
         self.full_time_traveled = np.repeat(0., self.variant_segments + 1, axis=0)
         self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
+        self.time = np.repeat(self.time, self.variant_segments + 1, axis=0)
 
     def get_current_azimuth(self):
-        return self.current_azimuth[0]
+        return self.azimuth_per_step[self.count+1]
 
     def update_position(self):
-        self.current_lats = self.lats_per_step[self.count,:]
-        self.current_lons = self.lons_per_step[self.count,:]
-        self.current_azimuth=self.azimuth_per_step[self.count+1,:]
+        self.current_lats = self.lats_per_step[self.count+1,:]
+        self.current_lons = self.lons_per_step[self.count+1,:]
 
     def update_time(self, delta_time, bs):
+        debug = True
+
         gcrs = geod.inverse(self.lats_per_step[self.count,:], self.lons_per_step[self.count,:], self.lats_per_step[self.count+1,:], self.lons_per_step[self.count+1,:])
         dist = gcrs['s12']
         #self.time += dt.timedelta(seconds=dist/bs)
 
         delta_time_calc=dist/bs
-
         delta_time_calc=np.round(delta_time_calc/100)*100
         if not (delta_time == delta_time_calc[0]):
             raise ValueError('delta_time=' + str(delta_time) + ' delta_time_calc=' + str(delta_time_calc))
-        self.full_time_traveled += delta_time_calc
-        self.time += dt.timedelta(seconds=delta_time_calc)
+
+        for iTime in range(0,self.variant_segments+1):
+                self.time[iTime]+=dt.timedelta(seconds=delta_time_calc[0])
+                self.full_time_traveled[iTime]+=delta_time_calc[0]
+
+        if(debug):
+            print('dist', dist)
+            print('bs', bs)
+            print('time = ',self.time)
+            print('delta_time_calc = ', delta_time_calc)
 
     def update_dist(self, delta_time, bs, current_lats, current_lons):
         #return {'lat2' : self.lats_per_step[self.count,:], 'lon2' : self.lons_per_step[self.count,:]}
         pass
+
+    def get_wind_functions(self,wt):
+        debug = True
+        twa = np.zeros(self.variant_segments+1)
+        tws = np.zeros(self.variant_segments+1)
+
+        for i in range(0,self.variant_segments+1):
+            winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time[i])
+            twa[i] = winds['twa'][0]
+            tws[i] = winds['tws'][0]
+
+        if(debug):
+            print('obtaining wind function for current position', self.current_lats, self.current_lons)
+            print('time:', self.time[0])
+            print('wind', winds)
+
+        winds =  {'twa' : twa, 'tws' : tws}
+        return winds
 
     def get_final_index(self):
         return 0    #dummy

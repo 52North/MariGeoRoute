@@ -33,19 +33,34 @@ class RoutingAlg():
     finish: tuple  # lat, lon at end
     gcr_azi: float  # azimut of great circle route
 
+    '''
+        All variables that are named *_per_step constitute (M,N) arrays, whereby N corresponds to the number of variants (plus 1) and
+        M corresponds to the number of routing steps.
+    
+        At the start of each routing step 'count', the element(s) at the position 'count' of the following arrays correspond to
+        properties of the point of departure of the respective routing step. This means that for 'count = 0' the elements of
+        lats_per_step and lons_per_step correspond to the coordinates of the departure point of the whole route. The first 
+        elements of the attributes 
+            - azimuth_per_step
+            - dist_per_step
+            - speed_per_step
+        are 0 to satisfy this definition.
+    '''
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)    #
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps                  #
-    azimuth_per_step: np.ndarray  # azimuth: (M,N) array, N=headings+1, M=steps
-    dist_per_step: np.ndarray  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
+    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
+    azimuth_per_step: np.ndarray    # heading
+    dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
+    speed_per_step: np.ndarray  # boat speed
 
-    current_lats: np.ndarray
-    current_lons: np.ndarray
+    current_lats: np.ndarray    # current lat
+    current_lons: np.ndarray    # current lons
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
 
-    full_dist_traveled: np.ndarray  # full geodesic distance since start
-    time: dt.datetime  # current datetime
-    full_time_traveled: np.ndarray  # time elapsed since start
+    #the lenght of the following arrays depends on the number of variants (variant segments)
+    full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
+    full_time_traveled: np.ndarray  # time elapsed since start for all variants
+    time: np.ndarray                # current datetime for all variants
 
     variant_segments: int  # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int
@@ -63,8 +78,9 @@ class RoutingAlg():
         self.lons_per_step = np.array([[start[1]]])
         self.azimuth_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
+        self.speed_per_step = np.array([[0]])
         self.full_dist_traveled = np.array([])
-        self.time = time
+        self.time = np.array([time])
         self.full_time_traveled = np.array([])
 
         self.current_lats = np.array([start[0]])
@@ -90,6 +106,7 @@ class RoutingAlg():
         print('lons_per_step = ', self.lons_per_step)
         print('variants = ', self.azimuth_per_step)
         print('dist_per_step = ', self.dist_per_step)
+        print('speed_per_step = ', self.speed_per_step)
         print('full_dist_traveled = ', self.full_dist_traveled)
         print('time = ', self.time)
 
@@ -151,10 +168,9 @@ class RoutingAlg():
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
-            if(i==self.ncount):  self.update_weather(wt)
+            if(i==self.ncount-1):  self.update_weather(wt)
             #self.current_position()
-            # self.print_shape()
-            # self.print_ra()
+            #self.print_shape()
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, delta_time)
@@ -167,11 +183,11 @@ class RoutingAlg():
         return {'route' : route, 'fig' : self.fig}
 
     def update_weather(self, wt):
-        self.fig.clear()
+        #self.fig.clear()
         map_size = wt.get_map_size()
-        self.fig = graphics.create_map(map_size.x1, map_size.y1, map_size.x2, map_size.y2, 96)
+        #self.fig = graphics.create_map(map_size.x1, map_size.y1, map_size.x2, map_size.y2, 96)
         self.fig = graphics.plot_gcr(self.fig, self.start[0], self.start[1], self.finish[0], self.finish[1])
-        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time))
+        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time[0]))
 
     def define_variants(self):
         # branch out for multiple headings
@@ -181,6 +197,7 @@ class RoutingAlg():
         self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
+        self.speed_per_step = np.repeat(self.speed_per_step, self.variant_segments + 1, axis=1)
         self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
@@ -198,14 +215,17 @@ class RoutingAlg():
             """
 
         # get wind speed (tws) and angle (twa)
+        debug = True
 
-        winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time)
+        winds = self.get_wind_functions(wt) #wind is always a function of the variants
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
+        if(debug) : print('wind in move_boat_direct',wind)
 
         # get boat speed
         bs = boat.boat_speed_function(wind)
+        self.speed_per_step = np.vstack((bs, self.speed_per_step))
 
         # update boat position
         self.update_position()
@@ -233,10 +253,10 @@ class RoutingAlg():
             self.lons_per_step[:, idx],
             self.azimuth_per_step[:, idx],
             self.dist_per_step[:, idx],
+            self.speed_per_step[:, idx],
             self.full_dist_traveled[idx]
         )
-
-        route.print_route()
+        #route.print_route()
 
         return route
 

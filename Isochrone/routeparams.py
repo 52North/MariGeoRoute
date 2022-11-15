@@ -25,13 +25,14 @@ class RouteParams():
     rpm: int  # propeller [revolutions per minute]
     route_type: str  # route name
     time: dt.timedelta  # time needed for the route [seconds]
-    lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
-    azimuths_per_step: np.ndarray  # azimuth: (M,N) array, N=headings+1, M=steps [degree]
-    dists_per_step: np.ndarray  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
-    full_dist_traveled: np.ndarray  # full geodesic distance since start
+    lats_per_step: tuple  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
+    lons_per_step: tuple  # longs: (M,N) array, N=headings+1, M=steps
+    azimuths_per_step: tuple  # azimuth: (M,N) array, N=headings+1, M=steps [degree]
+    dists_per_step: tuple  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
+    speed_per_step: tuple
+    full_dist_traveled: tuple  # full geodesic distance since start
 
-    def __init__(self, count, start, finish, fuel, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, full_dist_traveled):
+    def __init__(self, count, start, finish, fuel, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, speed_per_step, full_dist_traveled):
         self.count = count  # routing step
         self.start = start  # lat, lon at start
         self.finish = finish  # lat, lon at end
@@ -43,6 +44,7 @@ class RouteParams():
         self.lons_per_step = lons_per_step
         self.azimuths_per_step = azimuths_per_step
         self.dists_per_step = dists_per_step
+        self.speed_per_step = speed_per_step
         self.full_dist_traveled = full_dist_traveled
 
     def print_route(self):
@@ -59,6 +61,7 @@ class RouteParams():
         print('lons_per_step ' + str(self.lons_per_step))
         print('azimuths_per_step ' + str(self.azimuths_per_step))
         print('dists_per_step ' + str(self.dists_per_step))
+        print('speed_per_step ' + str(self.speed_per_step))
         print('full_dist_traveled ' + str(self.full_dist_traveled))
         utils.print_line()
 
