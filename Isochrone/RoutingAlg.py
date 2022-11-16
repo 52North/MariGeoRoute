@@ -61,6 +61,7 @@ class RoutingAlg():
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
     full_time_traveled: np.ndarray  # time elapsed since start for all variants
     time: np.ndarray                # current datetime for all variants
+    fuel: np.ndarray
 
     variant_segments: int  # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int

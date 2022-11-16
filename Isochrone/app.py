@@ -110,7 +110,8 @@ def plot_map():
     boat.set_rpm(60)
     params = app.config
 
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    #wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     #wt.check_ds_format()
     wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.init_wind_functions()

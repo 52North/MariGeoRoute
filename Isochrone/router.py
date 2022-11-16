@@ -7,7 +7,7 @@ import datetime as dt
 
 import utils
 from RoutingAlgTimeMin import RoutingAlgTimeMin
-from RoutingAlgFuelMin import RoutingAlgFuelMin
+from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from polars import Boat
 from routeparams import RouteParams
 from weather import WeatherCond

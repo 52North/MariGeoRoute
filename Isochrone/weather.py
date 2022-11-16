@@ -255,7 +255,7 @@ class WeatherCondNCEP(WeatherCond):
         lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
         lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
 
-        return {'u': u,'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'time': time}
+        return {'u': u,'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
 
 class WeatherCondCMEMS(WeatherCond):
     def calculate_wind_function(self, time):

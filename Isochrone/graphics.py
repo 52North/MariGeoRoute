@@ -104,8 +104,12 @@ def plot_barbs(fig, winds):
     lats = np.delete(lats, 1, 0)
     lons = np.delete(lons, 1, 0)
 
-    rebinx=5
-    rebiny=11
+    #rebinx=5  #CMEMS
+    #rebiny=11
+
+    rebinx=1   #NCEP
+    rebiny=1
+
     u = rebin(u, rebinx, rebiny)
     v = rebin(v, rebinx, rebiny)
     lats = rebin(lats, rebinx, rebiny)

@@ -4,7 +4,7 @@ from global_land_mask import globe
 #global-land-mask, contains scripts for checking whether a lat/lon point is on land or sea
 import numpy as np
 import datetime as dt
-from isochrone import Isochrone
+from RoutingAlg import Isochrone
 from polars import boat_speed_function
 from weather import wind_function
 from scipy.stats import binned_statistic
