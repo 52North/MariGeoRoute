@@ -1,17 +1,10 @@
 """Routing functions."""
-from geovectorslib import geod
-from global_land_mask import globe
-#global-land-mask, contains scripts for checking whether a lat/lon point is on land or sea
-import numpy as np
-import datetime as dt
-
 import utils
 from RoutingAlgTimeMin import RoutingAlgTimeMin
 from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from polars import Boat
 from routeparams import RouteParams
 from weather import WeatherCond
-from scipy.stats import binned_statistic
 
 def modified_isochrone_routing(start, #r_la1, r_lo1
             finish, #r_la2, r_lo2

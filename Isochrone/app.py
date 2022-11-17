@@ -1,20 +1,14 @@
 """Flask main."""
 import io
 import logging
-import datetime as dt
-import os
-
+import graphics
 from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from polars import *
-from weather import WeatherCond, WeatherCondNCEP, WeatherCondCMEMS
-from routeparams import RouteParams
 
-import graphics
-import weather
 import router
-import utils as ut
+from polars import *
+from weather import *
 
 # App Config.
 app = Flask(__name__)
@@ -22,11 +16,6 @@ app.config.from_object('config')
 
 state = {}
 state['hour'] = 0
-
-
-#@app.route('/')
-#def hello():  #create dummy page here
-#    return 'Hello World!'
 
 '''
 # Controllers.
@@ -77,8 +66,6 @@ def plot_map():
     except (ValueError):
         logging.log(logging.ERROR, 'expecting real values')
 
-    # fig = graphics.create_maps(lat1, lon1, lat2, lon2, dpi, 4)
-
     # try:
     #     latest = request.args['latest']
     # except KeyError:
@@ -105,21 +92,17 @@ def plot_map():
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
     start_time = dt.datetime.strptime(app.config['DEFAULT_GFS_DATETIME'], '%Y%m%d%H')
+    params = app.config
 
     # *******************************************
     # initialise boat
-    #boat = Tanker(-99)
-    #boat.init_hydro_model()
-    #boat.set_boat_speed(6)
+    boat = Tanker(-99)
+    boat.init_hydro_model()
+    boat.set_boat_speed(6)
     #boat.test_power_consumption_per_course()
-    #boat.test_power_consumption_per_speed()
+    boat.test_power_consumption_per_speed()
 
-    #raise Exception('stop here')
-    
-    boat = SailingBoat(filepath=boatfile)
-    #boat.set_rpm(60)
-
-    params = app.config
+    #boat = SailingBoat(filepath=boatfile)
 
     # *******************************************
     # initialise weather
@@ -158,17 +141,12 @@ def plot_map():
     if not (min_fuel_route.__eq__(min_time_route)):
         raise ValueError('Routes not matching!')'''
 
-    #fig = graphics.plot_barbs(fig, vct_winds, 0)
     fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
     #fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
-
-    # Write the file as well
-    with open('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/Screenshots/map8.png', 'wb') as f:
-        f.write(output.getbuffer())
 
     return Response(output.getvalue(), mimetype='image/png')
 

@@ -4,12 +4,10 @@ import numpy as np
 and other geospatial data analyses"""
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-from itertools import chain
 from geovectorslib import geod
 from matplotlib.figure import Figure
+
 from routeparams import RouteParams
-import datetime as dt
-from datetime import timedelta
 
 
 """lat1 : initial latitude 

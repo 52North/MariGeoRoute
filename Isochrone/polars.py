@@ -4,28 +4,15 @@ Have TWA(True wind Angle) and TWS (True Wind speed) value for calculate boat spe
 
 
 """
-import mariPower
-from mariPower import *
 import numpy as np
 import math
-import os
-
-""" Interpolation  a method of constructing new data points based on the range of a discrete set of known data points. 
-The data must be defined on a regular grid; the grid spacing however may be uneven. Linear and nearest-neighbor
- interpolation are supported """
+import matplotlib.pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
-import datetime as dt
 
 import utils as ut
+import mariPower.ship
 from utils import knots_to_mps  # Convert  knot value in meter per second
-
-import importlib
-importlib.reload(mariPower)
-import mariPower.ship as ship
-
 from weather import WeatherCond
-import matplotlib.pyplot as plt
-
 
 class Boat:
     speed: float

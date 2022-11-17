@@ -1,14 +1,11 @@
 import numpy as np
 import datetime as dt
-import utils as ut
-from polars import Boat
-from typing import NamedTuple
 from geovectorslib import geod
-from weather import WeatherCond
-from global_land_mask import globe
+
 from scipy.stats import binned_statistic
 from routeparams import RouteParams
 from RoutingAlg import RoutingAlg
+from polars import Boat
 import utils
 
 class RoutingAlgTimeFuelMin(RoutingAlg):

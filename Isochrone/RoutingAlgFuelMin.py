@@ -1,14 +1,9 @@
 import numpy as np
 import datetime as dt
-import utils as ut
-from polars import Boat
-from typing import NamedTuple
 from geovectorslib import geod
-from weather import WeatherCond
 from global_land_mask import globe
-from scipy.stats import binned_statistic
+
 from routeparams import RouteParams
-from RoutingAlg import RoutingAlg
 from IsoBased import IsoBased
 import utils
 
@@ -25,8 +20,6 @@ class RoutingAlgFuelMin(IsoBased):
     def update_time(self, delta_time, bs):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
-
-
 
     def crosses_land(self):
         debug = False
