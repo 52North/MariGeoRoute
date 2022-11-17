@@ -28,7 +28,14 @@ def round_time(dt=None, round_to=60):
     rounding = (seconds + round_to / 2) // round_to * round_to
     return dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond)
 
-
+def twopi_to_pmpi(degrees):
+    if(degrees>180): degrees = degrees-360
+    if((degrees>360) or (degrees <-360)): raise ValueError('Angle of' + str(degrees))
+    return degrees
 
 def print_line():
     print('---------------------------------------------------')
+
+def print_step(stepnote, istep=0):
+    step = "   " * (istep+1) + stepnote
+    print(step)

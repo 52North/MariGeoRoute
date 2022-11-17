@@ -226,6 +226,7 @@ class RoutingAlg():
 
         # get boat speed
         bs = boat.boat_speed_function(wind)
+        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
         self.speed_per_step = np.vstack((bs, self.speed_per_step))
 
         # update boat position
@@ -239,7 +240,7 @@ class RoutingAlg():
         print('Terminating...')
 
         idx = self.get_final_index()
-        fuel = round(boat.get_fuel_per_time(self.full_time_traveled[idx]), 2)
+        fuel = round(boat.get_fuel_per_time(self.full_time_traveled[idx], None), 2)
         time = round(self.full_time_traveled[idx] / 3600,2 )
 
         route = RouteParams(

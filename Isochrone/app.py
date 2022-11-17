@@ -7,7 +7,7 @@ import os
 from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from polars import Boat
+from polars import *
 from weather import WeatherCond, WeatherCondNCEP, WeatherCondCMEMS
 from routeparams import RouteParams
 
@@ -93,23 +93,36 @@ def plot_map():
     # except (KeyError):
     #     hour = 0
 
+    # *******************************************
+    # basic settings
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
     windfile = app.config['DEFAULT_GFS_FILE']
     delta_time = app.config['DELTA_TIME_FORECAST']
     hours = app.config['TIME_FORECAST']
     lat1, lon1, lat2, lon2 = app.config['DEFAULT_MAP']
-
-
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
     start_time = dt.datetime.strptime(app.config['DEFAULT_GFS_DATETIME'], '%Y%m%d%H')
 
-    boat = Boat(rpm=-99, filepath=boatfile)
-    boat.set_rpm(60)
+    # *******************************************
+    # initialise boat
+    #boat = Tanker(-99)
+    #boat.init_hydro_model()
+    #boat.set_boat_speed(6)
+    #boat.test_power_consumption_per_course()
+    #boat.test_power_consumption_per_speed()
+
+    #raise Exception('stop here')
+    
+    boat = SailingBoat(filepath=boatfile)
+    #boat.set_rpm(60)
+
     params = app.config
 
+    # *******************************************
+    # initialise weather
     #wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
     wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     #wt.check_ds_format()

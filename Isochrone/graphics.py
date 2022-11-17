@@ -98,11 +98,12 @@ def plot_barbs(fig, winds):
     v = winds['v']
     lats = winds['lats_u']
     lons = winds['lons_u']
-
-    u = np.delete(u,1, 0)
-    v = np.delete(v, 1, 0)
-    lats = np.delete(lats, 1, 0)
-    lons = np.delete(lons, 1, 0)
+	
+    #comment in for CMEMS data
+    #u = np.delete(u,1, 0)
+    #v = np.delete(v, 1, 0)
+    #lats = np.delete(lats, 1, 0)
+    #lons = np.delete(lons, 1, 0)
 
     #rebinx=5  #CMEMS
     #rebiny=11
@@ -116,7 +117,7 @@ def plot_barbs(fig, winds):
     lons = rebin(lons, rebinx, rebiny)
 
     ax = fig.get_axes()[0]
-    ax.barbs(lons, lats, u, v, length=4,
+    ax.barbs(lons, lats, u, v, length=5,
              sizes=dict(emptybarb=0.25, spacing=0.2, height=0.5),
              linewidth=0.95)
     # ax.quiver(lons, lats, u, v)
