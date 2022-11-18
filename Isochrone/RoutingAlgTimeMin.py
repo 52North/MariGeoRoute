@@ -8,8 +8,11 @@ from IsoBased import IsoBased
 import utils
 
 class RoutingAlgTimeMin(IsoBased):
-    def __init__(self, start, finish, time):
+    delta_time : int
+
+    def __init__(self, start, finish, time, delta_time):
         IsoBased.__init__(self, start, finish, time)
+        self.delta_time = delta_time
 
     def define_initial_variants(self):
         self.full_time_traveled = np.repeat(0., self.variant_segments + 1, axis=0)
@@ -17,15 +20,14 @@ class RoutingAlgTimeMin(IsoBased):
     def get_current_azimuth(self):
         return self.current_variant
 
-    def update_time(self, delta_time, bs):
+    def update_time(self, delta_time):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
 
-    def update_dist(self, delta_time,bs, current_lats, current_lons):
+    def update_position(self, dist):
         debug = False
 
-        dist = delta_time * bs
-        move = geod.direct(current_lats, current_lons, self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
+        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
@@ -84,15 +86,24 @@ class RoutingAlgTimeMin(IsoBased):
 
         # print(self)
 
+    def update_fuel(self, delta_fuel):
+        self.fuel+=delta_fuel
 
     def get_wind_functions(self, wt):
         debug = False
-        winds = wt.get_wind_function((self.current_lats, self.current_lons), self.time[0])
+        if (debug): print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
+
+        winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
         if(debug):
-            print('obtaining wind function for position: ', self.current_lats, self.current_lons)
             print('time', self.time[0])
             print('winds', winds)
         return winds
+
+    def get_current_lats(self):
+        return self.lats_per_step[0, :]
+
+    def get_current_lons(self):
+        return self.lons_per_step[0, :]
 
     def check_isochrones(self, route : RouteParams):
         debug=False
@@ -117,3 +128,13 @@ class RoutingAlgTimeMin(IsoBased):
             if not (time==3600):
                 exc = 'Timestep ' + str(step) + ' of min.-time route are not equal to ' + str(3600) + ' but ' + str(time)
                 raise ValueError(exc)
+
+    def get_dist(self, bs):
+        dist = self.delta_time * bs
+        return dist
+
+    def get_delta_variables(self, boat, wind, bs):
+        dist = self.get_dist(bs)
+        delta_fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
+
+        return self.delta_time, delta_fuel, dist

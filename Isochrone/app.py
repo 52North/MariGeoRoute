@@ -96,13 +96,13 @@ def plot_map():
 
     # *******************************************
     # initialise boat
-    boat = Tanker(-99)
-    boat.init_hydro_model()
-    boat.set_boat_speed(6)
+    #boat = Tanker(-99)
+    #boat.init_hydro_model()
+    #boat.set_boat_speed(6)
     #boat.test_power_consumption_per_course()
-    boat.test_power_consumption_per_speed()
+    #boat.test_power_consumption_per_speed()
 
-    #boat = SailingBoat(filepath=boatfile)
+    boat = SailingBoat(filepath=boatfile)
 
     # *******************************************
     # initialise weather

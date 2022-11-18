@@ -16,7 +16,7 @@ DPI = 96
 # Defaults - self-explanatory
 DEFAULT_MAP = [30, 0, 45, 40]
 DEFAULT_ROUTE = [43.5,7.2, 33.8,35.5]
-TIME_FORECAST = 30     # [hours]
+TIME_FORECAST = 110     # [hours]
 DELTA_TIME_FORECAST = 3600 # [seconds]
 DEFAULT_GFS_DATETIME = '2020111600' #NCEP
 #DEFAULT_GFS_DATETIME = '2019060211' #CMEMS
@@ -30,13 +30,13 @@ DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/201
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters
-ROUTER_HDGS_SEGMENTS =  6            #number of headings : put even number!!
-ROUTER_HDGS_INCREMENTS_DEG = 30       #increment of headings
+ROUTER_HDGS_SEGMENTS =  180            #number of headings : put even number!!
+ROUTER_HDGS_INCREMENTS_DEG = 2         #increment of headings
 ROUTER_RPM_SEGMENTS = 1
 ROUTER_RPM_INCREMENTS_DEG = 1
 ISOCHRONE_EXPECTED_SPEED_KTS = 8
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 90    #angular range of azimuth that is considered for pruning (only one half)
-ISOCHRONE_PRUNE_SEGMENTS = 3          #number of azimuth bins that are used for pruning
+ISOCHRONE_PRUNE_SEGMENTS = 180          #number of azimuth bins that are used for pruning
 
 # boat settings
 DEFAULT_BOAT = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/polar-ITA70.csv'  #contains some boat specifics

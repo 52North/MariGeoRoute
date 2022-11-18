@@ -8,6 +8,8 @@ from IsoBased import IsoBased
 import utils
 
 class RoutingAlgFuelMin(IsoBased):
+    delta_fuel : float
+
     def __init__(self, start, finish, time):
         IsoBased.__init__(self, start, finish, time)
 
@@ -17,9 +19,12 @@ class RoutingAlgFuelMin(IsoBased):
     def get_current_azimuth(self):
         return self.current_variant
 
-    def update_time(self, delta_time, bs):
+    def update_time(self, delta_time):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
+
+    def update_fuel(self, delta_fuel):
+        self.full_fuel_consumed += delta_fuel
 
     def crosses_land(self):
         debug = False

@@ -52,8 +52,6 @@ class RoutingAlg():
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     speed_per_step: np.ndarray  # boat speed
 
-    current_lats: np.ndarray    # current lat
-    current_lons: np.ndarray    # current lons
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
 
@@ -83,9 +81,8 @@ class RoutingAlg():
         self.full_dist_traveled = np.array([])
         self.time = np.array([time])
         self.full_time_traveled = np.array([])
+        self.fuel = np.array([0.])
 
-        self.current_lats = np.array([start[0]])
-        self.current_lons = np.array([start[1]])
         gcr = self.calculate_gcr(start, finish)
         self.current_azimuth = gcr
         self.gcr_azi = gcr
@@ -148,7 +145,13 @@ class RoutingAlg():
             finish[1]])  # calculate distance between start and end according to Vincents approach, return dictionary
         return gcr['azi1']
 
-    def recursive_routing(self, boat: Boat, wt : WeatherCond, delta_time, verbose=False):
+    def get_current_lats(self):
+        pass
+
+    def get_current_lons(self):
+        pass
+
+    def recursive_routing(self, boat: Boat, wt : WeatherCond, verbose=False):
         """
             Progress one isochrone with pruning/optimising route for specific time segment
 
@@ -177,7 +180,7 @@ class RoutingAlg():
             #self.print_shape()
 
             self.define_variants_per_step()
-            self.move_boat_direct(wt, boat, delta_time)
+            self.move_boat_direct(wt, boat)
             self.pruning_per_step(True)
 
             #print('full_time_traveled:', self.full_time_traveled)
@@ -213,7 +216,7 @@ class RoutingAlg():
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
 
-    def move_boat_direct(self, wt : WeatherCond, boat: Boat, delta_time):
+    def move_boat_direct(self, wt : WeatherCond, boat: Boat):
         """
                 calculate new boat position for current time step based on wind and boat function
             """
@@ -230,10 +233,12 @@ class RoutingAlg():
         # get boat speed
         bs = boat.boat_speed_function(wind)
         self.speed_per_step = np.vstack((bs, self.speed_per_step))
-        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
 
-        self.update_dist(delta_time, bs, self.current_lats, self.current_lons)
-        self.update_time(delta_time, bs)
+        delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
+
+        self.update_position(dist)
+        self.update_time(delta_time)
+        self.update_fuel(delta_fuel)
         self.count += 1
 
     def terminate(self, boat: Boat):

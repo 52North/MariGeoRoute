@@ -35,12 +35,12 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
                 iso (Isochrone) - next isochrone
     """
 
-    ra=RoutingAlgTimeMin(start,finish,start_time)
+    ra=RoutingAlgTimeMin(start,finish,start_time, delta_time)
     ra.set_fig(fig)
     ra.set_steps(steps)
     ra.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],params['ISOCHRONE_PRUNE_SEGMENTS'])
     ra.set_variant_segments(params['ROUTER_HDGS_SEGMENTS'], params ['ROUTER_HDGS_INCREMENTS_DEG'])
-    min_time_route=ra.recursive_routing(boat, wt, delta_time,  verbose)
+    min_time_route=ra.recursive_routing(boat, wt, verbose)
 
     #min_time_route.print_route()
     return min_time_route
