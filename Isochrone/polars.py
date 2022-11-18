@@ -73,9 +73,10 @@ class Tanker(Boat):
         f *= delta_time / 3600 * 1 / 1000  # amount of fuel for this time interval
         return f
     def get_fuel_per_course(self, course, wind_dir, wind_speed, boat_speed):
-        self.hydro_model.WindDirection = math.radians(wind_speed)
-        self.hydro_model.WindSpeed = wind_dir
-        ut.print_step('course [rad]= ' + str(course) + ' [degrees]=' + str(ut.twopi_to_pmpi(course)), 1)
+        self.hydro_model.WindDirection = math.radians(wind_dir)
+        self.hydro_model.WindSpeed = wind_speed
+        course = ut.degree_to_pmpi(course)
+        ut.print_step('course [rad]= ' + str(course), 1)
         ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
         ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
         Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
@@ -93,16 +94,7 @@ class Tanker(Boat):
 
         P = np.zeros(courses.shape)
         for icours in range(0,courses.shape[0]):
-            course = math.radians(courses[icours])
-            #self.hydro_model.WindDirection = math.radians(wind['twa'][icours])
-            #self.hydro_model.WindSpeed = wind['tws'][icours]
-            #ut.print_step('course [rad]= ' + str(course) + ' [degrees]=' + str(ut.twopi_to_pmpi(courses[icours])), 1 )
-            #ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1 )
-            #ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1 )
-            #Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, self.speed, aUseHeading=True,
-                                                         #aUpdateCalmwaterResistanceEveryIteration=False)
-
-            P[icours] = self.get_fuel_per_course(course, math.radians(wind['twa'][icours]),wind['tws'][icours], self.speed)
+            P[icours] = self.get_fuel_per_course(course, wind['twa'][icours], wind['tws'][icours], self.speed)
 
         if(debug):
             ut.print_step('power consumption' + str(P))
@@ -114,16 +106,21 @@ class Tanker(Boat):
         return speed
 
     def test_power_consumption_per_course(self):
-        courses = np.linspace(-math.pi, math.pi, num=21, endpoint=True)
-        wind_dir = math.radians(45)
+        courses = np.linspace(0, 360, num=21, endpoint=True)
+        wind_dir = 45
         wind_speed = 2
         power = np.zeros(courses.shape)
 
+        #get_fuel_per_course gets angles in degrees from 0 to 360
         for i in range(0,courses.shape[0]):
-            #power = self.get_fuel_per_course(courses[i], wind_dir, wind_speed, self.speed)
-            power[i] = self.get_fuel_per_time_simple(i*3600)
+            power[i] = self.get_fuel_per_course(courses[i], wind_dir, wind_speed, self.speed)
+            #power[i] = self.get_fuel_per_time_simple(i*3600)
 
+        #plotting with matplotlib needs angles in radiants
         fig, axes = plt.subplots(1,2,subplot_kw={'projection': 'polar'})
+        for i in range(0,courses.shape[0]): courses[i] = math.radians(courses[i])
+        wind_dir = math.radians(wind_dir)
+
         axes[0].plot(courses, power)
         axes[0].legend()
         for ax in axes.flatten():
@@ -142,9 +139,9 @@ class Tanker(Boat):
         plt.show()
 
     def test_power_consumption_per_speed(self):
-        course = math.radians(10)
-        boat_speed = np.linspace(1,20, num=19, endpoint=True)
-        wind_dir = math.radians(45)
+        course = 10
+        boat_speed = np.linspace(1,20, num=17)
+        wind_dir = 45
         wind_speed = 2
         power = np.zeros(boat_speed.shape)
 
@@ -154,7 +151,7 @@ class Tanker(Boat):
 
         plt.plot(boat_speed, power, 'r--')
         plt.xlabel('speed (m/s)')
-        plt.xlabel('power (W)')
+        plt.ylabel('power (W)')
         plt.show()
 
 class SailingBoat(Boat):

@@ -126,6 +126,9 @@ class RoutingAlg():
         print('azimuth = ', self.current_azimuth)
         print('full_time_traveled = ', self.full_time_traveled)
 
+    def get_current_speed(self):
+        return self.speed_per_step[0]
+
     def set_steps(self, steps):
         self.ncount = steps
 
@@ -203,9 +206,9 @@ class RoutingAlg():
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
         delta_hdgs = np.linspace(
-            -self.variant_segments * self.variant_increments_deg,
-            +self.variant_segments * self.variant_increments_deg,
-            self.variant_segments + 1)
+            -self.variant_segments/2 * self.variant_increments_deg,
+            +self.variant_segments/2 * self.variant_increments_deg,
+            self.variant_segments  + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
@@ -222,15 +225,13 @@ class RoutingAlg():
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
-        if(debug) : print('wind in move_boat_direct',wind)
+        if(debug) : print('wind in move_boat_direct', wind)
 
         # get boat speed
         bs = boat.boat_speed_function(wind)
-        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
         self.speed_per_step = np.vstack((bs, self.speed_per_step))
+        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
 
-        # update boat position
-        self.update_position()
         self.update_dist(delta_time, bs, self.current_lats, self.current_lons)
         self.update_time(delta_time, bs)
         self.count += 1

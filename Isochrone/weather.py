@@ -117,6 +117,11 @@ class WeatherCond():
         return u, v, lats_u, lons_u
     '''
 
+    def get_twatws_from_uv(self, u, v):
+        tws = np.sqrt(u ** 2 + v ** 2)
+        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0  # angle from 0° to 360°, 0° = N
+        return twa, tws
+
     def init_wind_vectors(self):
         """Return wind vectors for given number of hours.
             Parameters:
@@ -204,9 +209,7 @@ class WeatherCondNCEP(WeatherCond):
     def calculate_wind_function(self):
         """Vectorized wind functions from NetCDF file."""
 
-        tws = np.sqrt(self.ds.u10 ** 2 + self.ds.v10 ** 2)
-        twa = 180.0 / np.pi * np.arctan2(self.ds.u10, self.ds.v10) + 180.0
-
+        twa, tws = self.get_twatws_from_uv(self.ds.u10, self.ds.v10)
         tws = tws.to_numpy()
         twa = twa.to_numpy()
 
@@ -265,8 +268,7 @@ class WeatherCondCMEMS(WeatherCond):
         u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
         v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
 
-        tws = np.sqrt(u ** 2 + v ** 2)
-        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0
+        twa, tws = self.get_twatws_from_uv(u,v)
 
         tws = tws.to_numpy()
         twa = twa.to_numpy()

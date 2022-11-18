@@ -47,6 +47,8 @@ class IsoBased(RoutingAlg):
                     Returns:
                         pruned isochrone dictionary with max values in each bin
                    """
+        debug = True
+        if(debug): print('Pruning...')
 
         mean_dist = np.mean(self.full_dist_traveled)
         gcr_point = geod.direct(
@@ -61,6 +63,8 @@ class IsoBased(RoutingAlg):
             [self.finish[1]]
         )
 
+        if(debug): print('mean azimuth', new_azi['azi1'])
+
         azi0s = np.repeat(
             new_azi['azi1'],
             self.prune_segments + 1)
@@ -73,6 +77,10 @@ class IsoBased(RoutingAlg):
 
         bins = azi0s - delta_hdgs
         bins = np.sort(bins)
+
+        if(debug):
+            print('binning for pruning', bins)
+            print('current courses', self.current_azimuth)
 
         idxs = []
         bin_stat, bin_edges, bin_number = binned_statistic(
@@ -91,6 +99,8 @@ class IsoBased(RoutingAlg):
                 idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0])
             idxs = list(set([item for subl in idxs for item in subl]))
 
+        print('full dist travelled', self.full_dist_traveled)
+        print('Indexes that passed', idxs)
 
         # Return a trimmed isochrone
         lats_new = self.lats_per_step[:, idxs]
