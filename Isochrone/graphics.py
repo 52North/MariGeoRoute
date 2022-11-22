@@ -98,13 +98,13 @@ def plot_barbs(fig, winds):
     lons = winds['lons_u']
 	
     #comment in for CMEMS data
-    #u = np.delete(u,1, 0)
-    #v = np.delete(v, 1, 0)
-    #lats = np.delete(lats, 1, 0)
-    #lons = np.delete(lons, 1, 0)
+    u = np.delete(u,1, 0)
+    v = np.delete(v, 1, 0)
+    lats = np.delete(lats, 1, 0)
+    lons = np.delete(lons, 1, 0)
 
-    #rebinx=5  #CMEMS
-    #rebiny=11
+    rebinx=5  #CMEMS
+    rebiny=11
 
     rebinx=1   #NCEP
     rebiny=1

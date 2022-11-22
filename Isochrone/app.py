@@ -86,7 +86,9 @@ def plot_map():
     boatfile = app.config['DEFAULT_BOAT']
     windfile = app.config['DEFAULT_GFS_FILE']
     delta_time = app.config['DELTA_TIME_FORECAST']
+    delta_fuel = app.config['DELTA_FUEL']
     hours = app.config['TIME_FORECAST']
+    routing_steps = app.config['ROUTING_STEPS']
     lat1, lon1, lat2, lon2 = app.config['DEFAULT_MAP']
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
     start = (r_la1, r_lo1)
@@ -96,18 +98,18 @@ def plot_map():
 
     # *******************************************
     # initialise boat
-    #boat = Tanker(-99)
-    #boat.init_hydro_model()
-    #boat.set_boat_speed(6)
+    boat = Tanker(-99)
+    boat.init_hydro_model()
+    boat.set_boat_speed(6)
     #boat.test_power_consumption_per_course()
     #boat.test_power_consumption_per_speed()
 
-    boat = SailingBoat(filepath=boatfile)
+    #boat = SailingBoat(filepath=boatfile)
 
     # *******************************************
     # initialise weather
-    #wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
-    wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
+    wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    #wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     #wt.check_ds_format()
     wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.init_wind_functions()
@@ -121,14 +123,25 @@ def plot_map():
         boat,
         wt,
         start_time,
-        delta_time, hours,
+        delta_time, routing_steps,
         params,
         fig
     )
     fig = min_time_route['fig']
 
+    '''min_fuel_route = router.modified_isochrone_routing(
+        start, finish,
+        boat,
+        wt,
+        start_time,
+        delta_fuel, routing_steps,
+        params,
+        fig
+    )
+    fig = min_fuel_route['fig']'''
 
-    '''min_fuel_route = router.min_fuel_routing(
+    '''
+    min_fueltime_route = router.min_fuel_routing(
         min_time_route['route'],
         boat,
         wt,
@@ -136,10 +149,10 @@ def plot_map():
         delta_time,
         params,
         fig
-    )
+    )'''
 
-    if not (min_fuel_route.__eq__(min_time_route)):
-        raise ValueError('Routes not matching!')'''
+    #if not (min_fuel_route.__eq__(min_time_route)):
+    #    raise ValueError('Routes not matching!')'''
 
     fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
     #fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))

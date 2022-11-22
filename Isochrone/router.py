@@ -1,6 +1,7 @@
 """Routing functions."""
 import utils
 from RoutingAlgTimeMin import RoutingAlgTimeMin
+from RoutingAlgFuelMin import RoutingAlgFuelMin
 from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from polars import Boat
 from routeparams import RouteParams
@@ -34,7 +35,7 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
             Returns:
                 iso (Isochrone) - next isochrone
     """
-
+    print('Modified isochrone routing...')
     ra=RoutingAlgTimeMin(start,finish,start_time, delta_time)
     ra.set_fig(fig)
     ra.set_steps(steps)
@@ -45,12 +46,14 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
     #min_time_route.print_route()
     return min_time_route
 
-def min_fuel_routing(
-            route : RouteParams,
-            boat : Boat,   #class containing boat polars, function
-            wt : WeatherCond,  #dict containing wind functinos (model timestamp, vector of functions per hour)
+def min_fueltime_routing(
+            start,  # r_la1, r_lo1
+            finish,  # r_la2, r_lo2
+            boat: Boat,  # class containing boat polars, function
+            wt: WeatherCond,  # dict containing wind functinos (model timestamp, vector of functions per hour)
             start_time,
-            delta_time,
+            delta_fuel,
+            steps,
             params,
             fig,
             verbose=False):
@@ -73,12 +76,12 @@ def min_fuel_routing(
                 iso (Isochrone) - next isochrone
     """
 
-    ra_fuel=RoutingAlgFuelMin(route, start_time)
+    ra_fuel=RoutingAlgFuelMin(start, finish, start_time, delta_fuel)
     ra_fuel.set_fig(fig)
-    ra_fuel.set_steps(route.count)
-    #ra.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],params['ISOCHRONE_PRUNE_SEGMENTS'])
-    ra_fuel.set_variant_segments(params['ROUTER_RPM_SEGMENTS'], params ['ROUTER_RPM_INCREMENTS_DEG'])
-    min_fuel_route=ra_fuel.recursive_routing(boat, wt, delta_time,  verbose)
+    ra_fuel.set_steps(steps)
+    ra_fuel.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'], params['ISOCHRONE_PRUNE_SEGMENTS'])
+    ra_fuel.set_variant_segments(params['ROUTER_HDGS_SEGMENTS'], params['ROUTER_HDGS_INCREMENTS_DEG'])
+    min_fuel_route = ra_fuel.recursive_routing(boat, wt, verbose)
 
     min_fuel_route['route'].print_route()
     return min_fuel_route

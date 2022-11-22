@@ -140,7 +140,7 @@ class WeatherCond():
         for i in range(self.time_steps):
             time = self.time_start + self.time_res * i
             wind_vectors[i] = self.read_wind_vectors(time)
-            print('reading wind wector time', time)
+            #print('reading wind vector time', time)
 
         self.wind_vectors = wind_vectors
 
@@ -174,9 +174,15 @@ class WeatherCond():
                         twa (array): array of TWA
                         tws (array): array of TWS
         """
+        debug = True
         time_passed = self.get_time_step_index(time)
         rounded_time= time_passed['rounded_time']
         idx = time_passed['idx']
+
+        try:
+            wind_timestamp = self.wind_functions[idx]['timestamp']
+        except ValueError:
+            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(self.time_steps) + ' available')
 
         if not (rounded_time==self.wind_functions[idx]['timestamp']):
             ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
@@ -193,7 +199,13 @@ class WeatherCond():
         rounded_time = time_passed['rounded_time']
         idx = time_passed['idx']
 
-        if not (rounded_time == self.wind_vectors[idx]['timestamp']):
+        try:
+            wind_timestamp = self.wind_vectors[idx]['timestamp']
+        except KeyError:
+            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(self.time_steps) + ' available')
+            raise
+
+        if not (rounded_time == wind_timestamp):
             ex = 'Accessing wrong weather forecast. Accessing element ' + str(
                 self.wind_vectors[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
             raise Exception(ex)

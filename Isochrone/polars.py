@@ -94,7 +94,7 @@ class Tanker(Boat):
 
         P = np.zeros(courses.shape)
         for icours in range(0,courses.shape[0]):
-            P[icours] = self.get_fuel_per_course(course, wind['twa'][icours], wind['tws'][icours], self.speed)
+            P[icours] = self.get_fuel_per_course(courses[icours], wind['twa'][icours], wind['tws'][icours], self.speed)
 
         if(debug):
             ut.print_step('power consumption' + str(P))

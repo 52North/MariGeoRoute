@@ -51,6 +51,7 @@ class RoutingAlg():
     azimuth_per_step: np.ndarray    # heading
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     speed_per_step: np.ndarray  # boat speed
+    fuel_per_step: np.ndarray
 
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
@@ -58,8 +59,8 @@ class RoutingAlg():
     #the lenght of the following arrays depends on the number of variants (variant segments)
     full_dist_traveled: np.ndarray  # full geodesic distance since start for all variants
     full_time_traveled: np.ndarray  # time elapsed since start for all variants
+    full_fuel_consumed: np.ndarray
     time: np.ndarray                # current datetime for all variants
-    fuel: np.ndarray
 
     variant_segments: int  # number of variant segments in the range of -180° to 180°
     variant_increments_deg: int
@@ -78,10 +79,12 @@ class RoutingAlg():
         self.azimuth_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
         self.speed_per_step = np.array([[0]])
-        self.full_dist_traveled = np.array([])
+        self.fuel_per_step = np.array([[0]])
+
         self.time = np.array([time])
-        self.full_time_traveled = np.array([])
-        self.fuel = np.array([0.])
+        self.full_time_traveled = np.array([0])
+        self.full_fuel_consumed = np.array([0])
+        self.full_dist_traveled = np.array([0])
 
         gcr = self.calculate_gcr(start, finish)
         self.current_azimuth = gcr
@@ -100,22 +103,32 @@ class RoutingAlg():
         print('step = ', self.count)
         print('start', self.start)
         print('finish', self.finish)
-        print('lats_per_step = ', self.lats_per_step)
-        print('lons_per_step = ', self.lons_per_step)
-        print('variants = ', self.azimuth_per_step)
-        print('dist_per_step = ', self.dist_per_step)
-        print('speed_per_step = ', self.speed_per_step)
-        print('full_dist_traveled = ', self.full_dist_traveled)
-        print('time = ', self.time)
+        print('per-step variables:')
+        print('     lats_per_step = ', self.lats_per_step)
+        print('     lons_per_step = ', self.lons_per_step)
+        print('     variants = ', self.azimuth_per_step)
+        print('     dist_per_step = ', self.dist_per_step)
+        print('     speed_per_step = ', self.speed_per_step)
+        print('per-variant variables')
+        print('     time =', self.time)
+        print('     full_dist_traveled = ', self.full_dist_traveled)
+        print('     full_time_traveled = ', self.full_time_traveled)
+        print('     full_fuel_consumed = ', self.full_fuel_consumed )
 
     def print_shape(self):
         print('PRINTING SHAPE')
-        print('lats_per_step = ', self.lats_per_step.shape)
-        print('lons_per_step = ', self.lons_per_step.shape)
-        print('azimuths = ', self.azimuth_per_step.shape)
-        print('dist_per_step = ', self.dist_per_step.shape)
-        print('full_dist_traveled = ', self.full_dist_traveled.shape)
-        print('full_time_traveled = ', self.full_time_traveled.shape)
+        print('per-step variables:')
+        print('     lats_per_step = ', self.lats_per_step.shape)
+        print('     lons_per_step = ', self.lons_per_step.shape)
+        print('     fuel_per_step =', self.fuel_per_step.shape)
+        print('     azimuths = ', self.azimuth_per_step.shape)
+        print('     dist_per_step = ', self.dist_per_step.shape)
+        print('per-variant variables:')
+        print('     time =', self.time.shape)
+        print('     full_dist_traveled = ', self.full_dist_traveled.shape)
+        print('     full_time_traveled = ', self.full_time_traveled.shape)
+        print('     full_fuel_consumed = ', self.full_fuel_consumed.shape)
+
     def current_position(self):
         print('CURRENT POSITION')
         print('lats = ', self.current_lats)
@@ -123,22 +136,10 @@ class RoutingAlg():
         print('azimuth = ', self.current_azimuth)
         print('full_time_traveled = ', self.full_time_traveled)
 
-    def get_current_speed(self):
-        return self.speed_per_step[0]
+
 
     def set_steps(self, steps):
         self.ncount = steps
-
-    def set_variant_segments(self, segments):
-        self.variant_segments = segments
-
-    def set_pruning_settings(self, sector_deg_half, seg):
-        self.prune_sector_deg_half = sector_deg_half
-        self.prune_segments = seg
-
-    def set_variant_segments(self, seg, inc):
-        self.variant_segments = seg
-        self.variant_increments_deg = inc
 
     def calculate_gcr(self, start, finish):
         gcr = geod.inverse([start[0]], [start[1]], [finish[0]], [
@@ -150,6 +151,10 @@ class RoutingAlg():
 
     def get_current_lons(self):
         pass
+
+    def get_current_speed(self):
+        pass
+
 
     def recursive_routing(self, boat: Boat, wt : WeatherCond, verbose=False):
         """
@@ -170,6 +175,7 @@ class RoutingAlg():
                     Returns:
                         iso (Isochrone) - next isochrone
             """
+        self.check_settings()
         self.define_initial_variants()
         # self.print_shape()
         for i in range(self.ncount):
@@ -177,11 +183,19 @@ class RoutingAlg():
             print('Step ', i)
             if(i==self.ncount-1):  self.update_weather(wt)
             #self.current_position()
-            #self.print_shape()
 
             self.define_variants_per_step()
+            #print('before moving')
+            #self.print_shape()
+            #self.print_ra()
             self.move_boat_direct(wt, boat)
+            #print('after moving')
+            #self.print_shape()
+            #self.print_ra()
             self.pruning_per_step(True)
+            #print('after pruning')
+            #self.print_shape()
+            #self.print_ra()
 
             #print('full_time_traveled:', self.full_time_traveled)
 
@@ -205,6 +219,12 @@ class RoutingAlg():
         self.dist_per_step = np.repeat(self.dist_per_step, self.variant_segments + 1, axis=1)
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.speed_per_step = np.repeat(self.speed_per_step, self.variant_segments + 1, axis=1)
+        self.fuel_per_step = np.repeat(self.fuel_per_step, self.variant_segments + 1, axis=1)
+
+        self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
+        self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.variant_segments + 1, axis=0)
+        self.full_dist_traveled = np.repeat(self.full_dist_traveled, self.variant_segments + 1, axis=0)
+        self.time = np.repeat(self.time, self.variant_segments + 1, axis=0)
         self.check_variant_def()
 
         # determine new headings - centered around gcrs X0 -> X_prev_step
@@ -215,6 +235,9 @@ class RoutingAlg():
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
+
+    def define_initial_variants(self):
+        pass
 
     def move_boat_direct(self, wt : WeatherCond, boat: Boat):
         """
@@ -246,14 +269,13 @@ class RoutingAlg():
         print('Terminating...')
 
         idx = self.get_final_index()
-        fuel = round(boat.get_fuel_per_time(self.full_time_traveled[idx], None), 2)
         time = round(self.full_time_traveled[idx] / 3600,2 )
 
         route = RouteParams(
             self.count,  # routing step
             self.start,  # lat, lon at start
             self.finish,  # lat, lon at end
-            fuel,  # sum of fuel consumption [t]
+            self.full_fuel_consumed[idx],  # sum of fuel consumption [t]
             boat.get_rpm(),  # propeller [revolutions per minute]
             'min_time_route',  # route name
             time,  # time needed for the route [seconds]
@@ -271,16 +293,10 @@ class RoutingAlg():
     def check_variant_def(self):
         pass
 
-    def define_initial_variants(self):
-        pass
-
     def define_variants_per_step(self):
         pass
 
     def pruning_per_step(self, trim=True):
-        pass
-
-    def variants_per_step(self):
         pass
 
     def final_pruning(self):

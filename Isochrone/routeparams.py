@@ -21,16 +21,16 @@ class RouteParams():
     count: int  # routing step
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
-    fuel: float  # sum of fuel consumption [t]
     rpm: int  # propeller [revolutions per minute]
     route_type: str  # route name
-    time: dt.timedelta  # time needed for the route [seconds]
+    time: dt.timedelta  # time needed for the route [datetime]
+    fuel_per_step: tuple  # sum of power consumption [W]
     lats_per_step: tuple  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: tuple  # longs: (M,N) array, N=headings+1, M=steps
     azimuths_per_step: tuple  # azimuth: (M,N) array, N=headings+1, M=steps [degree]
-    dists_per_step: tuple  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps
-    speed_per_step: tuple
-    full_dist_traveled: tuple  # full geodesic distance since start
+    dists_per_step: tuple  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps [m]
+    speed_per_step: tuple  # boat speed per step [m/s]
+    full_dist_traveled: tuple  # full geodesic distance since start [m]
 
     def __init__(self, count, start, finish, fuel, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, speed_per_step, full_dist_traveled):
         self.count = count  # routing step
