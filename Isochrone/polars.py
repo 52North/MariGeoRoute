@@ -76,16 +76,16 @@ class Tanker(Boat):
         self.hydro_model.WindDirection = math.radians(wind_dir)
         self.hydro_model.WindSpeed = wind_speed
         course = ut.degree_to_pmpi(course)
-        ut.print_step('course [rad]= ' + str(course), 1)
-        ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
-        ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
+        #ut.print_step('course [rad]= ' + str(course), 1)
+        #ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
+        #ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
         Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
                                                                          aUpdateCalmwaterResistanceEveryIteration=False)
 
         return ptemp
 
     def get_fuel_per_time(self, courses, wind):
-        debug = True
+        debug = False
 
         if(debug):
             print('Requesting power calculation')
@@ -223,4 +223,5 @@ class SailingBoat(Boat):
         return 0
 
     def get_fuel_per_time(self, course, wt : WeatherCond):
-        return 0.
+        fuel = np.zeros(course.shape)
+        return fuel

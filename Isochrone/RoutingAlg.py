@@ -136,8 +136,6 @@ class RoutingAlg():
         print('azimuth = ', self.current_azimuth)
         print('full_time_traveled = ', self.full_time_traveled)
 
-
-
     def set_steps(self, steps):
         self.ncount = steps
 
@@ -154,7 +152,6 @@ class RoutingAlg():
 
     def get_current_speed(self):
         pass
-
 
     def recursive_routing(self, boat: Boat, wt : WeatherCond, verbose=False):
         """
@@ -181,7 +178,6 @@ class RoutingAlg():
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
-            if(i==self.ncount-1):  self.update_weather(wt)
             #self.current_position()
 
             self.define_variants_per_step()
@@ -200,15 +196,15 @@ class RoutingAlg():
             #print('full_time_traveled:', self.full_time_traveled)
 
         self.final_pruning()
-        route = self.terminate(boat)
+        route = self.terminate(boat, wt)
         return {'route' : route, 'fig' : self.fig}
 
-    def update_weather(self, wt):
+    def update_weather(self, wt, idx=0):
         #self.fig.clear()
         map_size = wt.get_map_size()
         #self.fig = graphics.create_map(map_size.x1, map_size.y1, map_size.x2, map_size.y2, 96)
         self.fig = graphics.plot_gcr(self.fig, self.start[0], self.start[1], self.finish[0], self.finish[1])
-        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time[0]))
+        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time[idx]))
 
     def define_variants(self):
         # branch out for multiple headings
@@ -264,7 +260,7 @@ class RoutingAlg():
         self.update_fuel(delta_fuel)
         self.count += 1
 
-    def terminate(self, boat: Boat):
+    def terminate(self, boat: Boat, wt: WeatherCond):
         utils.print_line()
         print('Terminating...')
 
@@ -287,11 +283,52 @@ class RoutingAlg():
             self.full_dist_traveled[idx]
         )
         #route.print_route()
+        self.update_weather(wt, idx)
 
         return route
 
     def check_variant_def(self):
         pass
+
+    def crosses_land(self):
+        debug = False
+
+        LandCrossingSteps = 10
+        delta_lats = (self.lats_per_step[0, :] - self.lats_per_step[1, :]) / LandCrossingSteps
+        delta_lons = (self.lons_per_step[0, :] - self.lons_per_step[1, :]) / LandCrossingSteps
+        x0 = self.lats_per_step[1, :]
+        y0 = self.lons_per_step[1, :]
+        print('lats_per_step shape',  self.lats_per_step.shape[1] )
+        is_on_land = [False for i in range(0, self.lats_per_step.shape[1])]
+
+        if(debug):
+            print('Moving from (' + str(self.lats_per_step[1, :]) + ',' + str(self.lons_per_step[1, :]) + ') to (' + str(self.lats_per_step[0, :]) + ',' + str(self.lons_per_step[0, :]))
+            print('x0=' + str(x0) + ', y0=' + str(y0))
+            print('is_on_land', is_on_land)
+            print('delta_lats', delta_lats)
+            print('delta_lons', delta_lons)
+
+        for iStep in range(0, LandCrossingSteps):
+            x = x0 + delta_lats
+            y = y0 + delta_lons
+            if (debug):
+                print('     iStep=', iStep)
+                print('     x=', x)
+                print('     y=', y)
+
+            is_on_land_temp = globe.is_land(x,y)
+            print('is_on_land_temp', is_on_land_temp)
+            is_on_land = is_on_land + is_on_land_temp
+            print('is_on_land', is_on_land)
+            x0 = x
+            y0 = y
+
+
+        #if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
+        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
+        #    raise ValueError(exc)
+
+        return is_on_land
 
     def define_variants_per_step(self):
         pass

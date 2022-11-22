@@ -118,7 +118,7 @@ def plot_map():
 
     fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
-    min_time_route = router.modified_isochrone_routing(
+    '''min_time_route = router.modified_isochrone_routing(
         start, finish,
         boat,
         wt,
@@ -127,9 +127,9 @@ def plot_map():
         params,
         fig
     )
-    fig = min_time_route['fig']
+    fig = min_time_route['fig']'''
 
-    '''min_fuel_route = router.modified_isochrone_routing(
+    min_fuel_route = router.min_fuel_routing(
         start, finish,
         boat,
         wt,
@@ -138,24 +138,12 @@ def plot_map():
         params,
         fig
     )
-    fig = min_fuel_route['fig']'''
-
-    '''
-    min_fueltime_route = router.min_fuel_routing(
-        min_time_route['route'],
-        boat,
-        wt,
-        start_time,
-        delta_time,
-        params,
-        fig
-    )'''
 
     #if not (min_fuel_route.__eq__(min_time_route)):
     #    raise ValueError('Routes not matching!')'''
 
-    fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
-    #fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
+    #fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
+    fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()

@@ -14,9 +14,6 @@ class RoutingAlgFuelMin(IsoBased):
         IsoBased.__init__(self, start, finish, time)
         self.delta_fuel = delta_fuel
 
-    def get_current_azimuth(self):
-        return self.current_variant
-
     def check_isochrones(self, route : RouteParams):
         print('To be implemented')
 
@@ -29,9 +26,10 @@ class RoutingAlgFuelMin(IsoBased):
         delta_time = self.delta_fuel/fuel*3600
         dist = self.get_dist(bs, delta_time)
 
-        print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
+        #print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
+        delta_fuel = np.repeat(self.delta_fuel, wind['twa'].shape)
 
-        return delta_time, self.delta_fuel, dist
+        return delta_time, delta_fuel, dist
 
     def update_time(self, delta_time):
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)): raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')

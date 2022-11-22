@@ -14,9 +14,6 @@ class RoutingAlgTimeMin(IsoBased):
         IsoBased.__init__(self, start, finish, time)
         self.delta_time = delta_time
 
-    def get_current_azimuth(self):
-        return self.current_variant
-
     def check_isochrones(self, route : RouteParams):
         debug=False
         if(debug) : print('Checking route for equal time intervals')

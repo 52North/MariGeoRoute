@@ -106,8 +106,8 @@ def plot_barbs(fig, winds):
     rebinx=5  #CMEMS
     rebiny=11
 
-    rebinx=1   #NCEP
-    rebiny=1
+    #rebinx=1   #NCEP
+    #rebiny=1
 
     u = rebin(u, rebinx, rebiny)
     v = rebin(v, rebinx, rebiny)

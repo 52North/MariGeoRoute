@@ -46,7 +46,7 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
     #min_time_route.print_route()
     return min_time_route
 
-def min_fueltime_routing(
+def min_fuel_routing(
             start,  # r_la1, r_lo1
             finish,  # r_la2, r_lo2
             boat: Boat,  # class containing boat polars, function

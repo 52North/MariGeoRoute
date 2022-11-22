@@ -47,7 +47,7 @@ class IsoBased(RoutingAlg):
                     Returns:
                         pruned isochrone dictionary with max values in each bin
                    """
-        debug = True
+        debug = False
         if(debug): print('Pruning...')
 
         mean_dist = np.mean(self.full_dist_traveled)
@@ -127,9 +127,6 @@ class IsoBased(RoutingAlg):
     def define_variants_per_step(self):
         self.define_variants()
 
-    def set_variant_segments(self, segments):
-        self.variant_segments = segments
-
     def set_pruning_settings(self, sector_deg_half, seg):
         self.prune_sector_deg_half = sector_deg_half
         self.prune_segments = seg
@@ -165,61 +162,20 @@ class IsoBased(RoutingAlg):
                              str(self.variant_segments) + ', variant_increments_deg=' + str(self.variant_increments_deg)
                              + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
 
-    def crosses_land(self):
-        debug = False
-
-        LandCrossingSteps = 10
-        delta_lats = (self.lats_per_step[0, :] - self.lats_per_step[1, :]) / LandCrossingSteps
-        delta_lons = (self.lons_per_step[0, :] - self.lons_per_step[1, :]) / LandCrossingSteps
-        x0 = self.lats_per_step[1, :]
-        y0 = self.lons_per_step[1, :]
-        print('lats_per_step shape',  self.lats_per_step.shape[1] )
-        is_on_land = [False for i in range(0, self.lats_per_step.shape[1])]
-
-        if(debug):
-            print('Moving from (' + str(self.lats_per_step[1, :]) + ',' + str(self.lons_per_step[1, :]) + ') to (' + str(self.lats_per_step[0, :]) + ',' + str(self.lons_per_step[0, :]))
-            print('x0=' + str(x0) + ', y0=' + str(y0))
-            print('is_on_land', is_on_land)
-            print('delta_lats', delta_lats)
-            print('delta_lons', delta_lons)
-
-        for iStep in range(0, LandCrossingSteps):
-            x = x0 + delta_lats
-            y = y0 + delta_lons
-            if (debug):
-                print('     iStep=', iStep)
-                print('     x=', x)
-                print('     y=', y)
-
-            is_on_land_temp = globe.is_land(x,y)
-            print('is_on_land_temp', is_on_land_temp)
-            is_on_land = is_on_land + is_on_land_temp
-            print('is_on_land', is_on_land)
-            x0 = x
-            y0 = y
-
-
-        #if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
-        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
-        #    raise ValueError(exc)
-
-        return is_on_land
-
     def get_final_index(self):
         idx = np.argmax(self.full_dist_traveled)
         return idx
 
-    def terminate(self, boat : Boat):
+    def terminate(self, boat : Boat, wt: WeatherCond):
         self.lats_per_step=np.flip(self.lats_per_step,0)
         self.lons_per_step=np.flip(self.lons_per_step,0)
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
         self.speed_per_step=np.flip(self.speed_per_step,0)
-        route = RoutingAlg.terminate(self, boat)
+        route = RoutingAlg.terminate(self, boat, wt)
 
         self.check_isochrones(route)
         return route
-
 
     def update_time(self, delta_time):
         self.full_time_traveled += delta_time
