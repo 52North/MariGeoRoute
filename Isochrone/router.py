@@ -1,7 +1,7 @@
 """Routing functions."""
 import utils
-from RoutingAlgTimeMin import RoutingAlgTimeMin
-from RoutingAlgFuelMin import RoutingAlgFuelMin
+from IsoChrone import IsoChrone
+from IsoFuel import IsoFuel
 from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from polars import Boat
 from routeparams import RouteParams
@@ -36,7 +36,7 @@ def modified_isochrone_routing(start, #r_la1, r_lo1
                 iso (Isochrone) - next isochrone
     """
     print('Modified isochrone routing...')
-    ra=RoutingAlgTimeMin(start,finish,start_time, delta_time)
+    ra=IsoChrone(start,finish,start_time, delta_time)
     ra.set_fig(fig)
     ra.set_steps(steps)
     ra.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'],params['ISOCHRONE_PRUNE_SEGMENTS'])
@@ -76,7 +76,7 @@ def min_fuel_routing(
                 iso (Isochrone) - next isochrone
     """
 
-    ra_fuel=RoutingAlgFuelMin(start, finish, start_time, delta_fuel)
+    ra_fuel=IsoFuel(start, finish, start_time, delta_fuel)
     ra_fuel.set_fig(fig)
     ra_fuel.set_steps(steps)
     ra_fuel.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'], params['ISOCHRONE_PRUNE_SEGMENTS'])
