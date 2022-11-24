@@ -7,7 +7,7 @@ from routeparams import RouteParams
 from IsoBased import IsoBased
 import utils
 
-class RoutingAlgFuelMin(IsoBased):
+class IsoFuel(IsoBased):
     delta_fuel : float
 
     def __init__(self, start, finish, time, delta_fuel):

@@ -7,7 +7,7 @@ from routeparams import RouteParams
 from IsoBased import IsoBased
 import utils
 
-class RoutingAlgTimeMin(IsoBased):
+class IsoChrone(IsoBased):
     delta_time : int
 
     def __init__(self, start, finish, time, delta_time):
