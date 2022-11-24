@@ -1,136 +1,342 @@
 """Weather functions."""
 import numpy as np
 import datetime as dt
+import xarray as xr
+import bbox as bbox
+from bbox import BBox2D, XYXY
 
-import pygrib as pg# Provides a high-level interface to  ECCODES C library for reading GRIB files
+import pygrib as pg
 
 from scipy.interpolate import RegularGridInterpolator
-"""GRIB is a file format for the storage and transport of gridded meteorological data,"""
+
+import utils
 from utils import round_time
 
 
-def grib_to_wind_function(filepath):
-    """Vectorized wind functions from grib file.GRIB is a file format for the storage and transport of gridded meteorological data,
-    such as Numerical Weather Prediction model output."""
-    grbs = pg.open(filepath)
+class WeatherCond():
+    model: str
+    time_steps: int
+    time_res: dt.timedelta
+    time_start: dt.datetime
+    time_end: dt.timedelta
+    map_size: bbox.BBox2D
+    ds: xr.Dataset
+    wind_functions: None
+    wind_vectors: None
 
-    u, _, _ = grbs[1].data() # U for Initial
-    v, _, _ = grbs[2].data() # V for Final
+    def __init__(self, filepath, model, time, hours, time_res):
+        utils.print_line()
+        print('Initialising weather')
 
-    tws = np.sqrt(u * u + v * v)
-    #twa=np.arctan2(u, v)
-    twa = 10.0 / np.pi * np.arctan2(u, v) + 10.0#arctan:This mathematical function helps user to calculate inverse tangent for all x(being the array elements
-    print(tws,'printing tws')
-    lats_grid = np.linspace(-90, 90, 181)#Linespace : is a tool in Python for creating numeric sequences.
-    lons_grid = np.linspace(0, 360, 361)
+        self.read_dataset(filepath)
 
-    f_twa = RegularGridInterpolator(
-        (lats_grid, lons_grid),
-        np.flip(np.hstack((twa, twa[:, 0].reshape(181, 1))), axis=0), #Flip. Reverse the order of elements in an array along the given axis.
-    )#hstack() function is used to stack the sequence of input arrays horizontally (i.e. column wise) to make a single array
+        self.model = model
+        self.time_res = time_res
+        self.time_start = time
+        self.time_end = time + dt.timedelta(hours=hours)
 
-    f_tws = RegularGridInterpolator(
-        (lats_grid, lons_grid),
-        np.flip(np.hstack((tws, tws[:, 0].reshape(181, 1))), axis=0),
-    )
+        time_passed = self.time_end - self.time_start
+        self.time_steps = int(time_passed.total_seconds()/self.time_res.total_seconds())
 
-    return {'twa': f_twa, 'tws': f_tws}
+        print('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end))
+        print('nof time steps', self.time_steps)
+        utils.print_line()
+
+    @property
+    def time_res(self):
+        return self._time_res
+
+    @time_res.setter
+    def time_res(self, value):
+        if (value < 3): raise ValueError('Resolution below 3h not possible')
+        self._time_res = dt.timedelta(hours=value)
+        print('time resolution: ' + str(self._time_res) + ' hours')
+
+    @property
+    def time_start(self):
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self,value):
+        rounded_time = value - self.time_res/2
+        rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
+        self._time_start = rounded_time
+
+    @property
+    def time_end(self):
+        return self._time_end
+
+    @time_end.setter
+    def time_end(self, value):
+        rounded_time = value + self.time_res / 2
+        rounded_time = round_time(rounded_time, int(self.time_res.total_seconds()))
+        self._time_end = rounded_time
+
+    def get_time_step_index(self, time):
+        rounded_time = round_time(time, int(self.time_res.total_seconds()))
+        time_passed = rounded_time - self.time_start
+        idx = (time_passed.total_seconds() / self.time_res.total_seconds())
+        return {'rounded_time' : rounded_time, 'idx' : idx}
+
+    def set_map_size(self, lat1, lon1, lat2, lon2):
+        self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
+
+    def get_map_size(self):
+        return self.map_size
+
+    def read_dataset(self, filepath):
+        print('Reading dataset from', filepath)
+        self.ds = xr.open_dataset(filepath)
+        # print('dataset', self.ds)
+
+    def check_ds_format(self):
+        print('Printing dataset', self.ds)
+    '''
+    def grib_to_wind_function(filepath):
+        """Vectorized wind functions from grib file.GRIB is a file format for the storage and transport of gridded meteorological data,
+        such as Numerical Weather Prediction model output."""
+        grbs = pg.open(filepath)
+
+        u, _, _ = grbs[1].data()
+        v, _, _ = grbs[2].data()
+
+        tws = np.sqrt(u * u + v * v)
+        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0
+
+        return {'twa': twa, 'tws': tws}     
+    '''
 
 
-def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
-    """Return u-v components for given rect for visualization."""
-    grbs = pg.open(filepath)
-    print('printing lat1',lat1)
-    print('printing lat2',lat2)
-    print('printing lon1',lon1)
-    print('printing lon2',lon2)
-    u, lats_u, lons_u = grbs[1].data(lat1, lat2, lon1, lon2)#pygrib
-    v, lats_v, lons_v = grbs[1].data(lat1, lat2, lon1, lon2)
-    print('printing u in grib to wind vector',u)
-    print('printing u in grib to wind vector shape', u.shape)
-    print('printing u in grib to wind vector',v)
-    print('printing u in grib to wind lats_u',lats_u)
-    print('printing u in grib to wind lons_u',lons_u)
-    return u, v, lats_u, lons_u
 
+    '''
+    def grib_to_wind_vectors(filepath, lat1, lon1, lat2, lon2):
+        """Return u-v components for given rect for visualization."""
+        grbs = pg.open(filepath)
+        u, lats_u, lons_u = grbs[1].data(lat1, lat2, lon1, lon2)
+        v, lats_v, lons_v = grbs[2].data(lat1, lat2, lon1, lon2)
+        return u, v, lats_u, lons_u
+    '''
 
-def read_wind_vectors(model, hours_ahead, lat1, lon1, lat2, lon2):
-    """Return wind vectors for given number of hours.
+    def get_twatws_from_uv(self, u, v):
+        tws = np.sqrt(u ** 2 + v ** 2)
+        twa = 180.0 / np.pi * np.arctan2(u, v) + 180.0  # angle from 0° to 360°, 0° = N
+        return twa, tws
 
+    def init_wind_vectors(self):
+        """Return wind vectors for given number of hours.
             Parameters:
                     model (dict): available forecast wind functions
                     hours_ahead (int): number of hours looking ahead
                     lats, lons: rectange defining forecast area
-
             Returns:
                     wind_vectors (dict):
                         model: model timestamp
                         hour: function for given forecast hour
-    """
-    wind_vectors = {}
-    wind_vectors['model'] = model
-    print('model',model)
+            """
 
-    for i in range(hours_ahead + 1):
+        wind_vectors = {}
+        wind_vectors['model'] = self.model
 
-        filename = '/Users/eeshaahluwalia/Downloads/wind-router-master 3/data/2019122212/20205150000_split13.grb'
-        #filename='G:/dataviv/wind-router-master/wind-router-master/data/2019122212/20220523.1p00.000.grib2'
-            #filename = 'C:/wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
-        wind_vectors[i] = grib_to_wind_vectors(
-                filename, lat1, lon1, lat2, lon2)
+        for i in range(self.time_steps):
+            time = self.time_start + self.time_res * i
+            wind_vectors[i] = self.read_wind_vectors(time)
+            #print('reading wind vector time', time)
 
-    return wind_vectors
+        self.wind_vectors = wind_vectors
 
-
-def read_wind_functions(model, hours_ahead):
-    """
-    Read wind functions.
-
+    def init_wind_functions(self):
+        """
+        Read wind functions.
             Parameters:
                     model (dict): available forecast wind functions
-
             Returns:
                     wind_functions (dict):
                         model: model timestamp
                         model+hour: function for given forecast hour
-    """
-    wind_functions = {}
-    wind_functions['model'] = model
+         """
+        wind_function = {}
+        wind_function['model'] = self.model
 
-    for i in range(hours_ahead + 1):
+        for i in range(self.time_steps):
+            wind_function[i] = self.read_wind_functions(i)
 
-        filename= '/Users/eeshaahluwalia/Downloads/wind-router-master 3/data/2019122212/20205150000_split13.grb'
-        #filename='G:/dataviv/wind-router-master/wind-router-master/data/2019122212/2019122212f000'
-        #filename='G:/dataviv/wind-router-master/wind-router-master/data/2019122212/20220523.1p00.000.grib2'
-            #filename = 'C:/wind-router-master/data/{}/{}f{:03d}'.format(model, model, i)
-        wind_functions[i] = grib_to_wind_function(filename)
-    return wind_functions
+        self.wind_functions = wind_function
 
-
-def wind_function(winds, coordinate, time):
-    """
-    Vectorized TWA and TWS function from forecast.
-
+    def get_wind_function(self, coordinate, time):
+        """
+        Vectorized TWA and TWS function from forecast.
             Parameters:
                     winds (dict): available forecast wind functions
                     coordinate (array): array of tuples (lats, lons)
                     time (datetime): time to forecast
-
             Returns:
                     forecast (dict):
                         twa (array): array of TWA
                         tws (array): array of TWS
-    """
-    model_time = dt.datetime.strptime(winds['model'], "%Y%m%d%H")
-    rounded_time = round_time(time, 3600 * 3)
-    print('rounded time',rounded_time)
-    print('coordinates',coordinate)
+        """
+        debug = True
+        time_passed = self.get_time_step_index(time)
+        rounded_time= time_passed['rounded_time']
+        idx = time_passed['idx']
 
-    timedelta = rounded_time - model_time
-    forecast = int(timedelta.seconds / 3600)
+        try:
+            wind_timestamp = self.wind_functions[idx]['timestamp']
+        except ValueError:
+            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(self.time_steps) + ' available')
 
-    wind = winds[forecast]
-    twa = wind['twa'](coordinate)
-    tws = wind['tws'](coordinate)
-    print('twee',twa)
-    return {'twa': twa, 'tws': tws}
+        if not (rounded_time==self.wind_functions[idx]['timestamp']):
+            ex = 'Accessing wrong weather forecast. Accessing element ' + str(self.wind_functions[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
+            raise Exception(ex)
+
+        wind = self.wind_functions[idx]
+        twa = wind['twa'](coordinate)
+        tws = wind['tws'](coordinate)
+
+        return {'twa': twa, 'tws': tws}
+
+    def get_wind_vector(self, time):
+        time_passed = self.get_time_step_index(time)
+        rounded_time = time_passed['rounded_time']
+        idx = time_passed['idx']
+
+        try:
+            wind_timestamp = self.wind_vectors[idx]['timestamp']
+        except KeyError:
+            print('Requesting weather data for ' + str(time) + ' at index ' + str(idx) + ' but only ' + str(self.time_steps) + ' available')
+            raise
+
+        if not (rounded_time == wind_timestamp):
+            ex = 'Accessing wrong weather forecast. Accessing element ' + str(
+                self.wind_vectors[idx]['timestamp']) + ' but current rounded time is ' + str(rounded_time)
+            raise Exception(ex)
+
+        return self.wind_vectors[idx]
+
+
+class WeatherCondNCEP(WeatherCond):
+    def __init__(self, filepath, model, time, hours, time_res):
+        WeatherCond.__init__(self, filepath, model, time, hours, time_res)
+        print('WARNING: not well maintained. Currently one data file for one particular times is read several times')
+
+    def calculate_wind_function(self):
+        """Vectorized wind functions from NetCDF file."""
+
+        twa, tws = self.get_twatws_from_uv(self.ds.u10, self.ds.v10)
+        tws = tws.to_numpy()
+        twa = twa.to_numpy()
+
+        return {'twa': twa, 'tws': tws}
+
+    def read_wind_functions(self, iTime):
+        time = self.time_start + self.time_res*iTime
+
+        wind = self.calculate_wind_function()
+
+        lats_grid = np.linspace(-90, 90, 181)
+        lons_grid = np.linspace(0, 360, 361)
+
+        f_twa = RegularGridInterpolator(
+            (lats_grid, lons_grid),
+            np.flip(np.hstack((wind['twa'], wind['twa'][:, 0].reshape(181, 1))), axis=0),
+        )
+
+        f_tws = RegularGridInterpolator(
+            (lats_grid, lons_grid),
+            np.flip(np.hstack((wind['tws'], wind['tws'][:, 0].reshape(181, 1))), axis=0),
+        )
+
+        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
+
+    def read_wind_vectors(self, time):
+        """Return u-v components for given rect for visualization."""
+        lat1 = self.map_size.x1
+        lat2 = self.map_size.x2
+        lon1 = self.map_size.y1
+        lon2 = self.map_size.y2
+
+        u = self.ds['u10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        v = self.ds['v10'].where(
+            (self.ds.latitude >= lat1) & (self.ds.latitude <= lat2) & (self.ds.longitude >= lon1) & (
+                    self.ds.longitude <= lon2), drop=True)
+        lats_u_1D = self.ds['latitude'].where((self.ds.latitude >= lat1) & (self.ds.latitude <= lat2), drop=True)
+        lons_u_1D = self.ds['longitude'].where((self.ds.longitude >= lon1) & (self.ds.longitude <= lon2), drop=True)
+
+        u = u.to_numpy()
+        v = v.to_numpy()
+        lats_u_1D = lats_u_1D.to_numpy()
+        lons_u_1D = lons_u_1D.to_numpy()
+        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
+        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
+
+        return {'u': u,'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
+
+class WeatherCondCMEMS(WeatherCond):
+    def calculate_wind_function(self, time):
+        time_str=time.strftime('%Y-%m-%d %H:%M:%S')
+        #print('Reading time', time_str)
+
+        u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
+        v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
+
+        twa, tws = self.get_twatws_from_uv(u,v)
+
+        tws = tws.to_numpy()
+        twa = twa.to_numpy()
+
+        return {'twa': twa, 'tws': tws}
+
+    def read_wind_functions(self, iTime):
+        time = self.time_start + self.time_res*iTime
+        #wind = self.nc_to_wind_function_old_format()
+        wind = self.calculate_wind_function(time)
+
+        if not (wind['twa'].shape==wind['tws'].shape): raise ValueError('Shape of twa and tws not matching!')
+
+        lat_shape = wind['twa'].shape[0]
+        lon_shape = wind['twa'].shape[1]
+        #print('lat_shape', lat_shape)
+        #print('long_shape', lon_shape)
+        lats_grid = np.linspace(self.map_size.x1, self.map_size.x2, lat_shape)
+        lons_grid = np.linspace(self.map_size.y1, self.map_size.y2, lon_shape)
+        #print('lons shape', lons_grid.shape)
+
+        f_twa = RegularGridInterpolator(
+            (lats_grid, lons_grid), wind['twa'],
+        )
+
+        f_tws = RegularGridInterpolator(
+            (lats_grid, lons_grid), wind['tws'],
+        )
+
+        return {'twa': f_twa, 'tws': f_tws, 'timestamp': time}
+
+    def read_wind_vectors(self, time):
+        """Return u-v components for given rect for visualization."""
+
+        lat1 = self.map_size.x1
+        lat2 = self.map_size.x2
+        lon1 = self.map_size.y1
+        lon2 = self.map_size.y2
+        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        ds_time=self.ds.sel(time = time_str)
+
+        u = ds_time['u-component_of_wind_maximum_wind'].where(
+            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
+                    ds_time.longitude <= lon2), drop=True)
+        v = ds_time['v-component_of_wind_maximum_wind'].where(
+            (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
+                    ds_time.longitude <= lon2), drop=True)
+        lats_u_1D = ds_time['latitude'].where((ds_time.latitude >= lat1) & (ds_time.latitude <= lat2), drop=True)
+        lons_u_1D = ds_time['longitude'].where((ds_time.longitude >= lon1) & (ds_time.longitude <= lon2), drop=True)
+
+        u = u.to_numpy()
+        v = v.to_numpy()
+        lats_u_1D = lats_u_1D.to_numpy()
+        lons_u_1D = lons_u_1D.to_numpy()
+        lats_u = np.tile(lats_u_1D[:, np.newaxis], u.shape[1])
+        lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
+
+        return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}

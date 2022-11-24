@@ -1,17 +1,14 @@
 """Flask main."""
 import io
 import logging
-import datetime as dt
-import os
-
+import graphics
 from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-import polars
-import graphics
-import weather
 import router
+from polars import *
+from weather import *
 
 # App Config.
 app = Flask(__name__)
@@ -20,7 +17,7 @@ app.config.from_object('config')
 state = {}
 state['hour'] = 0
 
-
+'''
 # Controllers.
 @app.route('/', methods=["GET", "POST"])
 def home():
@@ -45,8 +42,10 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/ico'),
                                'favicon.png', mimetype='image/vnd.microsoft.icon')
 
+'''
 
-@app.route('/map')
+
+@app.route('/')
 def plot_map():
     """Route handling."""
     try:
@@ -67,8 +66,6 @@ def plot_map():
     except (ValueError):
         logging.log(logging.ERROR, 'expecting real values')
 
-    # fig = graphics.create_maps(lat1, lon1, lat2, lon2, dpi, 4)
-
     # try:
     #     latest = request.args['latest']
     # except KeyError:
@@ -83,46 +80,74 @@ def plot_map():
     # except (KeyError):
     #     hour = 0
 
+    # *******************************************
+    # basic settings
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
-    delta_time = 3600
-    hours = 60
-
-    vct_winds = weather.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
-
-    fct_winds = weather.read_wind_functions(model, hours)
-
+    windfile = app.config['DEFAULT_GFS_FILE']
+    delta_time = app.config['DELTA_TIME_FORECAST']
+    delta_fuel = app.config['DELTA_FUEL']
+    hours = app.config['TIME_FORECAST']
+    routing_steps = app.config['ROUTING_STEPS']
+    lat1, lon1, lat2, lon2 = app.config['DEFAULT_MAP']
     r_la1, r_lo1, r_la2, r_lo2 = app.config['DEFAULT_ROUTE']
-
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
-    print('startfinih',start,finish)
-    start_time = dt.datetime.strptime('2020111607', '%Y%m%d%H')
-
-    boat = polars.boat_properties(boatfile)
+    start_time = dt.datetime.strptime(app.config['DEFAULT_GFS_DATETIME'], '%Y%m%d%H')
     params = app.config
 
-    iso3 = router.routing(
+    # *******************************************
+    # initialise boat
+    boat = Tanker(-99)
+    boat.init_hydro_model()
+    boat.set_boat_speed(6)
+    #boat.test_power_consumption_per_course()
+    #boat.test_power_consumption_per_speed()
+
+    #boat = SailingBoat(filepath=boatfile)
+
+    # *******************************************
+    # initialise weather
+    wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    #wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
+    #wt.check_ds_format()
+    wt.set_map_size(lat1, lon1, lat2, lon2)
+    wt.init_wind_functions()
+    wt.init_wind_vectors()
+    #vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
+
+    fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
+
+    '''min_time_route = router.modified_isochrone_routing(
         start, finish,
-        boat, fct_winds,
+        boat,
+        wt,
         start_time,
-        delta_time, hours,
-        params
+        delta_time, routing_steps,
+        params,
+        fig
+    )
+    fig = min_time_route['fig']'''
+
+    min_fuel_route = router.min_fuel_routing(
+        start, finish,
+        boat,
+        wt,
+        start_time,
+        delta_fuel, routing_steps,
+        params,
+        fig
     )
 
-    fig = graphics.create_map(lat1, lon1, lat2, lon2, dpi)
+    #if not (min_fuel_route.__eq__(min_time_route)):
+    #    raise ValueError('Routes not matching!')'''
 
-    fig = graphics.plot_barbs(fig, vct_winds, 0)
-    fig = graphics.plot_gcr(fig, r_la1, r_lo1, r_la2, r_lo2)
-    fig = graphics.plot_isochrones(fig, iso3)
-    print('hellow2', iso3.lats1, iso3.lons1,)
+    #fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
+    fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
+    fig = graphics.plot_legend(fig)
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
-
-    # Write the file as well
-    with open('/Users/eeshaahluwalia/Downloads/wind-router-master 3/screenshots/map8.png', 'wb') as f:
-        f.write(output.getbuffer())
 
     return Response(output.getvalue(), mimetype='image/png')
 
@@ -131,13 +156,15 @@ def plot_map():
 @app.errorhandler(500)
 def internal_error(error):
     """Error handling."""
-    return render_template('errors/500.html'), 500
+    #return render_template('errors/500.html'), 500
+    return 'Error 500'
 
 
 @app.errorhandler(404)
 def not_found_error(error):
     """Error handling."""
-    return render_template('errors/404.html'), 404
+    #return render_template('errors/404.html'), 404
+    return 'Error 404'
 
 
 if not app.debug:

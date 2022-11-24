@@ -1,5 +1,6 @@
 """Utility functions."""
 import datetime
+import math
 
 
 def mps_to_knots(vals):
@@ -28,3 +29,17 @@ def round_time(dt=None, round_to=60):
     rounding = (seconds + round_to / 2) // round_to * round_to
     return dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond)
 
+def degree_to_pmpi(degrees):
+    if(degrees>=360): degrees = degrees-360
+    if(degrees<=360): degrees = degrees+360
+    if(degrees>180): degrees = degrees-360
+    if(degrees<180): degrees = degrees+360
+    degrees = math.radians(degrees)
+    return degrees
+
+def print_line():
+    print('---------------------------------------------------')
+
+def print_step(stepnote, istep=0):
+    step = "   " * (istep+1) + stepnote
+    print(step)
