@@ -275,10 +275,13 @@ class WeatherCondNCEP(WeatherCond):
 class WeatherCondCMEMS(WeatherCond):
     def calculate_wind_function(self, time):
         time_str=time.strftime('%Y-%m-%d %H:%M:%S')
-        #print('Reading time', time_str)
+        print('Reading time', time_str)
 
-        u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
-        v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
+        try:
+            u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
+            v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
+        except KeyError:
+            raise Exception('Please make sure that time stamps of environmental data match full hours')
 
         twa, tws = self.get_twatws_from_uv(u,v)
 

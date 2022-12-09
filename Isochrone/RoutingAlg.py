@@ -253,7 +253,8 @@ class RoutingAlg():
         bs = boat.boat_speed_function(wind)
         self.speed_per_step = np.vstack((bs, self.speed_per_step))
 
-        delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
+        #delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
+        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(boat, wind, bs)
 
         self.update_position(dist)
         self.update_time(delta_time)

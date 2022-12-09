@@ -84,13 +84,15 @@ class Tanker(Boat):
         f *= delta_time / 3600 * 1 / 1000  # amount of fuel for this time interval
         return f
     def get_fuel_per_course(self, course, wind_dir, wind_speed, boat_speed):
+        boat_speed = np.array([boat_speed])
         self.hydro_model.WindDirection = math.radians(wind_dir)
         self.hydro_model.WindSpeed = wind_speed
         course = ut.degree_to_pmpi(course)
         #ut.print_step('course [rad]= ' + str(course), 1)
         #ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
         #ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
-        Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
+        ut.print_step('boat_speed = ' + str(boat_speed),1)
+        Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotionSerial(course, boat_speed, aUseHeading=True,
                                                                          aUpdateCalmwaterResistanceEveryIteration=False)
 
         return ptemp
@@ -110,6 +112,37 @@ class Tanker(Boat):
         if(debug):
             ut.print_step('power consumption' + str(P))
         return P
+
+    def get_fuel_per_time_netCDF(self, courses, lats, lons, time):
+        debug = True
+
+        if (debug):
+            print('Requesting power calculation')
+            time_str = 'Time:' + str(time)
+            lats_str = 'Latitude:' + str(lats)
+            lons_str = 'Longitude:' + str(lons)
+            course_str = 'Courses:' + str(courses)
+            speed_str = 'Boat speed:' + str(self.speed)
+            ut.print_step(time_str, 1)
+            ut.print_step(lats_str, 1)
+            ut.print_step(lons_str, 1)
+            ut.print_step(course_str, 1)
+            ut.print_step(speed_str, 1)
+
+        raise Exception('Stop here')
+
+        #data_vars = dict(
+        #    courses=(["time", "latitude", "longitude"], courses),
+        #    boat_speed=(["time", "latitude", "longitude"], self.speed),
+        #)
+
+        #coords = dict(
+        #    latitude=(["latitude"], lat),
+        #    longitude=(["longitude"], lon),
+        #    time=(["time"], t),
+        #)
+
+
 
     def boat_speed_function(self, wind):
         speed = np.array([self.speed])
