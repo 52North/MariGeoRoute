@@ -28,7 +28,7 @@ DEFAULT_GFS_RESOLUTION = '1p00'
 #DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/20205150000_split13.grb'
 #DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/2019122212f000'
 #DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/2019122212/20205150000_split13.nc'                #NCEP
-DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/45d7b138-61a8-11ed-bdaf-0242ac120003.nc'  #CMEMS
+DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/db66fbac-76e6-11ed-a518-0242ac120003_lat30-35_lon0-20.nc'  #CMEMS needs lat: 30 to 45, lon: 0 to 20
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters

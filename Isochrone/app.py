@@ -99,7 +99,10 @@ def plot_map():
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model()
+    boat.init_hydro_model_single_pars()
+    #boat.init_hydro_model(windfile)
+    #boat.init_hydro_model_Route(windfile)
+
     boat.set_boat_speed(6)
     #boat.test_power_consumption_per_course()
     #boat.test_power_consumption_per_speed()

@@ -7,10 +7,13 @@ Have TWA(True wind Angle) and TWS (True Wind speed) value for calculate boat spe
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import netCDF4 as nc
 from scipy.interpolate import RegularGridInterpolator
 
 import utils as ut
-import mariPower.ship
+import mariPower
+from mariPower import ship
+from mariPower import __main__
 from utils import knots_to_mps  # Convert  knot value in meter per second
 from weather import WeatherCond
 
@@ -35,7 +38,7 @@ class Tanker(Boat):
         Boat.__init__(self)
         self.rpm = rpm
 
-    def init_hydro_model(self):
+    def init_hydro_model_single_pars(self):
         debug = True
         self.hydro_model = mariPower.ship.CBT()
         #shipSpeed = 13 * 1852 / 3600
@@ -59,6 +62,14 @@ class Tanker(Boat):
         print('     wave dir', self.hydro_model.WaveDirection)
         print('     current dir', self.hydro_model.CurrentDirection)
         print('     current speed', self.hydro_model.CurrentSpeed)
+
+    def init_hydro_model_NetCDF(self, netCDF_filepath):
+        self.hydro_model = mariPower.ship.CBT()
+        Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
+
+    def init_hydro_model_Route(self, netCDF_filepath):
+        self.hydro_model = mariPower.ship.CBT()
+        Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerRoute(self.hydro_model, netCDF_filepath)
 
     def set_boat_speed(self, speed):
         self.speed = speed
