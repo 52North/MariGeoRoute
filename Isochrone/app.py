@@ -103,7 +103,9 @@ def plot_map():
     #boat.init_hydro_model(windfile)
     #boat.init_hydro_model_Route(windfile)
 
-    boat.set_boat_speed(6)
+    boat.set_boat_speed(12)
+    boat.calibrate_simple_fuel()
+    #boat.write_simple_fuel()
     #boat.test_power_consumption_per_course()
     #boat.test_power_consumption_per_speed()
 

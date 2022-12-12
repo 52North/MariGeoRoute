@@ -299,7 +299,7 @@ class RoutingAlg():
         delta_lons = (self.lons_per_step[0, :] - self.lons_per_step[1, :]) / LandCrossingSteps
         x0 = self.lats_per_step[1, :]
         y0 = self.lons_per_step[1, :]
-        print('lats_per_step shape',  self.lats_per_step.shape[1] )
+        if debug: print('lats_per_step shape',  self.lats_per_step.shape[1] )
         is_on_land = [False for i in range(0, self.lats_per_step.shape[1])]
 
         if(debug):
@@ -318,9 +318,8 @@ class RoutingAlg():
                 print('     y=', y)
 
             is_on_land_temp = globe.is_land(x,y)
-            print('is_on_land_temp', is_on_land_temp)
             is_on_land = is_on_land + is_on_land_temp
-            print('is_on_land', is_on_land)
+            if debug: print('is_on_land', is_on_land)
             x0 = x
             y0 = y
 

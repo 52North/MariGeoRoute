@@ -87,7 +87,7 @@ class WeatherCond():
     def read_dataset(self, filepath):
         print('Reading dataset from', filepath)
         self.ds = xr.open_dataset(filepath)
-        # print('dataset', self.ds)
+        print(self.ds)
 
     def check_ds_format(self):
         print('Printing dataset', self.ds)

@@ -209,8 +209,8 @@ class IsoBased(RoutingAlg):
         is_on_land = globe.is_land(move['lat2'], move['lon2'])
         #print('is_on_land', is_on_land)
         gcrs['s12'][is_on_land] = 0
-        #crosses_land = self.crosses_land()
-        #gcrs['s12'][crosses_land] = 0
+        crosses_land = self.crosses_land()
+        gcrs['s12'][crosses_land] = 0
         self.full_dist_traveled = gcrs['s12']
 
 

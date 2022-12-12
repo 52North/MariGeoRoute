@@ -41,14 +41,15 @@ class IsoFuel(IsoBased):
         # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
         delta_fuel = np.repeat(self.delta_fuel, bs.shape)
 
-        self.determine_timespread(self,delta_time)
+        #self.determine_timespread(delta_time)
 
         return delta_time, delta_fuel, dist
 
     def determine_timespread(self, delta_time):
         stddev = np.std(delta_time)
         mean = np.mean(delta_time)
-        print('spread of time: ' + str(mean) + '+-' + str(stddev))
+        print('delta_time', delta_time/3600)
+        print('spread of time: ' + str(mean/3600) + '+-' + str(stddev/3600))
 
     def update_time(self, delta_time):
         if not ((self.full_time_traveled.shape == delta_time.shape) and (self.time.shape == delta_time.shape)): raise ValueError('shapes of delta_time, time and full_time_traveled not matching!')

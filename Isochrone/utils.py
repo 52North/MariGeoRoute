@@ -31,9 +31,9 @@ def round_time(dt=None, round_to=60):
 
 def degree_to_pmpi(degrees):
     if(degrees>=360): degrees = degrees-360
-    if(degrees<=360): degrees = degrees+360
+    if(degrees<=-360): degrees = degrees+360
     if(degrees>180): degrees = degrees-360
-    if(degrees<180): degrees = degrees+360
+    if(degrees<-180): degrees = degrees+360
     degrees = math.radians(degrees)
     return degrees
 

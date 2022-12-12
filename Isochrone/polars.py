@@ -9,6 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 from scipy.interpolate import RegularGridInterpolator
+import xarray as xr
 
 import utils as ut
 import mariPower
@@ -19,6 +20,7 @@ from weather import WeatherCond
 
 class Boat:
     speed: float
+    simple_fuel_model: xr.Dataset
 
     def __init__(self):
         self.speed = -99
@@ -79,23 +81,79 @@ class Tanker(Boat):
     def get_rpm(self):
         return self.rpm
 
-    def get_fuel_per_time_simple(self, delta_time):
-        f = 0.0007 * self.rpm ** 3 + 0.0297 * self.rpm ** 2 + 2.8414 * self.rpm - 19.359  # fuel [kg/h]
-        f *= delta_time / 3600 * 1 / 1000  # amount of fuel for this time interval
-        return f
+    def get_fuel_per_course_simple(self, course, wind_speed, wind_dir):
+        debug = False
+        angle = np.abs(course-wind_dir)
+        if angle>180: angle = np.abs(360 - angle)
+        if debug:
+            ut.print_line()
+            ut.print_step('course = ' + str(course),1)
+            ut.print_step('wind_speed = ' + str(wind_speed), 1)
+            ut.print_step('wind_dir = ' + str(wind_dir), 1)
+            ut.print_step('delta angle = ' + str(angle), 1)
+        wind_speed = wind_speed
+        power = self.simple_fuel_model.interp(delta_angle=angle, wind_speed=wind_speed)['power'].to_numpy()
+
+        if debug: ut.print_step('power = ' + str(power), 1)
+        return power
+
+    #def get_fuel_per_time_simple(self, delta_time):
+    #    f = 0.0007 * self.rpm ** 3 + 0.0297 * self.rpm ** 2 + 2.8414 * self.rpm - 19.359  # fuel [kg/h]
+    #    f *= delta_time / 3600 * 1 / 1000  # amount of fuel for this time interval
+    #    return f
+
     def get_fuel_per_course(self, course, wind_dir, wind_speed, boat_speed):
-        boat_speed = np.array([boat_speed])
+        #boat_speed = np.array([boat_speed])
         self.hydro_model.WindDirection = math.radians(wind_dir)
         self.hydro_model.WindSpeed = wind_speed
+        ut.print_step('course [degrees]= ' + str(course), 1)
         course = ut.degree_to_pmpi(course)
-        #ut.print_step('course [rad]= ' + str(course), 1)
-        #ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
-        #ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
+        ut.print_step('course [rad]= ' + str(course), 1)
+        ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
+        ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
         ut.print_step('boat_speed = ' + str(boat_speed),1)
-        Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotionSerial(course, boat_speed, aUseHeading=True,
-                                                                         aUpdateCalmwaterResistanceEveryIteration=False)
+        #Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotionSerial(course, boat_speed, aUseHeading=True,
+        #                                                                 aUpdateCalmwaterResistanceEveryIteration=False)
+        Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
+                                                                               aUpdateCalmwaterResistanceEveryIteration=False)
 
         return ptemp
+
+    def calibrate_simple_fuel(self):
+        self.simple_fuel_model = xr.open_dataset("/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/SimpleFuelModel/simple_fuel_model.nc")
+        ut.print_line()
+        print('Initialising simple fuel model')
+        print(self.simple_fuel_model)
+
+    def write_simple_fuel(self):
+        n_angle = 10
+        n_wind_speed = 20
+        power = np.zeros((n_angle, n_wind_speed))
+        delta_angle = ut.get_bin_centers(0,180,n_angle)
+        wind_speed = ut.get_bin_centers(0,60,n_wind_speed)
+
+        coords = dict(
+            delta_angle=(["delta_angle"], delta_angle),
+            wind_speed=(["wind_speed"], wind_speed),
+        )
+        attrs = dict(description="Necessary descriptions added here.")
+
+        for iang in range(0,n_angle):
+            for iwind_speed in range(0,n_wind_speed):
+                course = 0
+                wind_dir = 0 + delta_angle[iang]
+                power[iang,iwind_speed]= self.get_fuel_per_course(course, wind_dir, wind_speed[iwind_speed], self.speed)
+
+        data_vars = dict(
+            power=(["delta_angle", "wind_speed"], power),
+        )
+
+        ds = xr.Dataset(data_vars, coords, attrs)
+        ds.to_netcdf('/home/kdemmich/MariData/Code/simple_fuel_model.nc')
+
+        print('Writing simple fuel model:')
+        print(ds)
+        raise Exception('Stop here')
 
     def get_fuel_per_time(self, courses, wind):
         debug = False
@@ -107,7 +165,9 @@ class Tanker(Boat):
 
         P = np.zeros(courses.shape)
         for icours in range(0,courses.shape[0]):
-            P[icours] = self.get_fuel_per_course(courses[icours], wind['twa'][icours], wind['tws'][icours], self.speed)
+            #P[icours] = self.get_fuel_per_course(courses[icours], wind['twa'][icours], wind['tws'][icours], self.speed)
+            P[icours] = self.get_fuel_per_course_simple(courses[icours], wind['tws'][icours],  wind['twa'][icours])
+            if math.isnan(P[icours]): P[icours] = 1000000000000000
 
         if(debug):
             ut.print_step('power consumption' + str(P))
