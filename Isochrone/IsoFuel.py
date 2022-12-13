@@ -32,9 +32,9 @@ class IsoFuel(IsoBased):
         return delta_time, delta_fuel, dist
 
     def get_delta_variables_netCDF(self, boat, wind, bs):
-        #fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-        #                                           self.get_current_lons(), self.time)
-        fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
+        fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
+                                                  self.get_current_lons(), self.time, wind)
+        #fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
         delta_time = self.delta_fuel / fuel * 3600
         dist = self.get_dist(bs, delta_time)
 
