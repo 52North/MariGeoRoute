@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
+import xarray as xr
 
 from polars import Tanker
+import datetime
 
 #def test_inc():
 #    pol = Tanker(2)
@@ -20,7 +22,9 @@ def test_get_netCDF_courses():
     speed =  np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
 
     pol = Tanker (2)
-    ds = pol.get_netCDF_courses(courses, lat, lon,  1)
+    time = np.array([datetime.date.today(), datetime.date.today(), datetime.date.today(),
+                     datetime.date.today()+datetime.timedelta(days=360), datetime.date.today()+datetime.timedelta(days=360), datetime.date.today()+datetime.timedelta(days=360)])
+    ds = pol.get_netCDF_courses(courses, lat, lon,  time)
 
     lat_read = ds['lat'].to_numpy()
     lon_read = ds['lon'].to_numpy()
@@ -45,3 +49,32 @@ def test_get_netCDF_courses():
         for iit in range(0, courses_read.shape[1]):
             iprev=ilat*courses_read.shape[1]+iit
             assert courses[iprev]==courses_read[ilat][iit]
+
+
+def test_get_fuel_from_netCDF():
+    lat = np.array([1.1,2.2,3.3,4.4])
+    it = np.array([1, 2])
+    power = np.array([[1,4], [3.4,5.3],
+                          [2.1,6], [1.,5.1]])
+
+    data_vars = dict(
+        power=(["lat", "it"], power),
+    )
+
+    coords = dict(
+        lat=(["lat"], lat),
+        it=(["it"], it),
+    )
+    attrs = dict(description="Necessary descriptions added here.")
+
+    ds = xr.Dataset(data_vars, coords, attrs)
+    print(ds)
+
+    pol = Tanker(2)
+    power_test = pol.extract_fuel_from_netCDF(ds)
+    power_ref = np.array([1,4, 3.4,5.3, 2.1,6, 1.,5.1])
+
+    print('power_test', power_test)
+
+    for i in range(0,power_ref.shape[0]):
+        assert power_ref[i] == power_test[i]

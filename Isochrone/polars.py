@@ -181,16 +181,17 @@ class Tanker(Boat):
         return P
 
     def get_netCDF_courses(self, courses, lats,lons, time):
-        debug = True
+        debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
 
         assert courses.shape == lats.shape
         assert courses.shape == lons.shape
         assert courses.shape == speed.shape
+        assert courses.shape == time.shape
 
         if (debug):
             print('Requesting power calculation')
-            time_str = 'Time:' + str(time.shape)
+            time_str = 'Time:' + str(time)
             lats_str = 'Latitude:' + str(lats)
             lons_str = 'Longitude:' + str(lons)
             course_str = 'Courses:' + str(courses)
@@ -213,8 +214,6 @@ class Tanker(Boat):
             'it': it,
             'courses': courses,
             'speed': speed,
-            'time': time
-            # 'power' : np.random.rand(courses.shape[0]),
         })
 
         df = df.set_index(['lat', 'it'])
@@ -222,17 +221,57 @@ class Tanker(Boat):
 
         ds = df.to_xarray()
         lon_ind = np.unique(lons, return_index=True)[1]
+        time_ind = np.unique(time, return_index=True)[1]
         lons = [lons[index] for index in sorted(lon_ind)]
+        time_read = [time[index] for index in sorted(time_ind)]
+
         ds["lon"] = (['lat'], lons)
+        ds["time"] = (['lat'], time_read)
+        assert ds['lon'].shape == ds['lat'].shape
+        assert ds['time'].shape == ds['lat'].shape
+        #np.set_printoptions(threshold=sys.maxsize)
 
         if(debug): print('xarray DataSet', ds)
         return ds
 
+    def extract_fuel_from_netCDF(self, ds):
+        debug = False
+        if(debug): ut.print_step('Dataset with fuel:' + str(ds),1)
+
+        power_read = ds['power']
+        power_flattened = power_read.to_numpy().flatten()
+
+        if(debug):
+            ut.print_step('Dataset with fuel' + str(ds),1)
+            ut.print_step('original shape power' + str(power_read.shape), 1)
+            ut.print_step('flattened shape power' + str(power_flattened.shape), 1)
+
+        return power_flattened
+
+    def get_fuel_netCDF_dummy(self,ds, courses, wind):
+        debug = False
+
+        power = self.get_fuel_per_time(courses, wind)
+        if(debug): ut.print_step('power shape' + str(power.shape),1)
+        power = power.reshape(ds['lat'].shape[0], ds['it'].shape[0])
+        ds["power"] = (['lat', 'it'], power)
+        if(debug):
+            ut.print_step('power new shape' + str(power.shape),1)
+            ut.print_step('ds' + str(ds),1)
+
+        ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
+        ds_read = xr.open_dataset("/home/kdemmich/MariData/Code/sample.nc")
+        if(debug): print('read data set', ds_read)
+
+        return ds
+
     def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
         ds = self.get_netCDF_courses(courses, lats, lons, time)
+        #ds = self.get_fuel_netCDF(ds)
+        ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
+        power = self.extract_fuel_from_netCDF(ds)
 
-        P = self.get_fuel_per_time(courses, wind)
-        return P
+        return power
 
     def boat_speed_function(self, wind):
         speed = np.array([self.speed])
