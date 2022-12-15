@@ -178,22 +178,10 @@ class RoutingAlg():
         for i in range(self.ncount):
             utils.print_line()
             print('Step ', i)
-            #self.current_position()
 
             self.define_variants_per_step()
-            #print('before moving')
-            #self.print_shape()
-            #self.print_ra()
             self.move_boat_direct(wt, boat)
-            #print('after moving')
-            #self.print_shape()
-            #self.print_ra()
             self.pruning_per_step(True)
-            #print('after pruning')
-            #self.print_shape()
-            #self.print_ra()
-
-            #print('full_time_traveled:', self.full_time_traveled)
 
         self.final_pruning()
         route = self.terminate(boat, wt)
@@ -227,7 +215,7 @@ class RoutingAlg():
         delta_hdgs = np.linspace(
             -self.variant_segments/2 * self.variant_increments_deg,
             +self.variant_segments/2 * self.variant_increments_deg,
-            self.variant_segments  + 1)
+            self.variant_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs

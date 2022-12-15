@@ -1,5 +1,6 @@
 import numpy as np
 import datetime as dt
+
 import utils as ut
 from polars import Boat
 from typing import NamedTuple
@@ -30,55 +31,9 @@ class IsoBased(RoutingAlg):
                 'define_variants: number of rows not matching! count = ' + str(self.count) + ' lats per step ' + str(
                     self.lats_per_step.shape[0]))
 
-    def pruning_per_step(self,  trim=True):
-        """
-              generate view of the iso that only contains the longests route per azimuth segment
-
-              Binned statistic.
-              +            iso2 = prune_isochrone(iso2, 'azi02', 's02', bins, True)
-              print('iso2 ',iso2)  #
-
-                    Parameters:
-                    iso: isochrone dictionary
-                    x: values to binarize
-                    y: values to apply max to
-                    bins: bins edges, dimension is n_bins + 1
-                    trim: whether return just one of max values
-                    Returns:
-                        pruned isochrone dictionary with max values in each bin
-                   """
-        debug = False
-        if(debug): print('Pruning...')
-
-        mean_dist = np.mean(self.full_dist_traveled)
-        gcr_point = geod.direct(
-            [self.start[0]],
-            [self.start[1]],
-            self.gcr_azi, mean_dist)
-
-        new_azi = geod.inverse(
-            gcr_point['lat2'],
-            gcr_point['lon2'],
-            [self.finish[0]],
-            [self.finish[1]]
-        )
-
-        if(debug): print('mean azimuth', new_azi['azi1'])
-
-        azi0s = np.repeat(
-            new_azi['azi1'],
-            self.prune_segments + 1)
-
-        # determine bins
-        delta_hdgs = np.linspace(
-            -self.prune_sector_deg_half,
-            +self.prune_sector_deg_half,
-            self.prune_segments + 1)  # -90,+90,181
-
-        bins = azi0s - delta_hdgs
-        bins = np.sort(bins)
-
-        if(debug):
+    def pruning(self, trim, bins):
+        debug = True
+        if (debug):
             print('binning for pruning', bins)
             print('current courses', self.current_azimuth)
 
@@ -99,30 +54,77 @@ class IsoBased(RoutingAlg):
                 idxs.append(np.where(self.full_dist_traveled == bin_stat[i])[0])
             idxs = list(set([item for subl in idxs for item in subl]))
 
-        if(debug):
+        if (debug):
             print('full_dist_traveled', self.full_dist_traveled)
             print('Indexes that passed', idxs)
 
         # Return a trimmed isochrone
-        self.lats_per_step = self.lats_per_step[:, idxs]
-        self.lons_per_step = self.lons_per_step[:, idxs]
-        self.azimuth_per_step = self.azimuth_per_step[:, idxs]
-        self.dist_per_step = self.dist_per_step[:, idxs]
-        self.speed_per_step = self.speed_per_step[:, idxs]
-        self.fuel_per_step = self.fuel_per_step[:, idxs]
+        try:
+            self.lats_per_step = self.lats_per_step[:, idxs]
+            self.lons_per_step = self.lons_per_step[:, idxs]
+            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.dist_per_step = self.dist_per_step[:, idxs]
+            self.speed_per_step = self.speed_per_step[:, idxs]
+            self.fuel_per_step = self.fuel_per_step[:, idxs]
 
-        self.current_azimuth = self.current_variant[idxs]
-        self.current_variant = self.current_variant[idxs]
-        self.full_dist_traveled = self.full_dist_traveled[idxs]
-        self.full_time_traveled = self.full_time_traveled[idxs]
-        self.full_fuel_consumed = self.full_fuel_consumed[idxs]
-        self.time = self.time[idxs]
+            self.current_azimuth = self.current_variant[idxs]
+            self.current_variant = self.current_variant[idxs]
+            self.full_dist_traveled = self.full_dist_traveled[idxs]
+            self.full_time_traveled = self.full_time_traveled[idxs]
+            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
+            self.time = self.time[idxs]
+        except IndexError:
+            raise Exception('Pruned indices running out of bounds.')
 
-        #print('last_azimuth', self.last_azimuth)
-        #print('inx', idxs)
+    def pruning_per_step(self,  trim=True):
+        """
+              generate view of the iso that only contains the longests route per azimuth segment
 
-        # print("rpm = ",boat.get_rpm())
-        # print("Used fuel", boat.get_fuel_per_time(delta_time))
+              Binned statistic.
+              +            iso2 = prune_isochrone(iso2, 'azi02', 's02', bins, True)
+              print('iso2 ',iso2)  #
+
+                    Parameters:
+                    iso: isochrone dictionary
+                    x: values to binarize
+                    y: values to apply max to
+                    bins: bins edges, dimension is n_bins + 1
+                    trim: whether return just one of max values
+                    Returns:
+                        pruned isochrone dictionary with max values in each bin
+                   """
+        debug = True
+        if(debug): print('Pruning...')
+
+        mean_dist = np.mean(self.full_dist_traveled)
+        gcr_point = geod.direct(
+            [self.start[0]],
+            [self.start[1]],
+            self.gcr_azi, mean_dist)
+
+        new_azi = geod.inverse(
+            gcr_point['lat2'],
+            gcr_point['lon2'],
+            [self.finish[0]],
+            [self.finish[1]]
+        )
+
+        if (debug): print('mean azimuth', new_azi['azi1'])
+
+        azi0s = np.repeat(
+            new_azi['azi1'],
+            self.prune_segments + 1)
+
+        # determine bins
+        delta_hdgs = np.linspace(
+            -self.prune_sector_deg_half,
+            +self.prune_sector_deg_half,
+            self.prune_segments + 1)  # -90,+90,181
+
+        bins = azi0s - delta_hdgs
+        bins = np.sort(bins)
+
+        self.pruning(trim, bins)
 
     def define_variants_per_step(self):
         self.define_variants()
@@ -161,6 +163,12 @@ class IsoBased(RoutingAlg):
             raise ValueError('Prune sector does not contain all variants. Please adjust settings. (variant_segments=' +
                              str(self.variant_segments) + ', variant_increments_deg=' + str(self.variant_increments_deg)
                              + ', prune_sector_deg_half=' + str(self.prune_sector_deg_half))
+        if ((self.variant_segments % 2)!=0):
+            raise ValueError('Please provide an even number of variant segments, you chose: ' + str(self.variant_segments))
+
+        if ((self.prune_segments % 2)!=0):
+            raise ValueError(
+                'Please provide an even number of prune segments, you chose: ' + str(self.prune_segments))
 
     def get_final_index(self):
         idx = np.argmax(self.full_dist_traveled)

@@ -32,13 +32,13 @@ DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/202
 DEFAULT_GFS_MODEL = '2020111600'
 
 # Isochrone routing parameters
-ROUTER_HDGS_SEGMENTS = 90 #6            #number of headings : put even number!!   #6
+ROUTER_HDGS_SEGMENTS = 90 #6            #total number of headings : put even number!!   #6
 ROUTER_HDGS_INCREMENTS_DEG = 2 #30         #increment of headings
 ROUTER_RPM_SEGMENTS = 1
 ROUTER_RPM_INCREMENTS_DEG = 1
 ISOCHRONE_EXPECTED_SPEED_KTS = 8
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91    #angular range of azimuth that is considered for pruning (only one half)
-ISOCHRONE_PRUNE_SEGMENTS = 36          #number of azimuth bins that are used for pruning #3
+ISOCHRONE_PRUNE_SEGMENTS = 36          #total number of azimuth bins that are used for pruning in prune sector which is 2x ISOCHRONE_PRUNE_SECTOR_DEG_HALF : put even number ! #3
 
 # boat settings
 DEFAULT_BOAT = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/polar-ITA70.csv'  #contains some boat specifics
