@@ -121,4 +121,53 @@ def test_pruning_select_correct_idxs():
     #utils.print_line()
     #ra.print_ra()
 
+'''
+    test whether IsoBased.update_position() updates current_azimuth, lats/lons_per_step, dist_per_step correctly
+'''
+def test_update_position():
+    lat_start = 51.289444
+    lon_start = 6.766667
+    lat_end = 60.293333
+    lon_end = 5.218056
+    dist_travel = 1007.091*1000
+    az = 355.113
+    az_till_start = 330.558
+
+    ra = create_dummy_ra_object()
+    ra.lats_per_step = np.array([[lat_start,lat_start,lat_start,lat_start]])
+    ra.lons_per_step = np.array([[lon_start,lon_start,lon_start,lon_start]])
+    ra.azimuth_per_step = np.array([[0,0,0,0]])
+    ra.dist_per_step = np.array([[0,0,0,0]])
+    ra.current_variant = np.array([az,az,az,az])
+
+    dist = np.array([dist_travel,dist_travel,dist_travel,dist_travel])
+
+    ra.update_position(dist)
+
+    lats_test = np.array([
+        [lat_end, lat_end, lat_end, lat_end],
+        [lat_start,lat_start,lat_start,lat_start]]
+    )
+    lons_test = np.array([
+        [lon_end, lon_end, lon_end, lon_end],
+        [lon_start, lon_start, lon_start, lon_start]]
+    )
+    dist_test = np.array([
+        [dist_travel,dist_travel,dist_travel,dist_travel],
+        [0, 0, 0, 0]
+    ])
+    az_test = np.array([
+        #[az_till_start,az_till_start,az_till_start,az_till_start],
+        [az,az,az,az],
+        [0,0,0,0]
+    ])
+
+    assert np.allclose(lats_test, ra.lats_per_step, 0.01)
+    assert np.allclose(lons_test, ra.lons_per_step, 0.01)
+    assert np.allclose(ra.current_variant,np.array([az_till_start,az_till_start,az_till_start,az_till_start]), 0.1)
+    assert np.array_equal(ra.dist_per_step,dist_test)
+    assert np.array_equal(ra.azimuth_per_step,az_test)
+
+
+
 
