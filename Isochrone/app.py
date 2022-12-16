@@ -9,6 +9,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import router
 from polars import *
 from weather import *
+from Constraints import *
 
 # App Config.
 app = Flask(__name__)
@@ -123,6 +124,15 @@ def plot_map():
 
     fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
+    # *******************************************
+    # initialise constraints
+    pars = ConstraintPars()
+    land_crossing = LandCrossing()
+
+    constraint_list = ConstraintsList(pars)
+    constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.print_settings()
+
     '''min_time_route = router.modified_isochrone_routing(
         start, finish,
         boat,
@@ -138,6 +148,7 @@ def plot_map():
         start, finish,
         boat,
         wt,
+        constraint_list,
         start_time,
         delta_fuel, routing_steps,
         params,

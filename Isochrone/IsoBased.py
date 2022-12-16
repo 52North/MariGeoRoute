@@ -32,7 +32,7 @@ class IsoBased(RoutingAlg):
                     self.lats_per_step.shape[0]))
 
     def pruning(self, trim, bins):
-        debug = True
+        debug = False
         if (debug):
             print('binning for pruning', bins)
             print('current courses', self.current_azimuth)
@@ -93,7 +93,7 @@ class IsoBased(RoutingAlg):
                     Returns:
                         pruned isochrone dictionary with max values in each bin
                    """
-        debug = True
+        debug = False
         if(debug): print('Pruning...')
 
         mean_dist = np.mean(self.full_dist_traveled)
@@ -189,10 +189,22 @@ class IsoBased(RoutingAlg):
         self.full_time_traveled += delta_time
         self.time += dt.timedelta(seconds=delta_time)
 
-    def update_position(self, dist):
+    def check_bearing(self, dist):
+        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
+        #ut.print_step('move=' + str(move),1)
+        return move
+
+    def check_constraints(self, move, constraint_list):
         debug = False
 
-        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
+        is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
+        if(debug): ut.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
+        is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], move['lat2'], self.lons_per_step[0], move['lon2'], self.time, is_constrained)
+        if(debug): ut.print_step('is_constrained after checking' + str(is_constrained),1)
+        return is_constrained
+
+    def update_position(self, move, is_constrained, dist):
+        debug = False
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
@@ -213,13 +225,10 @@ class IsoBased(RoutingAlg):
         self.current_variant = gcrs['azi1']
         self.current_azimuth = gcrs['azi1']
 
-        # remove those which ended on land
-        is_on_land = globe.is_land(move['lat2'], move['lon2'])
-        #print('is_on_land', is_on_land)
-        gcrs['s12'][is_on_land] = 0
-        crosses_land = self.crosses_land()
-        gcrs['s12'][crosses_land] = 0
+        gcrs['s12'][is_constrained] = 0
         self.full_dist_traveled = gcrs['s12']
+        if(debug):
+            print('full_dist_traveled:', self.full_dist_traveled)
 
 
 

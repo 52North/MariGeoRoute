@@ -1,6 +1,8 @@
 import numpy as np
 import datetime as dt
 import utils as ut
+import time
+
 from polars import Boat
 from typing import NamedTuple
 from geovectorslib import geod
@@ -12,6 +14,7 @@ from matplotlib.figure import Figure
 import graphics
 
 import utils
+from Constraints import *
 
 
 class RoutingAlg():
@@ -153,7 +156,7 @@ class RoutingAlg():
     def get_current_speed(self):
         pass
 
-    def recursive_routing(self, boat: Boat, wt : WeatherCond, verbose=False):
+    def recursive_routing(self, boat: Boat, wt : WeatherCond, constraints_list : ConstraintsList, verbose=False):
         """
             Progress one isochrone with pruning/optimising route for specific time segment
 
@@ -180,7 +183,7 @@ class RoutingAlg():
             print('Step ', i)
 
             self.define_variants_per_step()
-            self.move_boat_direct(wt, boat)
+            self.move_boat_direct(wt, boat, constraints_list)
             self.pruning_per_step(True)
 
         self.final_pruning()
@@ -223,7 +226,7 @@ class RoutingAlg():
     def define_initial_variants(self):
         pass
 
-    def move_boat_direct(self, wt : WeatherCond, boat: Boat):
+    def move_boat_direct(self, wt : WeatherCond, boat: Boat, constraint_list: ConstraintsList):
         """
                 calculate new boat position for current time step based on wind and boat function
             """
@@ -244,7 +247,10 @@ class RoutingAlg():
         #delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(boat, wind, bs)
 
-        self.update_position(dist)
+        move = self.check_bearing(dist)
+        is_constrained = self.check_constraints(move, constraint_list)
+
+        self.update_position(move, is_constrained, dist)
         self.update_time(delta_time)
         self.update_fuel(delta_fuel)
         self.count += 1
@@ -278,45 +284,6 @@ class RoutingAlg():
 
     def check_variant_def(self):
         pass
-
-    def crosses_land(self):
-        debug = False
-
-        LandCrossingSteps = 10
-        delta_lats = (self.lats_per_step[0, :] - self.lats_per_step[1, :]) / LandCrossingSteps
-        delta_lons = (self.lons_per_step[0, :] - self.lons_per_step[1, :]) / LandCrossingSteps
-        x0 = self.lats_per_step[1, :]
-        y0 = self.lons_per_step[1, :]
-        if debug: print('lats_per_step shape',  self.lats_per_step.shape[1] )
-        is_on_land = [False for i in range(0, self.lats_per_step.shape[1])]
-
-        if(debug):
-            print('Moving from (' + str(self.lats_per_step[1, :]) + ',' + str(self.lons_per_step[1, :]) + ') to (' + str(self.lats_per_step[0, :]) + ',' + str(self.lons_per_step[0, :]))
-            print('x0=' + str(x0) + ', y0=' + str(y0))
-            print('is_on_land', is_on_land)
-            print('delta_lats', delta_lats)
-            print('delta_lons', delta_lons)
-
-        for iStep in range(0, LandCrossingSteps):
-            x = x0 + delta_lats
-            y = y0 + delta_lons
-            if (debug):
-                print('     iStep=', iStep)
-                print('     x=', x)
-                print('     y=', y)
-
-            is_on_land_temp = globe.is_land(x,y)
-            is_on_land = is_on_land + is_on_land_temp
-            if debug: print('is_on_land', is_on_land)
-            x0 = x
-            y0 = y
-
-
-        #if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
-        #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
-        #    raise ValueError(exc)
-
-        return is_on_land
 
     def define_variants_per_step(self):
         pass

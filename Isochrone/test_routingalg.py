@@ -5,6 +5,14 @@ import datetime
 
 import utils
 from IsoBased import IsoBased
+from Constraints import *
+
+def generate_dummy_constraint_list():
+    pars = ConstraintPars()
+    pars.resolution = 1./10
+
+    constraint_list = ConstraintsList(pars)
+    return constraint_list
 
 def create_dummy_ra_object():
     start = (30, 45)
@@ -120,11 +128,69 @@ def test_pruning_select_correct_idxs():
 
     #utils.print_line()
     #ra.print_ra()
+'''
+    test shape and content of 'move' for known distance, start and end points
+'''
+def test_check_bearing():
+    lat_start = 51.289444
+    lon_start = 6.766667
+    lat_end = 60.293333
+    lon_end = 5.218056
+    dist_travel = 1007.091*1000
+    az = 355.113
+
+    ra = create_dummy_ra_object()
+    ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
+    ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
+    ra.current_variant = np.array([az,az,az,az])
+
+    dist = np.array([dist_travel, dist_travel, dist_travel, dist_travel])
+
+    lats_test = np.array([
+        [lat_end, lat_end, lat_end, lat_end],
+        [lat_start, lat_start, lat_start, lat_start]]
+    )
+    lons_test = np.array([
+        [lon_end, lon_end, lon_end, lon_end],
+        [lon_start, lon_start, lon_start, lon_start]]
+    )
+
+    ra.print_ra()
+    move = ra.check_bearing(dist)
+
+    #print('lats_test[0]', lats_test[0])
+    #print('lons_test[0]', lons_test[0])
+    assert np.allclose(lats_test[0], move['lat2'], 0.01)
+    assert np.allclose(lons_test[0], move['lon2'], 0.01)
+
+'''
+    test results for elements of is_constrained
+'''
+def test_check_constraints_land_crossing():
+    move = {'lat2' : np.array([52.70, 53.55]),  #1st point: land crossing (failure), 2nd point: no land crossing(success)
+            'lon2' : np.array([4.04, 5.45])}
+
+    ra = create_dummy_ra_object()
+    ra.lats_per_step = np.array([[52.76, 53.45]])
+    ra.lons_per_step = np.array([[5.40, 3.72]])
+
+    land_crossing = LandCrossing()
+    wave_height = WaveHeight()
+    wave_height.current_wave_height = np.array([5, 5])
+
+    #is_constrained = [False for i in range(0, lat.shape[1])]
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.add_neg_constraint(wave_height)
+    is_constrained = ra.check_constraints(move, constraint_list)
+    assert is_constrained[0] == 1
+    assert is_constrained[1] == 0
 
 '''
     test whether IsoBased.update_position() updates current_azimuth, lats/lons_per_step, dist_per_step correctly
+        - boat crosses land
 '''
-def test_update_position():
+def test_update_position_fail():
     lat_start = 51.289444
     lon_start = 6.766667
     lat_end = 60.293333
@@ -142,7 +208,18 @@ def test_update_position():
 
     dist = np.array([dist_travel,dist_travel,dist_travel,dist_travel])
 
-    ra.update_position(dist)
+    land_crossing = LandCrossing()
+    wave_height = WaveHeight()
+    wave_height.current_wave_height = np.array([5, 5, 5, 5])
+
+    # is_constrained = [False for i in range(0, lat.shape[1])]
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.add_neg_constraint(wave_height)
+
+    move = ra.check_bearing(dist)
+    constraints = ra.check_constraints(move, constraint_list)
+    ra.update_position(move, constraints, dist)
 
     lats_test = np.array([
         [lat_end, lat_end, lat_end, lat_end],
@@ -162,12 +239,50 @@ def test_update_position():
         [0,0,0,0]
     ])
 
+
     assert np.allclose(lats_test, ra.lats_per_step, 0.01)
     assert np.allclose(lons_test, ra.lons_per_step, 0.01)
     assert np.allclose(ra.current_variant,np.array([az_till_start,az_till_start,az_till_start,az_till_start]), 0.1)
     assert np.array_equal(ra.dist_per_step,dist_test)
     assert np.array_equal(ra.azimuth_per_step,az_test)
 
+    assert np.array_equal(ra.full_dist_traveled, np.array([0,0,0,0]))
 
 
+'''
+    test whether IsoBased.update_position() updates current_azimuth, lats/lons_per_step, dist_per_step correctly
+        - no land crossing
+'''
+def test_update_position_success():
+    lat_start = 53.55
+    lon_start = 5.45
+    lat_end = 53.45
+    lon_end = 3.72
+    dist_travel = 1007.091*1000
+    az = 355.113
+    az_till_start = 330.558
 
+    ra = create_dummy_ra_object()
+    ra.lats_per_step = np.array([[lat_start,lat_start,lat_start,lat_start]])
+    ra.lons_per_step = np.array([[lon_start,lon_start,lon_start,lon_start]])
+    ra.azimuth_per_step = np.array([[0,0,0,0]])
+    ra.dist_per_step = np.array([[0,0,0,0]])
+    ra.current_variant = np.array([az,az,az,az])
+
+    dist = np.array([dist_travel,dist_travel,dist_travel,dist_travel])
+
+    land_crossing = LandCrossing()
+    wave_height = WaveHeight()
+    wave_height.current_wave_height = np.array([5, 5, 5, 5])
+
+    # is_constrained = [False for i in range(0, lat.shape[1])]
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.add_neg_constraint(wave_height)
+
+    move = ra.check_bearing(dist)
+    constraints = ra.check_constraints(move, constraint_list)
+    ra.update_position(move, constraints, dist)
+
+    no_constraints = ra.full_dist_traveled > 0
+    assert np.array_equal(no_constraints, np.array([1,1,1,1]))
