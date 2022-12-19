@@ -189,8 +189,11 @@ class WeatherCond():
             raise Exception(ex)
 
         wind = self.wind_functions[idx]
-        twa = wind['twa'](coordinate)
-        tws = wind['tws'](coordinate)
+        try:
+            twa = wind['twa'](coordinate)
+            tws = wind['tws'](coordinate)
+        except:
+            raise Exception('Running out of weather map!')
 
         return {'twa': twa, 'tws': tws}
 

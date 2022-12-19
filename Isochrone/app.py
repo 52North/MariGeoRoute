@@ -86,6 +86,7 @@ def plot_map():
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
     windfile = app.config['DEFAULT_GFS_FILE']
+    coursesfile = app.config['COURSES_FILE']
     delta_time = app.config['DELTA_TIME_FORECAST']
     delta_fuel = app.config['DELTA_FUEL']
     hours = app.config['TIME_FORECAST']
@@ -100,9 +101,9 @@ def plot_map():
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_single_pars()
+    #boat.init_hydro_model_single_pars()
     #boat.init_hydro_model(windfile)
-    #boat.init_hydro_model_Route(windfile)
+    boat.init_hydro_model_Route(windfile, coursesfile)
 
     boat.set_boat_speed(12)
     boat.calibrate_simple_fuel()

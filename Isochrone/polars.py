@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import math
 import matplotlib.pyplot as plt
+import datetime as dt
 import netCDF4 as nc
 from scipy.interpolate import RegularGridInterpolator
 import xarray as xr
@@ -39,6 +40,8 @@ class Boat:
 class Tanker(Boat):
     rpm: int
     hydro_model: mariPower.ship
+    environment_path: str
+    courses_path: str
 
     def __init__(self, rpm):
         Boat.__init__(self)
@@ -71,11 +74,13 @@ class Tanker(Boat):
 
     def init_hydro_model_NetCDF(self, netCDF_filepath):
         self.hydro_model = mariPower.ship.CBT()
+        self.environment_path = netCDF_filepath
         Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
-    def init_hydro_model_Route(self, netCDF_filepath):
+    def init_hydro_model_Route(self, filepath_env, filepath_courses):
         self.hydro_model = mariPower.ship.CBT()
-        Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerRoute(self.hydro_model, netCDF_filepath)
+        self.environment_path = filepath_env
+        self.courses_path = filepath_courses
 
     def set_boat_speed(self, speed):
         self.speed = speed
@@ -180,7 +185,7 @@ class Tanker(Boat):
             ut.print_step('power consumption' + str(P))
         return P
 
-    def get_netCDF_courses(self, courses, lats,lons, time):
+    def write_netCDF_courses(self, courses, lats,lons, time):
         debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
 
@@ -221,30 +226,34 @@ class Tanker(Boat):
 
         ds = df.to_xarray()
         lon_ind = np.unique(lons, return_index=True)[1]
-        time_ind = np.unique(time, return_index=True)[1]
         lons = [lons[index] for index in sorted(lon_ind)]
-        time_read = [time[index] for index in sorted(time_ind)]
+        time_reshape = time.reshape(ds['lat'].shape[0], ds['it'].shape[0])[:,0]
 
         ds["lon"] = (['lat'], lons)
-        ds["time"] = (['lat'], time_read)
+        ds["time"] = (['lat'], time_reshape)
         assert ds['lon'].shape == ds['lat'].shape
         assert ds['time'].shape == ds['lat'].shape
         #np.set_printoptions(threshold=sys.maxsize)
 
         if(debug): print('xarray DataSet', ds)
-        return ds
+
+        ds.to_netcdf(self.courses_path + str())
+        if (debug):
+            ds_read = xr.open_dataset(self.courses_path)
+            print('read data set', ds_read)
 
     def extract_fuel_from_netCDF(self, ds):
         debug = False
         if(debug): ut.print_step('Dataset with fuel:' + str(ds),1)
 
-        power_read = ds['power']
+        power_read = ds['Power_delivered']
         power_flattened = power_read.to_numpy().flatten()
 
         if(debug):
             ut.print_step('Dataset with fuel' + str(ds),1)
             ut.print_step('original shape power' + str(power_read.shape), 1)
             ut.print_step('flattened shape power' + str(power_flattened.shape), 1)
+            ut.print_step('power result' + str(power_flattened))
 
         return power_flattened
 
@@ -259,16 +268,60 @@ class Tanker(Boat):
             ut.print_step('power new shape' + str(power.shape),1)
             ut.print_step('ds' + str(ds),1)
 
-        ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
-        ds_read = xr.open_dataset("/home/kdemmich/MariData/Code/sample.nc")
+        ds.to_netcdf(self.courses_path)
+        ds_read = xr.open_dataset(self.courses_path)
         if(debug): print('read data set', ds_read)
 
-        return ds
+    def get_fuel_netCDF(self):
+        ship = mariPower.ship.CBT()
+        mariPower.__main__.PredictPowerRoute(ship, self.courses_path, self.environment_path)
+
+        ds_read = xr.open_dataset(self.courses_path)
+        return ds_read
+
+    def get_fuel_netCDF_loop(self):
+        debug = False
+        filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
+        ds = xr.load_dataset(self.courses_path)
+        n_vars = ds['it'].shape[0]
+        ds_merged = xr.Dataset()
+
+        if(debug):
+            ut.print_line()
+            ut.print_step('get_fuel_netCDF_loop: loop over all variants per space point', 0)
+            ut.print_step('original dataset: ' + str(ds), 0)
+
+        for ivar in range(1,n_vars+1):
+            ds_read_temp = ds.isel(it=[ivar-1])
+            ds_read_temp.coords['it'] = [1]
+            ds_read_temp.to_netcdf(filename_single, mode = 'w')
+            ds_read_temp.close()
+            ship = mariPower.ship.CBT()
+            if(debug):
+                ds_read_test = xr.load_dataset(filename_single)
+                courses_test = ds_read_test['courses']
+                ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
+
+            mariPower.__main__.PredictPowerRoute(ship, filename_single, self.environment_path)
+
+            ds_temp = xr.load_dataset(filename_single)
+            ds_temp.coords['it'] = [ivar]
+            if ivar == 1:
+                ds_merged = ds_temp.copy()
+            else:
+                ds_merged = xr.concat([ds_merged, ds_temp], dim="it")
+            if(debug): ut.print_step('step ' + str(ivar) +  ': merged dataset:' + str(ds_merged),1)
+        ds_merged['lon'] = ds_merged['lon'].sel(it=1).drop('it')
+        ds_merged['time'] = ds_merged['time'].sel(it=1).drop('it')
+
+        if (debug): ut.print_step('final merged dataset:' + str(ds_merged))
+        return ds_merged
+
 
     def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
-        ds = self.get_netCDF_courses(courses, lats, lons, time)
-        #ds = self.get_fuel_netCDF(ds)
-        ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
+        self.write_netCDF_courses(courses, lats, lons, time)
+        ds = self.get_fuel_netCDF_loop()
+        #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
         power = self.extract_fuel_from_netCDF(ds)
 
         return power
