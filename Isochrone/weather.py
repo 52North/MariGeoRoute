@@ -3,7 +3,9 @@ import numpy as np
 import datetime as dt
 import xarray as xr
 import bbox as bbox
+import matplotlib
 from bbox import BBox2D, XYXY
+import sys
 
 import pygrib as pg
 
@@ -41,6 +43,61 @@ class WeatherCond():
         print('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end))
         print('nof time steps', self.time_steps)
         utils.print_line()
+
+    def close_env_file(self):
+        self.ds.close()
+
+    def adjust_depth_format(self, depth_path):
+        debug = True
+        ds_depth = xr.open_dataset(depth_path)
+        ds_depth = ds_depth.sortby("latitude")
+        ds_depth.load()
+        ds_depth_pos = ds_depth.where(ds_depth.longitude <= 180, drop=True)
+        ds_depth_neg = ds_depth.where(ds_depth.longitude > 180, drop=True)
+        ds_depth_neg['longitude'] = ds_depth_neg['longitude'] - 360
+        ds_depth = ds_depth_pos.merge(ds_depth_neg)
+
+        if(debug):
+            print('ds_depth_pos', ds_depth_pos)
+            print('ds_depth_neg', ds_depth_neg)
+            print('ds_depth new', ds_depth)
+
+        return ds_depth
+
+    def add_depth_to_EnvData(self, depth_path):
+        #ds_lat = self.ds['latitude'].to_numpy()
+        #ds_lon = self.ds['longitude'].to_numpy()
+
+
+        ds_depth = self.adjust_depth_format(depth_path)
+        #depth_lat = ds_depth['latitude'].to_numpy()
+        #depth_lon = ds_depth['longitude'].to_numpy()
+
+        #lat_int = np.intersect1d(ds_lat, depth_lat)
+        #lon_int = np.intersect1d(ds_lon, depth_lon)
+        #np.set_printoptions(threshold=sys.maxsize)
+        #print('lat_int', lat_int)
+        #print('ds_lat', ds_lat)
+        #print('depth_lat', depth_lat)
+        #print('lon_int', lon_int)
+        #print('ds_lon', ds_lon)
+        #print('depth_lon', depth_lon)
+
+        #print("sorted", ds_depth)
+        #ds_depth.load()
+
+        ds_depth_int = ds_depth.interp_like(self.ds, method="linear")   #TODO: interpolation raises discrepancies of +-40m
+        depth = ds_depth_int['deptho'].to_numpy()
+        #depth = ds_depth['deptho'].sel(latitude = lat_int, longitude = lon_int)
+        #self.ds = self.ds.sel(latitude = lat_int, longitude = lon_int)
+        #depth = ds_depth['deptho'].to_numpy()
+        depth = np.nan_to_num(depth)
+
+        self.ds['depth'] = (['latitude', 'longitude'], depth)
+        arr = self.ds['depth'].to_numpy()
+        print(arr)
+        self.ds['depth'].plot()
+        matplotlib.pyplot.show()
 
     @property
     def time_res(self):

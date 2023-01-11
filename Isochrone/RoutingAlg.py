@@ -177,6 +177,7 @@ class RoutingAlg():
             """
         self.check_settings()
         self.define_initial_variants()
+        #start_time=time.time()
         # self.print_shape()
         for i in range(self.ncount):
             utils.print_line()
@@ -185,6 +186,7 @@ class RoutingAlg():
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
             self.pruning_per_step(True)
+            #ut.print_current_time('move_boat: Step=' + str(i), start_time)
 
         self.final_pruning()
         route = self.terminate(boat, wt)

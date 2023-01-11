@@ -86,6 +86,7 @@ def plot_map():
     model = app.config['DEFAULT_GFS_MODEL']
     boatfile = app.config['DEFAULT_BOAT']
     windfile = app.config['DEFAULT_GFS_FILE']
+    depthfile = app.config['DEFAULT_DEPTH_FILE']
     coursesfile = app.config['COURSES_FILE']
     delta_time = app.config['DELTA_TIME_FORECAST']
     delta_fuel = app.config['DELTA_FUEL']
@@ -116,6 +117,7 @@ def plot_map():
     # *******************************************
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    wt.add_depth_to_EnvData(depthfile)
     #wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     #wt.check_ds_format()
     wt.set_map_size(lat1, lon1, lat2, lon2)
@@ -129,9 +131,14 @@ def plot_map():
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
+    water_depth = WaterDepth(wt)
+    water_depth.plot_depth_map_from_file(depthfile, 53, 7, 58, 12)
+
+    raise Exception('Stop here')
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.add_neg_constraint(water_depth)
     constraint_list.print_settings()
 
     '''min_time_route = router.modified_isochrone_routing(

@@ -1,8 +1,12 @@
 import numpy as np
 import datetime as dt
 from global_land_mask import globe
+import cartopy.crs as ccrs
+import cartopy.feature as cf
 
 import utils as ut
+import xarray as xr
+import matplotlib.pyplot as plt
 from weather import WeatherCond
 
 class Constraint():
@@ -29,6 +33,9 @@ class Constraint():
     def print_debug(self, message):
         print(self.name + str(': ') + str(message))
 
+    def print_info(self):
+        pass
+
 
 class PositiveConstraint(Constraint):
     def __init__(self,name):
@@ -39,23 +46,28 @@ class NegativeContraint(Constraint):
         Constraint.__init__(self, name)
         self.message = 'At least one point discarded as '
 
+class NegativeConstraintFromWeather(NegativeContraint):
+    wt : WeatherCond
+    def __init__(self, name, weather):
+        NegativeContraint.__init__(self, name)
+        self.wt = weather
+
+    def check_weather(self, lat, lon, time):
+        pass
+
 class ConstraintPars():
     resolution : int
     bCheckEndPoints : bool
     bCheckCrossing : bool
-    bConsiderLand : bool
     def __init__(self):
         self.resolution = 1./10
         self.bCheckEndPoints = True
         self.bCheckCrossing = True
-        self.bConsiderLand = True
 
     def print(self):
         print('Print settings of Constraint Pars:')
         ut.print_step('resolution=' + str(self.resolution))
         ut.print_step('bCheckEndPoints=' + str(self.bCheckEndPoints))
-        ut.print_step('bCheckCrossing=' + str(self.bCheckCrossing))
-        ut.print_step('bConsiderLand=' + str(self.bConsiderLand))
 
 class ConstraintsList():
     pars: ConstraintPars
@@ -80,11 +92,21 @@ class ConstraintsList():
             ut.print_step(str(self.constraints_crossed[iConst]),1)
     def print_settings(self):
         self.pars.print()
+        self.print_active_constraints()
+
+    def print_active_constraints(self):
+        for Const in self.negative_constraints:
+            Const.print_info()
+
+        for Const in self.positive_constraints:
+            Const.print_info()
+
     def shall_I_pass(self, lat, lon, time):
         is_constrained = [False for i in range(0, lat.shape[1])]
 
-        if self.pars.bCheckEndPoints: is_constrained=self.safe_endpoint(lat, lon, time, is_constrained)
         if self.pars.bCheckCrossing: is_constrained=self.safe_crossing(lat,lon,time)
+        elif self.pars.bCheckEndPoints: is_constrained=self.safe_endpoint(lat, lon, time, is_constrained)
+        if is_constrained.any() : self.print_constraints_crossed()
 
     def split_route(self):
         pass
@@ -99,11 +121,11 @@ class ConstraintsList():
                 print('is_constrained_temp: ', is_constrained_temp)
                 print('is_constrained: ', is_constrained)
             is_constrained += is_constrained_temp
-        if (is_constrained.any()) & (debug): self.print_constraints_crossed()
+        #if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, time, is_constrained):
-        debug = False
+        debug = True
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
         delta_lons = (lon_end - lon_start) * self.pars.resolution
@@ -165,7 +187,11 @@ class LandCrossing(NegativeContraint):
         #self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
         return globe.is_land(lat, lon)
 
-class WaveHeight(NegativeContraint):
+    def print_info(self):
+        ut.print_step('no land crossing')
+
+
+class WaveHeight(NegativeConstraintFromWeather):
     current_wave_height : np.ndarray
     max_wave_height: float
 
@@ -182,6 +208,67 @@ class WaveHeight(NegativeContraint):
         #print('current_wave_height:', self.current_wave_height)
         return self.current_wave_height > self.max_wave_height
 
+    def print_info(self):
+        ut.print_step('maximum wave height=' + str(self.max_wave_height) + 'm')
+
+class WaterDepth(NegativeConstraintFromWeather):
+    current_depth : np.ndarray
+    min_depth: float
+
+    def __init__(self, weather):
+        NegativeConstraintFromWeather.__init__(self,'WaterDepth', weather)
+        self.message += 'water not deep enough!'
+        self.resource_type = 0
+        self.current_depth = np.array([-99])
+        self.min_depth = 20
+
+    def constraint_on_point(self, lat, lon, time):
+        self.check_weather(lat, lon, time)
+        returnvalue = self.current_depth > -self.min_depth
+        print('current_depth:', self.current_depth)
+        print('returnvalue', returnvalue)
+        return returnvalue
+
     def check_weather(self, lat, lon, time):
-        #self.print_debug('checking weather')
-        pass
+
+        print('lat shape', lat.shape)
+        print('lon shape', lon.shape)
+        self.current_depth = np.full(lat.shape,-99)
+
+        for i in range(0,lat.shape[0]):
+            self.current_depth[i] = self.get_current_depth(lat[i], lon[i])
+
+    def print_info(self):
+        ut.print_step('minimum water depth=' + str(self.min_depth) + 'm')
+
+    def get_current_depth(self, lat, lon):
+        #rounded_ds = self.wt.ds['depth'].interp(latitude = lat, longitude = lon, method='nearest').to_numpy()
+        return self.wt.ds['depth'].sel(latitude=lat, longitude=lon, method = "nearest", drop=True).to_numpy()
+        #return rounded_ds
+
+    def plot_depth_map_from_file(self, path, lat_start, lon_start, lat_end, lon_end):
+        level_diff = 10
+
+        ds_depth = xr.open_dataset(path)
+        depth = ds_depth['z'].where((ds_depth.lat > lat_start) & (ds_depth.lat < lat_end) & (ds_depth.lon > lon_start) & (ds_depth.lon < lon_end) & (ds_depth.z<0),drop=True)
+        #depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100) & (ds_depth.deptho<0) )
+
+        fig, ax = plt.subplots(figsize=(12, 10))
+        ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
+        depth.plot.contourf(ax=ax,
+                           # extend='max',
+                           # levels=np.arange(-60, 0, 0.1),  high-resolution contours
+                            levels = np.arange(-100,0,level_diff),
+                            transform=ccrs.PlateCarree())
+
+        fig.subplots_adjust(
+            left=0.0,
+            right=1,
+            bottom=0,
+            top=1,
+            wspace=0,
+            hspace=0)
+        ax.add_feature(cf.LAND)
+        ax.add_feature(cf.COASTLINE)
+
+        plt.show()
