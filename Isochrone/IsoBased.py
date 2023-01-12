@@ -44,6 +44,9 @@ class IsoBased(RoutingAlg):
         if trim:
             for i in range(len(bin_edges) - 1):
                 try:
+                    if(bin_stat[i]==0):
+                        #ut.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) + 'full_dist_traveled=' + str(self.full_dist_traveled))
+                        continue
                     idxs.append(
                         np.where(self.full_dist_traveled == bin_stat[i])[0][0])
                 except IndexError:

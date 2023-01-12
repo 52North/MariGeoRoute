@@ -117,10 +117,10 @@ def plot_map():
     # *******************************************
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.add_depth_to_EnvData(depthfile)
     #wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     #wt.check_ds_format()
-    wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.init_wind_functions()
     wt.init_wind_vectors()
     #vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
@@ -132,9 +132,7 @@ def plot_map():
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(wt)
-    water_depth.plot_depth_map_from_file(depthfile, 53, 7, 58, 12)
-
-    raise Exception('Stop here')
+    #water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)

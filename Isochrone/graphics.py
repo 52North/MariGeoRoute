@@ -96,18 +96,15 @@ def plot_barbs(fig, winds):
     v = winds['v']
     lats = winds['lats_u']
     lons = winds['lons_u']
-	
-    #comment in for CMEMS data
-    u = np.delete(u,1, 0)
-    v = np.delete(v, 1, 0)
-    lats = np.delete(lats, 1, 0)
-    lons = np.delete(lons, 1, 0)
 
-    rebinx=5  #CMEMS
-    rebiny=11
+    #rebinx=5  #CMEMS
+    #rebiny=11
 
     #rebinx=1   #NCEP
     #rebiny=1
+
+    rebinx= 20   #depth
+    rebiny= 20
 
     u = rebin(u, rebinx, rebiny)
     v = rebin(v, rebinx, rebiny)
@@ -163,8 +160,17 @@ def get_colour(i):
     return colours[i]
 
 def rebin(a,rebinx, rebiny):
-    if not ((a.shape[0] % rebinx) == 0): raise ValueError('Invalid rebinx')
-    if not ((a.shape[1] % rebiny) == 0): raise ValueError('Invalid rebiny')
+    modx=a.shape[0] % rebinx
+    mody=a.shape[1] % rebiny
+
+
+    if not (modx == 0):
+        for imod in range(0,modx):
+            a=np.delete(a,0,0)
+
+    if not (mody == 0):
+       for imod in range(0, mody):
+            a = np.delete(a, 0, 1)
 
     newshape_x = int(a.shape[0]/rebinx)
     newshape_y = int(a.shape[1]/rebiny)

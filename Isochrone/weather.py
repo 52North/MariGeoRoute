@@ -65,11 +65,18 @@ class WeatherCond():
         return ds_depth
 
     def add_depth_to_EnvData(self, depth_path):
-        #ds_lat = self.ds['latitude'].to_numpy()
-        #ds_lon = self.ds['longitude'].to_numpy()
+        try:
+            lat_start = self.map_size.x1
+            lat_end = self.map_size.x2
+            lon_start = self.map_size.y1
+            lon_end = self.map_size.y2
+        except:
+            raise Exception('Need to initialise weather data bounding box before adding depth data!')
 
+        ds_depth = xr.open_dataset(depth_path)
+        ds_depth = ds_depth.where((ds_depth.lat > lat_start) & (ds_depth.lat < lat_end) & (ds_depth.lon > lon_start) & (
+                    ds_depth.lon < lon_end) & (ds_depth.z < 0), drop=True)
 
-        ds_depth = self.adjust_depth_format(depth_path)
         #depth_lat = ds_depth['latitude'].to_numpy()
         #depth_lon = ds_depth['longitude'].to_numpy()
 
@@ -86,18 +93,18 @@ class WeatherCond():
         #print("sorted", ds_depth)
         #ds_depth.load()
 
-        ds_depth_int = ds_depth.interp_like(self.ds, method="linear")   #TODO: interpolation raises discrepancies of +-40m
-        depth = ds_depth_int['deptho'].to_numpy()
-        #depth = ds_depth['deptho'].sel(latitude = lat_int, longitude = lon_int)
-        #self.ds = self.ds.sel(latitude = lat_int, longitude = lon_int)
-        #depth = ds_depth['deptho'].to_numpy()
+        ds_depth = ds_depth.rename(lat="latitude", lon="longitude")
+        weather_int = self.ds.interp_like(ds_depth, method="linear")   
+
+        depth = ds_depth['z'].to_numpy()
         depth = np.nan_to_num(depth)
 
-        self.ds['depth'] = (['latitude', 'longitude'], depth)
-        arr = self.ds['depth'].to_numpy()
-        print(arr)
-        self.ds['depth'].plot()
-        matplotlib.pyplot.show()
+        weather_int['depth'] = (['latitude', 'longitude'], depth)
+        depth_test = weather_int['depth'].to_numpy()
+        if(np.isnan(depth_test).any()):
+            print('depth_test:', depth_test)
+            raise Exception('element of depth is nan!')
+        self.ds = weather_int
 
     @property
     def time_res(self):

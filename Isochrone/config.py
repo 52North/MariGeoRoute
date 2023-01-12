@@ -14,12 +14,12 @@ DPI = 96
 # SECRET_KEY = 'my precious'
 
 # Defaults - self-explanatory
-DEFAULT_MAP = [53, 7, 55, 12]
-DEFAULT_ROUTE = [53, 7, 55, 12] #english channel: [50.75, -0.13, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5]
+DEFAULT_MAP = [48, -2, 53, 5]
+DEFAULT_ROUTE = [50.3, 0, 51.90, 3.92]  #english channel: [50.75, -0.13, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
 TIME_FORECAST = 150     # [hours]
-ROUTING_STEPS = 14
+ROUTING_STEPS = 1 #14
 DELTA_TIME_FORECAST = 3600 # [seconds]
-DELTA_FUEL = 0.1*10000000*1 # [GW]
+DELTA_FUEL = 0.001*1000000000*1 # [GW]
 #DEFAULT_GFS_DATETIME = '2020111600' #NCEP
 DEFAULT_GFS_DATETIME = '2022070100' #CMEMS
 DEFAULT_GFS_HOUR = '06'

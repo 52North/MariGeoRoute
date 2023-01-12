@@ -131,30 +131,30 @@ class ConstraintsList():
         delta_lons = (lon_end - lon_start) * self.pars.resolution
         x0 = lat_start
         y0 = lon_start
-        if debug: print('lats_per_step shape', lat_start.shape[0])
 
-        if (debug):
-            print(
-                'Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
-                    lat_end) + ',' + str(lon_end))
-            print('x0=' + str(x0) + ', y0=' + str(y0))
-            print('is_on_land', is_constrained)
-            print('delta_lats', delta_lats)
-            print('delta_lons', delta_lons)
+        #if (debug):
+            #ut.print_step('Constraints: Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
+            #        lat_end) + ',' + str(lon_end), 0)
 
         nSteps = int(1. / self.pars.resolution)
         for iStep in range(0, nSteps):
             x = x0 + delta_lats
             y = y0 + delta_lons
-            if (debug):
-                print('     iStep=', iStep)
-                print('     x=', x)
-                print('     y=', y)
 
             is_constrained = self.safe_endpoint(x, y, time, is_constrained)
-            if debug: print('is_constrained', is_constrained)
             x0 = x
             y0 = y
+
+        if(debug):
+            lat_start_constrained = lat_start[is_constrained == 1]
+            lon_start_constrained = lon_start[is_constrained == 1]
+            lat_end_constrained = lat_end[is_constrained == 1]
+            lon_end_constrained = lon_end[is_constrained == 1]
+
+            if lat_start_constrained.shape[0] >0: ut.print_step('transitions constrained:', 1)
+            for i in range(0, lat_start_constrained.shape[0]):
+                ut.print_step('[' + str(lat_start_constrained[i]) + ',' + str(lon_start_constrained[i]) + '] to [' +
+                      str(lat_end_constrained[i]) + ',' + str(lon_end_constrained[i]) + ']', 2)
 
         # if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
         #    exc = 'Did not check destination, only checked lat=' + str(x0) + ', lon=' + str(y0)
@@ -225,14 +225,10 @@ class WaterDepth(NegativeConstraintFromWeather):
     def constraint_on_point(self, lat, lon, time):
         self.check_weather(lat, lon, time)
         returnvalue = self.current_depth > -self.min_depth
-        print('current_depth:', self.current_depth)
-        print('returnvalue', returnvalue)
+        #ut.print_step('current_depth:' + str(self.current_depth), 1)
         return returnvalue
 
     def check_weather(self, lat, lon, time):
-
-        print('lat shape', lat.shape)
-        print('lon shape', lon.shape)
         self.current_depth = np.full(lat.shape,-99)
 
         for i in range(0,lat.shape[0]):
@@ -242,9 +238,10 @@ class WaterDepth(NegativeConstraintFromWeather):
         ut.print_step('minimum water depth=' + str(self.min_depth) + 'm')
 
     def get_current_depth(self, lat, lon):
-        #rounded_ds = self.wt.ds['depth'].interp(latitude = lat, longitude = lon, method='nearest').to_numpy()
-        return self.wt.ds['depth'].sel(latitude=lat, longitude=lon, method = "nearest", drop=True).to_numpy()
-        #return rounded_ds
+        rounded_ds = self.wt.ds['depth'].interp(latitude = lat, longitude = lon, method='linear')
+        if np.isnan(rounded_ds):
+            raise Exception('Constraints: depth is nan!')
+        return rounded_ds
 
     def plot_depth_map_from_file(self, path, lat_start, lon_start, lat_end, lon_end):
         level_diff = 10
@@ -262,13 +259,14 @@ class WaterDepth(NegativeConstraintFromWeather):
                             transform=ccrs.PlateCarree())
 
         fig.subplots_adjust(
-            left=0.0,
+            left=0.05,
             right=1,
-            bottom=0,
-            top=1,
+            bottom=0.05,
+            top=0.95,
             wspace=0,
             hspace=0)
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
+        ax.gridlines(draw_labels=True)
 
         plt.show()
