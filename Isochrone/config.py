@@ -17,7 +17,7 @@ DPI = 96
 DEFAULT_MAP = [48, -2, 53, 5]
 DEFAULT_ROUTE = [50.3, 0, 51.90, 3.92]  #english channel: [50.75, -0.13, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
 TIME_FORECAST = 150     # [hours]
-ROUTING_STEPS = 1 #14
+ROUTING_STEPS = 14
 DELTA_TIME_FORECAST = 3600 # [seconds]
 DELTA_FUEL = 0.001*1000000000*1 # [GW]
 #DEFAULT_GFS_DATETIME = '2020111600' #NCEP
@@ -32,6 +32,7 @@ DEFAULT_GFS_RESOLUTION = '1p00'
 DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/77175d34-9006-11ed-b628-0242ac120003_Brighton_Rotterdam.nc'
 #DEFAULT_DEPTH_FILE = '/home/kdemmich/Downloads/ETOPO_2022_v1_30s_N90W180_bed.nc'
 DEFAULT_DEPTH_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/ETOPO_2022_v1_30s_N90W180_bed.nc'
+FIGURE_PATH='/home/kdemmich/MariData/Code/Figures'
 COURSES_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc'
 DEFAULT_GFS_MODEL = '2020111600'
 

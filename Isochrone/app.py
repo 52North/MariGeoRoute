@@ -88,6 +88,7 @@ def plot_map():
     windfile = app.config['DEFAULT_GFS_FILE']
     depthfile = app.config['DEFAULT_DEPTH_FILE']
     coursesfile = app.config['COURSES_FILE']
+    figurepath = app.config['FIGURE_PATH']
     delta_time = app.config['DELTA_TIME_FORECAST']
     delta_fuel = app.config['DELTA_FUEL']
     hours = app.config['TIME_FORECAST']
@@ -170,6 +171,9 @@ def plot_map():
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
+
+    #plot route in constraints
+    water_depth.plot_route_in_constraint(min_fuel_route['route'], graphics.get_colour(1), figurepath)
 
     return Response(output.getvalue(), mimetype='image/png')
 
