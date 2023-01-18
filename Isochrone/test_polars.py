@@ -273,5 +273,4 @@ def test_power_consumption_returned():
     print('ds:', ds)
 
 
-    assert 1==2
 

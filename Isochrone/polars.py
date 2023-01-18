@@ -1,9 +1,6 @@
-"""
-Boat polars file
-Have TWA(True wind Angle) and TWS (True Wind speed) value for calculate boat speed and properties
-
-
-"""
+## Classes Boat, Tanker, SailingBoat
+#
+#
 import numpy as np
 import pandas as pd
 import math
@@ -22,10 +19,13 @@ from mariPower import __main__
 from utils import knots_to_mps  # Convert  knot value in meter per second
 from weather import WeatherCond
 
+## Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
+# Tanker: implements interface to mariPower package which is used for power estimation.
+# SailingBoat: implements sailing boat as originally done in wind-router package. Deprecated. ToDo: can be deleted?
 
 class Boat:
-    speed: float
-    simple_fuel_model: xr.Dataset
+    speed: float                    #boat speed
+    simple_fuel_model: xr.Dataset   #xarray dataset containing
 
     def __init__(self):
         self.speed = -99
@@ -36,12 +36,36 @@ class Boat:
     def get_fuel_per_time(self):
         pass
 
+##
+# Class implementing connection to mariPower package.
+#
+# 'Flow' of information:
+# 1) Before starting the routing procedure, the routing tool writes the environmental data to a netCDF file (in the following: 'EnvData netCDF').
+# 2) The routing tool (WRT) writes the courses per space-time point to a netCDF file (in the following: 'courses netCDF') for which the power consumption will be requested.
+#       -> Tanker.write_netCDF_courses
+# 3) The WRT sends the paths to the 'EnvData netCDF' and the 'courses netCDF' to mariPower and requests the power calculation.
+#       -> Tanker.get_fuel_netCDF_loop
+# 4) The mariPower package writes the results for the power estimation to the 'courses netCDF'.
+# 5) The WRT extracts the power from the 'courses netCDF'.
+#       -> Tanker.extract_fuel_from_netCDF
+#
+# Steps 1), 3), and 5) are combined in the function
+#       -> Tanker.get_fuel_per_time_netCDF
+#
+#
+# Functions that are named something like *simple_fuel* are meant to be used as placeholders for the mariPower package. They should only be used for
+# testing purposes.
 
 class Tanker(Boat):
-    rpm: int
+    ## Boat properties
+    rpm: int                        #propeller revolutions per minute
+
+    ## Connection to hydrodynamic modeling
     hydro_model: mariPower.ship
-    environment_path: str
-    courses_path: str
+
+    ##additional information
+    environment_path: str           #path to netCDF for environmental data
+    courses_path: str               #path to netCDF which contains the power estimation per course
 
     def __init__(self, rpm):
         Boat.__init__(self)
@@ -72,11 +96,13 @@ class Tanker(Boat):
         print('     current dir', self.hydro_model.CurrentDirection)
         print('     current speed', self.hydro_model.CurrentSpeed)
 
-    def init_hydro_model_NetCDF(self, netCDF_filepath):
-        self.hydro_model = mariPower.ship.CBT()
-        self.environment_path = netCDF_filepath
-        Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
+    ## initialise mariPower.ship for communication of courses via arrays and passing of environmental data as netCDF
+    #def init_hydro_model_NetCDF(self, netCDF_filepath):
+    #    self.hydro_model = mariPower.ship.CBT()
+    #    self.environment_path = netCDF_filepath
+    #    Fx, driftAngle, ptemp, n, delta = mariPower.__main__.PredictPowerForNetCDF(self.hydro_model, netCDF_filepath)
 
+    ## initialise mariPower.ship for communication of courses via netCDF and passing of environmental data as netCDF (current standard)
     def init_hydro_model_Route(self, filepath_env, filepath_courses):
         self.hydro_model = mariPower.ship.CBT()
         self.environment_path = filepath_env
@@ -84,8 +110,10 @@ class Tanker(Boat):
 
     def set_boat_speed(self, speed):
         self.speed = speed
+
     def set_env_data_path(self,path):
         self.environment_path = path
+
     def set_courses_path(self, path):
         self.courses_path = path
 
@@ -95,6 +123,10 @@ class Tanker(Boat):
     def get_rpm(self):
         return self.rpm
 
+    ##
+    # function that implements a dummy model for the estimation of the fuel consumption. Only to be used for code
+    # testing, for which it minimises excecution time. Does not provide fully accurate estimations. Take care to initialise the simple model using
+    # calibrate_simple_fuel()
     def get_fuel_per_course_simple(self, course, wind_speed, wind_dir):
         debug = False
         angle = np.abs(course - wind_dir)
@@ -116,6 +148,9 @@ class Tanker(Boat):
     #    f *= delta_time / 3600 * 1 / 1000  # amount of fuel for this time interval
     #    return f
 
+    ##
+    # initiate estimation of power consumption in mariPower for one particular course and
+    # wind direction and speed as well as boat speed
     def get_fuel_per_course(self, course, wind_dir, wind_speed, boat_speed):
         # boat_speed = np.array([boat_speed])
         self.hydro_model.WindDirection = math.radians(wind_dir)
@@ -133,6 +168,8 @@ class Tanker(Boat):
 
         return ptemp
 
+    ##
+    # initialisation of simple fuel model that is used as dummy for accurate power estimation via mariPower
     def calibrate_simple_fuel(self):
         self.simple_fuel_model = xr.open_dataset(
             "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/SimpleFuelModel/simple_fuel_model.nc")
@@ -140,6 +177,10 @@ class Tanker(Boat):
         print('Initialising simple fuel model')
         print(self.simple_fuel_model)
 
+    ##
+    # function to write a simple fuel model to file which can be used as dummy for the power estimation with mariPower. The
+    # model only considers wind speed and angle as well as the boat speed. 'n_angle' times 'n_wind_speed' pairs of wind speed and wind angle
+    # are generated and send to mariPower. The calculated power consumption and wind data are written to file and can in the following be used as input for Tanker.calibrate_simple_fuel.
     def write_simple_fuel(self):
         n_angle = 10
         n_wind_speed = 20
@@ -169,8 +210,9 @@ class Tanker(Boat):
 
         print('Writing simple fuel model:')
         print(ds)
-        raise Exception('Stop here')
 
+    ##
+    # Initialise power estimation for a tuple of courses in dependence on wind speed and direction. The information is send to mariPower per course.
     def get_fuel_per_time(self, courses, wind):
         debug = False
 
@@ -188,6 +230,14 @@ class Tanker(Boat):
         if (debug):
             ut.print_step('power consumption' + str(P))
         return P
+
+    ##
+    # Writes netCDF which stores courses in dependence on latitude, longitude and time for further processing by mariPower.
+    # Several courses can be provided per space point. In this case, the arrays lats and lons need to be filled
+    # e.g. power estimation is requested for 3 courses (c1, c2, c3) for 1 space-time point (lat1, lon1) then:
+    #   courses = {c1, c2, c3}
+    #   lats = {lat1, lat1, lat1}
+    #   lons = {lon1, lon1, lon1}
 
     def write_netCDF_courses(self, courses, lats, lons, time):
         debug = False
@@ -246,6 +296,8 @@ class Tanker(Boat):
             ds_read = xr.open_dataset(self.courses_path)
             print('read data set', ds_read)
 
+    ##
+    # extracts power from 'courses netCDF' which has been written by mariPower and returns it as 1D array.
     def extract_fuel_from_netCDF(self, ds):
         debug = False
         if(debug): ut.print_step('Dataset with fuel:' + str(ds),1)
@@ -261,6 +313,9 @@ class Tanker(Boat):
 
         return power_flattened
 
+    ##
+    # dummy function uses to mimic writing of power estimation to 'courses netCDF'. Only used for testing purposes.
+    #
     def get_fuel_netCDF_dummy(self,ds, courses, wind):
         debug = False
 
@@ -276,6 +331,11 @@ class Tanker(Boat):
         ds_read = xr.open_dataset(self.courses_path)
         if(debug): print('read data set', ds_read)
 
+
+    ##
+    # Passes paths for 'courses netCDF' and 'environmental data netCDF' to mariPower and request estimation of power consumption.
+    # Is not yet working as explained for Tanker.get_fuel_netCDF_loop
+    #
     def get_fuel_netCDF(self):
         ship = mariPower.ship.CBT()
         mariPower.__main__.PredictPowerRoute(ship, self.courses_path, self.environment_path)
@@ -283,6 +343,13 @@ class Tanker(Boat):
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
 
+    ##
+    # @brief splits data in 'courses netCDF' one bunches per course per space point, sends them to mariPower separately and merges them again afterwards.
+    #
+    # mariPower can currently handle only requests with 1 course per space point. Thus, the data in the 'course netCDF' is split in
+    # several bunchs each one containing an xarray with only one course per space point. The bunches are send to mariPower separately
+    # and the returned data sets are merged into one. Will (hopefully) be redundant as soon as mariPower accepts requests with several
+    # courses per space-time point and will then be replaced by Tanker.get_fuel_netCDF()
     def get_fuel_netCDF_loop(self):
         debug = False
         filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
@@ -321,7 +388,8 @@ class Tanker(Boat):
         if (debug): ut.print_step('final merged dataset:' + str(ds_merged))
         return ds_merged
 
-
+    ##
+    # main function for communication with mariPower package (see documentation above)
     def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
         self.write_netCDF_courses(courses, lats, lons, time)
         ds = self.get_fuel_netCDF_loop()
@@ -330,11 +398,16 @@ class Tanker(Boat):
 
         return power
 
+    ##
+    # ToDo: deprecated?
     def boat_speed_function(self, wind):
         speed = np.array([self.speed])
         speed = np.repeat(speed, wind['twa'].shape, axis=0)
         return speed
 
+    ##
+    # Function to test/plot power consumption in dependence of wind speed and direction. Works only with old versions of mariPower package.
+    # Has partly been replaced by test_polars: test_power_consumption_returned()
     def test_power_consumption_per_course(self):
         courses = np.linspace(0, 360, num=21, endpoint=True)
         wind_dir = 45
@@ -368,6 +441,9 @@ class Tanker(Boat):
         axes[1].set_title("Environmental conditions", va='top')
         plt.show()
 
+    ##
+    # Function to test/plot power consumption in dependence of wind speed and direction. Works only with old versions of mariPower package.
+    # Has partly been replaced by test_polars: test_power_consumption_returned()
     def test_power_consumption_per_speed(self):
         course = 10
         boat_speed = np.linspace(1, 20, num=17)
