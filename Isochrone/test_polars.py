@@ -201,4 +201,77 @@ def test_get_fuel_netCDF_loop():
     assert power_test.shape == courses_test.shape
     assert (power_test < math.pow(10,30)).all
 
+def test_power_consumption_returned():
+    #dummy weather file
+    lat = np.array([54., 55, 56])
+    lon = np.array([14., 15, 16])
+    time = np.array([datetime.datetime.now()])
+
+    '''uwind = np.array([[
+        [40, 0, -40],
+        [40, 0, -40],
+        [40, 0, -40],
+    ]])
+    #vwind = np.full(shape=(time.shape[0], lat.shape[0], lon.shape[0]), fill_value=0)
+    vwind = np.array([[
+        [0,40, 0],
+        [0,40, 0],
+        [0,40, 0],
+    ]])'''
+
+    uwind = np.array([[
+        [40, -40, 0],
+        [40, -40, 0],
+        [40, -40, 0],
+    ]])
+    vwind = np.array([[
+        [0, 0, 40],
+        [0, 0, 40],
+        [0, 0, 40],
+    ]])
+
+    vo = np.full(shape=(time.shape[0], lat.shape[0], lon.shape[0]), fill_value=0)
+
+
+    data_vars = dict(
+        vo=(["time", "latitude", "longitude"], vo),
+        uo=(["time", "latitude", "longitude"], vo),
+        VHM0=(["time", "latitude", "longitude"], vo),
+        VTPK=(["time", "latitude", "longitude"], vo),
+        VMDR=(["time", "latitude", "longitude"], vo),
+        Temperature_surface=(["time", "latitude", "longitude"], vo),
+        so=(["time", "latitude", "longitude"], vo),
+    )
+
+    coords = dict(
+        time=(["time"], time),
+        latitude=(["latitude"], lat),
+        longitude=(["longitude"], lon),
+    )
+
+    attrs = dict(description="Necessary descriptions added here.")
+
+    ds = xr.Dataset(data_vars, coords, attrs)
+    ds['u-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], uwind)
+    ds['v-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], vwind)
+
+
+    print(ds)
+    ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
+
+    #dummy course netCDF
+    pol = get_default_Tanker()
+    pol.set_boat_speed(np.array([20]))
+    pol.set_env_data_path('/home/kdemmich/MariData/Code/sample.nc')
+    pol.set_courses_path('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc')
+    courses_test = np.array([0,0,0, 180, 180, 180])
+    lat_test = np.array([54,54,55, 55, 56, 56])
+    lon_test = np.array([14,14,15, 15, 16, 16])
+    time_test = np.array([datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now()])
+    pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
+    ds = pol.get_fuel_netCDF_loop()
+    print('ds:', ds)
+
+
+    assert 1==2
 

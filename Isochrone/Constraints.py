@@ -238,7 +238,10 @@ class WaterDepth(NegativeConstraintFromWeather):
         self.message += 'water not deep enough!'
         self.resource_type = 0
         self.current_depth = np.array([-99])
-        self.min_depth = 20
+        self.min_depth = 50
+
+    def set_drought(self, depth):
+        self.min_depth = depth
 
     def constraint_on_point(self, lat, lon, time):
         self.check_weather(lat, lon, time)
@@ -268,6 +271,7 @@ class WaterDepth(NegativeConstraintFromWeather):
         depth = ds_depth['z'].where(
             (ds_depth.lat > lat_start) & (ds_depth.lat < lat_end) & (ds_depth.lon > lon_start) & (
                         ds_depth.lon < lon_end) & (ds_depth.z < 0), drop=True)
+
         # depth = ds_depth['deptho'].where((ds_depth.latitude > lat_start) & (ds_depth.latitude < lat_end) & (ds_depth.longitude > lon_start) & (ds_depth.longitude < lon_end),drop=True) #.where((ds_depth.deptho>-100) & (ds_depth.deptho<0) )
 
         fig, ax = plt.subplots(figsize=(12, 10))

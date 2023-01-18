@@ -69,6 +69,7 @@ class IsoBased(RoutingAlg):
             self.dist_per_step = self.dist_per_step[:, idxs]
             self.speed_per_step = self.speed_per_step[:, idxs]
             self.fuel_per_step = self.fuel_per_step[:, idxs]
+            self.starttime_per_step = self.starttime_per_step[:, idxs]
 
             self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
@@ -183,6 +184,8 @@ class IsoBased(RoutingAlg):
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
         self.speed_per_step=np.flip(self.speed_per_step,0)
+        self.starttime_per_step=np.flip(self.starttime_per_step,0)
+
         route = RoutingAlg.terminate(self, boat, wt)
 
         self.check_isochrones(route)

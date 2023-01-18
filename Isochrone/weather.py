@@ -64,7 +64,7 @@ class WeatherCond():
 
         return ds_depth
 
-    def add_depth_to_EnvData(self, depth_path):
+    def add_depth_to_EnvData(self, depth_path, bWriteEnvData=False):
         try:
             lat_start = self.map_size.x1
             lat_end = self.map_size.x2
@@ -94,7 +94,7 @@ class WeatherCond():
         #ds_depth.load()
 
         ds_depth = ds_depth.rename(lat="latitude", lon="longitude")
-        weather_int = self.ds.interp_like(ds_depth, method="linear")   
+        weather_int = self.ds.interp_like(ds_depth, method="linear")
 
         depth = ds_depth['z'].to_numpy()
         depth = np.nan_to_num(depth)
@@ -105,6 +105,9 @@ class WeatherCond():
             print('depth_test:', depth_test)
             raise Exception('element of depth is nan!')
         self.ds = weather_int
+
+        if bWriteEnvData:
+            self.ds.to_netcdf('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/Depth_u_EnvData/EnvData_Depth.nc')
 
     @property
     def time_res(self):
@@ -257,7 +260,7 @@ class WeatherCond():
             twa = wind['twa'](coordinate)
             tws = wind['tws'](coordinate)
         except:
-            raise Exception('Running out of weather map!')
+            raise Exception('Running out of weather map! Asking for time' + str(rounded_time) + ' wind:' + str(wind))
 
         return {'twa': twa, 'tws': tws}
 

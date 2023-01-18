@@ -56,4 +56,6 @@ class IsoFuel(IsoBased):
         for i in range(0,self.full_time_traveled.shape[0]):
             self.full_time_traveled[i] += delta_time[i]
             self.time[i] += dt.timedelta(seconds=delta_time[i])
+        self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
+
 

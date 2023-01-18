@@ -84,6 +84,10 @@ class Tanker(Boat):
 
     def set_boat_speed(self, speed):
         self.speed = speed
+    def set_env_data_path(self,path):
+        self.environment_path = path
+    def set_courses_path(self, path):
+        self.courses_path = path
 
     def set_rpm(self, rpm):
         self.rpm = rpm
@@ -185,7 +189,7 @@ class Tanker(Boat):
             ut.print_step('power consumption' + str(P))
         return P
 
-    def write_netCDF_courses(self, courses, lats,lons, time):
+    def write_netCDF_courses(self, courses, lats, lons, time):
         debug = False
         speed = np.repeat(self.speed, courses.shape, axis=0)
 

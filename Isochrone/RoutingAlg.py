@@ -55,6 +55,7 @@ class RoutingAlg():
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     speed_per_step: np.ndarray  # boat speed
     fuel_per_step: np.ndarray
+    starttime_per_step: np.ndarray
 
     current_azimuth: np.ndarray  # current azimuth
     current_variant: np.ndarray  # current variant
@@ -83,6 +84,7 @@ class RoutingAlg():
         self.dist_per_step = np.array([[0]])
         self.speed_per_step = np.array([[0]])
         self.fuel_per_step = np.array([[0]])
+        self.starttime_per_step = np.array([[time]])
 
         self.time = np.array([time])
         self.full_time_traveled = np.array([0])
@@ -112,6 +114,7 @@ class RoutingAlg():
         print('     variants = ', self.azimuth_per_step)
         print('     dist_per_step = ', self.dist_per_step)
         print('     speed_per_step = ', self.speed_per_step)
+        print('     starttime_per_step = ', self.starttime_per_step)
         print('per-variant variables')
         print('     time =', self.time)
         print('     full_dist_traveled = ', self.full_dist_traveled)
@@ -209,6 +212,7 @@ class RoutingAlg():
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.speed_per_step = np.repeat(self.speed_per_step, self.variant_segments + 1, axis=1)
         self.fuel_per_step = np.repeat(self.fuel_per_step, self.variant_segments + 1, axis=1)
+        self.starttime_per_step = np.repeat(self.starttime_per_step, self.variant_segments + 1, axis=1)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
         self.full_fuel_consumed = np.repeat(self.full_fuel_consumed, self.variant_segments + 1, axis=0)
@@ -277,6 +281,7 @@ class RoutingAlg():
             self.azimuth_per_step[:, idx],
             self.dist_per_step[:, idx],
             self.speed_per_step[:, idx],
+            self.starttime_per_step[:, idx],
             self.full_dist_traveled[idx]
         )
         #route.print_route()

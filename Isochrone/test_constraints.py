@@ -136,6 +136,7 @@ def test_safe_waterdepth():
     weather.set_map_size(50, 0, 55, 5)
     weather.add_depth_to_EnvData(depthfile)
     waterdepth = WaterDepth(weather)
+    waterdepth.set_drought(20)
     #waterdepth.plot_depth_map_from_file(depthfile, 50,0,55,5)
 
     is_constrained = [False for i in range(0, lat.shape[1])]

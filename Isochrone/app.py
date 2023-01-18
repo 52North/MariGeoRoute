@@ -106,8 +106,7 @@ def plot_map():
     #boat.init_hydro_model_single_pars()
     #boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
-
-    boat.set_boat_speed(12)
+    boat.set_boat_speed(15)
     boat.calibrate_simple_fuel()
     #boat.write_simple_fuel()
     #boat.test_power_consumption_per_course()
@@ -161,6 +160,8 @@ def plot_map():
         params,
         fig
     )
+
+    #boat.write_netCDF_courses(min_fuel_route['route'].azimuths_per_step, min_fuel_route['route'].lats_per_step, min_fuel_route['route'].lons_per_step, min_fuel_route['route'].starttime_per_step)
 
     #if not (min_fuel_route.__eq__(min_time_route)):
     #    raise ValueError('Routes not matching!')'''
