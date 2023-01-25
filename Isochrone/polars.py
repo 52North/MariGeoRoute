@@ -338,7 +338,7 @@ class Tanker(Boat):
     #
     def get_fuel_netCDF(self):
         ship = mariPower.ship.CBT()
-        mariPower.__main__.PredictPowerRoute(ship, self.courses_path, self.environment_path)
+        mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
 
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
@@ -373,7 +373,7 @@ class Tanker(Boat):
                 courses_test = ds_read_test['courses']
                 ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
 
-            mariPower.__main__.PredictPowerRoute(ship, filename_single, self.environment_path)
+            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path)
 
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]

@@ -205,33 +205,40 @@ def test_power_consumption_returned():
     #dummy weather file
     lat = np.array([54., 55, 56])
     lon = np.array([14., 15, 16])
-    time = np.array([datetime.datetime.now()])
+    time_single = np.datetime64('2023-01-23')
+    time = np.array([time_single])
 
     '''uwind = np.array([[
         [40, 0, -40],
         [40, 0, -40],
         [40, 0, -40],
     ]])
-    #vwind = np.full(shape=(time.shape[0], lat.shape[0], lon.shape[0]), fill_value=0)
     vwind = np.array([[
         [0,40, 0],
         [0,40, 0],
         [0,40, 0],
     ]])'''
 
+
     uwind = np.array([[
-        [40, -40, 0],
-        [40, -40, 0],
-        [40, -40, 0],
-    ]])
+           [40, -40, 0],
+           [40, -40, 0],
+           [40, -40, 0],
+       ]])
     vwind = np.array([[
-        [0, 0, 40],
-        [0, 0, 40],
-        [0, 0, 40],
+           [0, 0, 40],
+           [0, 0, 40],
+           [0, 0, 40],
     ]])
+
+    #courses test file
+    courses_test = np.array([0, 180, 0, 180, 180,0])
+    #lat_test = np.array([54, 54, 55, 55, 56, 56])
+    #lon_test = np.array([14, 14, 15, 15, 16, 16])
+    lat_test = np.array([55, 55,  56, 56, 54, 54])
+    lon_test = np.array([15, 15,  16, 16, 14, 14])
 
     vo = np.full(shape=(time.shape[0], lat.shape[0], lon.shape[0]), fill_value=0)
-
 
     data_vars = dict(
         vo=(["time", "latitude", "longitude"], vo),
@@ -239,7 +246,7 @@ def test_power_consumption_returned():
         VHM0=(["time", "latitude", "longitude"], vo),
         VTPK=(["time", "latitude", "longitude"], vo),
         VMDR=(["time", "latitude", "longitude"], vo),
-        Temperature_surface=(["time", "latitude", "longitude"], vo),
+        thetao=(["time", "latitude", "longitude"], vo),
         so=(["time", "latitude", "longitude"], vo),
     )
 
@@ -255,7 +262,6 @@ def test_power_consumption_returned():
     ds['u-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], uwind)
     ds['v-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], vwind)
 
-
     print(ds)
     ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
 
@@ -264,13 +270,12 @@ def test_power_consumption_returned():
     pol.set_boat_speed(np.array([20]))
     pol.set_env_data_path('/home/kdemmich/MariData/Code/sample.nc')
     pol.set_courses_path('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc')
-    courses_test = np.array([0,0,0, 180, 180, 180])
-    lat_test = np.array([54,54,55, 55, 56, 56])
-    lon_test = np.array([14,14,15, 15, 16, 16])
-    time_test = np.array([datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now(),datetime.datetime.now()])
+
+    time_test = np.array([time_single, time_single, time_single, time_single, time_single, time_single])
     pol.write_netCDF_courses(courses_test, lat_test, lon_test, time_test)
     ds = pol.get_fuel_netCDF_loop()
-    print('ds:', ds)
+    print('ds:', ds['Power_delivered'])
 
+    assert 1==2
 
 
