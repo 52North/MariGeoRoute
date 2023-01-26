@@ -12,10 +12,12 @@ from scipy.stats import binned_statistic
 from routeparams import RouteParams
 from matplotlib.figure import Figure
 import graphics
+import logging
 
 import utils
 from Constraints import *
 
+logger = logging.getLogger('WRT.routingalg')
 
 class RoutingAlg():
     """
@@ -95,13 +97,15 @@ class RoutingAlg():
         self.current_azimuth = gcr
         self.gcr_azi = gcr
 
-        ut.print_line()
-        print('Initialising routing: ' + str(start) + ' to ' + str(finish))
-        print('     route from ' + str(start) + ' to ' + str(finish))
-        print('     start time ' + str(time))
+        self.print_init()
 
     def set_fig(self, fig):
         self.fig = fig
+
+    def print_init(self):
+        logger.info('Initialising routing:')
+        logger.info(ut.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
+        logger.info(ut.get_log_step('start time ' + str(self.time),1))
 
     def print_ra(self):
         print('PRINTING ALG SETTINGS')

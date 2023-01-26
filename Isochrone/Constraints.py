@@ -3,6 +3,7 @@ import datetime as dt
 from global_land_mask import globe
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import logging
 
 import utils as ut
 import xarray as xr
@@ -11,6 +12,7 @@ import routeparams
 from weather import WeatherCond
 from graphics import *
 
+logger = logging.getLogger('WRT.Constraints')
 
 class Constraint():
     name: str
@@ -75,9 +77,9 @@ class ConstraintPars():
         self.bCheckCrossing = True
 
     def print(self):
-        print('Print settings of Constraint Pars:')
-        ut.print_step('resolution=' + str(self.resolution))
-        ut.print_step('bCheckEndPoints=' + str(self.bCheckEndPoints))
+        logger.info('Print settings of Constraint Pars:')
+        logger.info(ut.get_log_step('resolution=' + str(self.resolution),1))
+        logger.info(ut.get_log_step('bCheckEndPoints=' + str(self.bCheckEndPoints),1))
 
 
 class ConstraintsList():
@@ -205,7 +207,7 @@ class LandCrossing(NegativeContraint):
         return globe.is_land(lat, lon)
 
     def print_info(self):
-        ut.print_step('no land crossing')
+        logger.info(ut.get_log_step('no land crossing',1))
 
 
 class WaveHeight(NegativeConstraintFromWeather):
@@ -226,7 +228,7 @@ class WaveHeight(NegativeConstraintFromWeather):
         return self.current_wave_height > self.max_wave_height
 
     def print_info(self):
-        ut.print_step('maximum wave height=' + str(self.max_wave_height) + 'm')
+        logger.info(ut.get_log_step('maximum wave height=' + str(self.max_wave_height) + 'm', 1))
 
 
 class WaterDepth(NegativeConstraintFromWeather):
@@ -256,7 +258,7 @@ class WaterDepth(NegativeConstraintFromWeather):
             self.current_depth[i] = self.get_current_depth(lat[i], lon[i])
 
     def print_info(self):
-        ut.print_step('minimum water depth=' + str(self.min_depth) + 'm')
+        logger.info(ut.get_log_step('minimum water depth=' + str(self.min_depth) + 'm',1))
 
     def get_current_depth(self, lat, lon):
         rounded_ds = self.wt.ds['depth'].interp(latitude=lat, longitude=lon, method='linear')

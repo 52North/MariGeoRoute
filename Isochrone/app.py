@@ -5,6 +5,10 @@ import graphics
 from logging import FileHandler, Formatter
 from flask import Flask, Response, render_template, request, send_from_directory
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import logging
+import logging.handlers
+import os
+import warnings
 
 import router
 from polars import *
@@ -48,6 +52,24 @@ def favicon():
 
 @app.route('/')
 def plot_map():
+    ##
+    # initialise logging
+    logger = logging.getLogger('WRT')
+    logger.setLevel(logging.INFO)
+    fh = logging.FileHandler(app.config['PERFORMANCE_LOG_FILE'], mode='w')
+    fh.setLevel(logging.WARNING)
+    fhinfo = logging.FileHandler(app.config['INFO_LOG_FILE'], mode='w')
+    fhinfo.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    fh.setFormatter(formatter)
+    fhinfo.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.addHandler(fhinfo)
+
+    ##
+    # suppress warnings from mariPower
+    warnings.filterwarnings("ignore")
+
     """Route handling."""
     try:
         lat1 = request.args['lat1']
@@ -57,7 +79,7 @@ def plot_map():
     except (KeyError):
         lat1, lon1, lat2, lon2 = app.config['DEFAULT_MAP']
         dpi = app.config['DPI']
-        logging.log(logging.WARNING, 'using default coordinates')
+        logger.info('using default map coordinates')
 
     try:
         lat1 = float(lat1)
@@ -65,21 +87,7 @@ def plot_map():
         lon1 = float(lon1)
         lon2 = float(lon2)
     except (ValueError):
-        logging.log(logging.ERROR, 'expecting real values')
-
-    # try:
-    #     latest = request.args['latest']
-    # except KeyError:
-    #     latest = False
-    # if latest:
-    #     weather_file = download_latest_gfs(0)
-    # else:
-    #     weather_file = app.config['DEFAULT_GFS_FILE']
-
-    # try:
-    #     hour = request.args['hour']
-    # except (KeyError):
-    #     hour = 0
+        raise ValueError('Expecting real values for map coordinates')
 
     # *******************************************
     # basic settings

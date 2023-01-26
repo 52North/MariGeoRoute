@@ -5,6 +5,10 @@ import utils as ut
 from polars import Boat
 from typing import NamedTuple
 from geovectorslib import geod
+import logging
+import logging.handlers
+import os
+
 from weather import WeatherCond
 from global_land_mask import globe
 from scipy.stats import binned_statistic
@@ -12,10 +16,15 @@ from routeparams import RouteParams
 from RoutingAlg import RoutingAlg
 import utils
 
+logger = logging.getLogger('WRT.Pruning')
+
 class IsoBased(RoutingAlg):
     def __init__(self, start, finish, time):
         RoutingAlg.__init__(self, start, finish, time)
         self.current_variant=self.current_azimuth
+
+    def print_init(self):
+        RoutingAlg.print_init(self)
 
     def check_variant_def(self):
         if (not ((self.lats_per_step.shape[1] == self.lons_per_step.shape[1]) and
@@ -33,6 +42,8 @@ class IsoBased(RoutingAlg):
 
     def pruning(self, trim, bins):
         debug = False
+        valid_pruning_segments = -99
+
         if (debug):
             print('binning for pruning', bins)
             print('current courses', self.current_azimuth)
@@ -60,6 +71,14 @@ class IsoBased(RoutingAlg):
         if (debug):
             print('full_dist_traveled', self.full_dist_traveled)
             print('Indexes that passed', idxs)
+
+        valid_pruning_segments = len(idxs)
+        if(valid_pruning_segments==0):
+            logger.error(' All pruning segments fully constrained for step ' + str(self.count) + '!')
+        elif (valid_pruning_segments < self.prune_segments * 0.1):
+            logger.warning(' More than 90% of pruning segments constrained for step ' + str(self.count) + '!')
+        elif(valid_pruning_segments < self.prune_segments * 0.5):
+            logger.warning(' More than 50% of pruning segments constrained for step ' + str(self.count) + '!')
 
         # Return a trimmed isochrone
         try:

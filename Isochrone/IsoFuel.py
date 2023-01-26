@@ -2,17 +2,24 @@ import numpy as np
 import datetime as dt
 from geovectorslib import geod
 from global_land_mask import globe
+import logging
 
 from routeparams import RouteParams
 from IsoBased import IsoBased
 import utils
 
+logger = logging.getLogger('WRT.routingalg')
+
 class IsoFuel(IsoBased):
     delta_fuel : float
 
     def __init__(self, start, finish, time, delta_fuel):
-        IsoBased.__init__(self, start, finish, time)
         self.delta_fuel = delta_fuel
+        IsoBased.__init__(self, start, finish, time)
+
+    def print_init(self):
+        IsoBased.print_init(self)
+        logger.info(utils.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
 
     def check_isochrones(self, route : RouteParams):
         print('To be implemented')
