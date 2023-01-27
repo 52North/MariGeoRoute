@@ -10,7 +10,9 @@ from weather import WeatherCond
 from global_land_mask import globe
 from scipy.stats import binned_statistic
 from routeparams import RouteParams
+import matplotlib
 from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import graphics
 import logging
 
@@ -74,9 +76,11 @@ class RoutingAlg():
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
 
-    fig: Figure
+    fig: matplotlib.figure
+    route_ensemble : list
+    figure_path : str
 
-    def __init__(self, start, finish, time):
+    def __init__(self, start, finish, time, figure_path):
         self.count = 0
         self.start = start
         self.finish = finish
@@ -97,10 +101,15 @@ class RoutingAlg():
         self.current_azimuth = gcr
         self.gcr_azi = gcr
 
+        self.figure_path = figure_path
+
         self.print_init()
 
-    def set_fig(self, fig):
-        self.fig = fig
+    def init_fig(self):
+        pass
+
+    def update_fig(self):
+        pass
 
     def print_init(self):
         logger.info('Initialising routing:')
@@ -194,17 +203,12 @@ class RoutingAlg():
             self.move_boat_direct(wt, boat, constraints_list)
             self.pruning_per_step(True)
             #ut.print_current_time('move_boat: Step=' + str(i), start_time)
+            self.update_fig()
 
         self.final_pruning()
         route = self.terminate(boat, wt)
         return {'route' : route, 'fig' : self.fig}
 
-    def update_weather(self, wt, idx=0):
-        #self.fig.clear()
-        map_size = wt.get_map_size()
-        #self.fig = graphics.create_map(map_size.x1, map_size.y1, map_size.x2, map_size.y2, 96)
-        self.fig = graphics.plot_gcr(self.fig, self.start[0], self.start[1], self.finish[0], self.finish[1])
-        self.fig = graphics.plot_barbs(self.fig, wt.get_wind_vector(self.time[idx]))
 
     def define_variants(self):
         # branch out for multiple headings
@@ -289,7 +293,6 @@ class RoutingAlg():
             self.full_dist_traveled[idx]
         )
         #route.print_route()
-        self.update_weather(wt, idx)
 
         return route
 

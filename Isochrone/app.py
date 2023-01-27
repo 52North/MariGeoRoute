@@ -70,6 +70,9 @@ def plot_map():
     # suppress warnings from mariPower
     warnings.filterwarnings("ignore")
 
+    #graphics.merge_figs("/home/kdemmich/MariData/Code/Figures/Depth20m/", 5)
+    #raise Exception('Stop here')
+
     """Route handling."""
     try:
         lat1 = request.args['lat1']
@@ -133,18 +136,18 @@ def plot_map():
     wt.init_wind_vectors()
     #vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
-    fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
 
     # *******************************************
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(wt)
+    water_depth.set_drought(20)
     #water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(water_depth)
+    #constraint_list.add_neg_constraint(water_depth)
     constraint_list.print_settings()
 
     '''min_time_route = router.modified_isochrone_routing(
@@ -166,7 +169,7 @@ def plot_map():
         start_time,
         delta_fuel, routing_steps,
         params,
-        fig
+        figurepath
     )
 
     #boat.write_netCDF_courses(min_fuel_route['route'].azimuths_per_step, min_fuel_route['route'].lats_per_step, min_fuel_route['route'].lons_per_step, min_fuel_route['route'].starttime_per_step)
@@ -174,6 +177,7 @@ def plot_map():
     #if not (min_fuel_route.__eq__(min_time_route)):
     #    raise ValueError('Routes not matching!')'''
 
+    fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
     #fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
     fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)

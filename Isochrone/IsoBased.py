@@ -8,6 +8,11 @@ from geovectorslib import geod
 import logging
 import logging.handlers
 import os
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import cartopy.crs as ccrs
+import cartopy.feature as cf
+from PIL import Image
 
 from weather import WeatherCond
 from global_land_mask import globe
@@ -19,8 +24,8 @@ import utils
 logger = logging.getLogger('WRT.Pruning')
 
 class IsoBased(RoutingAlg):
-    def __init__(self, start, finish, time):
-        RoutingAlg.__init__(self, start, finish, time)
+    def __init__(self, start, finish, time, figurepath):
+        RoutingAlg.__init__(self, start, finish, time, figurepath)
         self.current_variant=self.current_azimuth
 
     def print_init(self):
@@ -295,3 +300,53 @@ class IsoBased(RoutingAlg):
 
     def get_delta_variables(self, boat, wind, bs):
         pass
+
+    def init_fig(self, wt):
+        level_diff = 10
+
+        depth = wt.ds['depth'].where(wt.ds.depth < 0, drop=True)
+
+        self.fig, ax = plt.subplots(figsize=(12, 10))
+        ax.axis('off')
+        ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
+        depth.plot.contourf(ax=ax,
+                            levels=np.arange(-100, 0, level_diff),
+                            transform=ccrs.PlateCarree())
+
+        self.fig.subplots_adjust(
+            left=0.05,
+            right=0.95,
+            bottom=0.05,
+            top=0.95,
+            wspace=0,
+            hspace=0)
+        ax.add_feature(cf.LAND)
+        ax.add_feature(cf.COASTLINE)
+        ax.gridlines(draw_labels=True)
+
+        self.route_ensemble = []
+        for iRoute in  range(0,self.prune_segments):
+            route, = ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], 'r-')
+            self.route_ensemble.append(route)
+        final_path = self.figure_path + '/fig0.png'
+        print('Saving start figure to ', final_path)
+        plt.savefig(final_path)
+
+    def update_fig(self):
+        fig = self.fig
+
+        for iRoute in range(0,self.prune_segments):
+            if iRoute>= self.lats_per_step.shape[1]:
+                self.route_ensemble[iRoute].set_xdata([0])
+                self.route_ensemble[iRoute].set_ydata([0])
+            else:
+                self.route_ensemble[iRoute].set_xdata(self.lons_per_step[:,iRoute])
+                self.route_ensemble[iRoute].set_ydata(self.lats_per_step[:, iRoute])
+
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+
+        final_path = self.figure_path + '/fig' + str(self.count) + '.png'
+        print('Saving updated figure to ', final_path)
+        plt.savefig(final_path)
+

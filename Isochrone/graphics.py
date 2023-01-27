@@ -5,7 +5,10 @@ and other geospatial data analyses"""
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 from geovectorslib import geod
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from matplotlib.figure import Figure
+from PIL import Image
 
 from routeparams import RouteParams
 
@@ -177,3 +180,21 @@ def rebin(a,rebinx, rebiny):
 
     sh = newshape_x, rebinx, newshape_y, rebiny
     return a.reshape(sh).mean(-1).mean(1)
+
+def merge_figs(path, ncounts):
+        fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
+        image_list = []
+        impath = ''
+
+        for iIm in range(0,ncounts+1):
+            impath = path + 'fig' + str(iIm) + '.png'
+            print('Reading image ', impath)
+            im_temp = Image.open(impath)
+            im_plot = plt.imshow(im_temp)
+            image_list.append([im_plot])
+
+        ani = animation.ArtistAnimation(fig, image_list, interval=1000, blit=True,
+                                        repeat_delay=10)
+
+        writergif = animation.PillowWriter(fps=1, bitrate=1000)
+        ani.save(path + str(ani) + '.gif', writer=writergif)

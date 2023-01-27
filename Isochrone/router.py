@@ -57,7 +57,7 @@ def min_fuel_routing(
             delta_fuel,
             steps,
             params,
-            fig,
+            fig_path,
             verbose=False):
     """
     Do full isochrone routing.
@@ -78,13 +78,13 @@ def min_fuel_routing(
                 iso (Isochrone) - next isochrone
     """
 
-    ra_fuel=IsoFuel(start, finish, start_time, delta_fuel)
-    ra_fuel.set_fig(fig)
+    ra_fuel=IsoFuel(start, finish, start_time, delta_fuel, fig_path)
     ra_fuel.set_steps(steps)
     ra_fuel.set_pruning_settings(params['ISOCHRONE_PRUNE_SECTOR_DEG_HALF'], params['ISOCHRONE_PRUNE_SEGMENTS'])
     ra_fuel.set_variant_segments(params['ROUTER_HDGS_SEGMENTS'], params['ROUTER_HDGS_INCREMENTS_DEG'])
-    min_fuel_route = ra_fuel.recursive_routing(boat, wt, constraint_list, verbose)
+    ra_fuel.init_fig(wt)
 
+    min_fuel_route = ra_fuel.recursive_routing(boat, wt, constraint_list, verbose)
     min_fuel_route['route'].print_route()
     return min_fuel_route
 
