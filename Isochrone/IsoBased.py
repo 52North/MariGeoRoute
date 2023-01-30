@@ -24,9 +24,11 @@ import utils
 logger = logging.getLogger('WRT.Pruning')
 
 class IsoBased(RoutingAlg):
-    def __init__(self, start, finish, time, figurepath):
+
+    def __init__(self, start, finish, time, figurepath=""):
         RoutingAlg.__init__(self, start, finish, time, figurepath)
         self.current_variant=self.current_azimuth
+        self.is_last_step = False
 
     def print_init(self):
         RoutingAlg.print_init(self)
@@ -220,7 +222,31 @@ class IsoBased(RoutingAlg):
         self.time += dt.timedelta(seconds=delta_time)
 
     def check_bearing(self, dist):
-        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)    #calculate new isochrone, update position and distance traveled
+        debug = False
+
+        nvariants = self.get_current_lons().shape[0]
+        dist_to_dest =  geod.inverse(
+            self.get_current_lats(),
+            self.get_current_lons(),
+            np.full(nvariants, self.finish[0]),
+            np.full(nvariants, self.finish[1])
+        )
+        if(debug):
+            print('dist_to_dest:', dist_to_dest['s12'])
+            print('dist traveled:', dist)
+
+        reaching_dest = dist_to_dest['s12'] < dist
+
+        if(debug):
+            print('reaching dest:', reaching_dest)
+
+        if(np.any(reaching_dest)):
+            self.is_last_step = True
+            new_lat = np.full(nvariants, self.finish[0])
+            new_lon = np.full(nvariants, self.finish[1])
+            return {'azi2': dist_to_dest['azi1'], 'lat2': new_lat, 'lon2': new_lon, 'iterations' : -99}     #compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}' by geod.direct
+
+        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)   
         #ut.print_step('move=' + str(move),1)
         return move
 
@@ -301,6 +327,9 @@ class IsoBased(RoutingAlg):
     def get_delta_variables(self, boat, wind, bs):
         pass
 
+    def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
+        pass
+
     def init_fig(self, wt):
         level_diff = 10
 
@@ -323,6 +352,9 @@ class IsoBased(RoutingAlg):
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
         ax.gridlines(draw_labels=True)
+
+        ax.plot( self.start[1],self.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",markersize=10)
+        ax.plot( self.finish[1],self.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",markersize=10)
 
         self.route_ensemble = []
         for iRoute in  range(0,self.prune_segments):

@@ -276,6 +276,4 @@ def test_power_consumption_returned():
     ds = pol.get_fuel_netCDF_loop()
     print('ds:', ds['Power_delivered'])
 
-    assert 1==2
-
 

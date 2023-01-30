@@ -28,9 +28,16 @@ class IsoFuel(IsoBased):
         dist = delta_time * bs
         return dist
 
+    # calculate time [s] from boat speed and distance
+    def get_time(self, bs, dist):
+        time = dist/bs
+        return time
+
+    ##
+    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables(self, boat, wind, bs):
         fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
-        delta_time = self.delta_fuel/fuel*3600
+        delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 
         #print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
@@ -38,11 +45,13 @@ class IsoFuel(IsoBased):
 
         return delta_time, delta_fuel, dist
 
+    ##
+    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables_netCDF(self, boat, wind, bs):
         fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
                                                   self.get_current_lons(), self.time, wind)
         #fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
-        delta_time = self.delta_fuel / fuel * 3600
+        delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 
         # print('delta_fuel=' + str(fuel) + ' , delta_time=' + str(delta_time) + ' , dist=' + str(dist))
@@ -51,6 +60,17 @@ class IsoFuel(IsoBased):
         #self.determine_timespread(delta_time)
 
         return delta_time, delta_fuel, dist
+    
+    ##
+    #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
+    def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
+        fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
+                                                  self.get_current_lons(), self.time, wind)
+        dist = geod.inverse(self.get_current_lats(), self.get_current_lons(), np.full(self.get_current_lats().shape,self.finish[0]) , np.full(self.get_current_lons().shape, self.finish[1]))
+        delta_time = self.get_time(bs, dist['s12'])
+        delta_fuel = fuel * delta_time
+
+        return delta_time, delta_fuel, dist['s12']
 
     def determine_timespread(self, delta_time):
         stddev = np.std(delta_time)
@@ -64,5 +84,36 @@ class IsoFuel(IsoBased):
             self.full_time_traveled[i] += delta_time[i]
             self.time[i] += dt.timedelta(seconds=delta_time[i])
         self.starttime_per_step = np.vstack((self.time, self.starttime_per_step))
+
+    def final_pruning(self):
+        debug = False
+        if (debug):
+            print('Final IsoFuel Pruning...')
+            print('full_fuel_consumed:', self.full_fuel_consumed)
+
+        idxs = np.argmin(self.full_fuel_consumed)
+
+        if debug: print('idxs', idxs)
+
+        # Return a trimmed isochrone
+        try:
+            self.lats_per_step = self.lats_per_step[:, idxs]
+            self.lons_per_step = self.lons_per_step[:, idxs]
+            self.azimuth_per_step = self.azimuth_per_step[:, idxs]
+            self.dist_per_step = self.dist_per_step[:, idxs]
+            self.speed_per_step = self.speed_per_step[:, idxs]
+            self.fuel_per_step = self.fuel_per_step[:, idxs]
+            self.starttime_per_step = self.starttime_per_step[:, idxs]
+
+            self.current_azimuth = self.current_variant[idxs]
+            self.current_variant = self.current_variant[idxs]
+            self.full_dist_traveled = self.full_dist_traveled[idxs]
+            self.full_time_traveled = self.full_time_traveled[idxs]
+            self.full_fuel_consumed = self.full_fuel_consumed[idxs]
+            self.time = self.time[idxs]
+        except IndexError:
+            raise Exception('Pruned indices running out of bounds.')
+
+
 
 

@@ -325,6 +325,10 @@ class WaterDepth(NegativeConstraintFromWeather):
         time = route.time
         ax.plot(lons, lats, 'r-')
 
-        plt.title('Route British Channel - ' + str(self.min_depth) + 'm drought')
+        #plt.title('Route British Channel - ' + str(self.min_depth) + 'm drought')
+        ax.plot(route.start[1], route.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
+                markersize=10)
+        ax.plot(route.finish[1], route.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
+                markersize=10)
 
         plt.savefig(figure_file + '/route_waterdepth.png')

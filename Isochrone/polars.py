@@ -24,7 +24,7 @@ from weather import WeatherCond
 # SailingBoat: implements sailing boat as originally done in wind-router package. Deprecated. ToDo: can be deleted?
 
 class Boat:
-    speed: float                    #boat speed
+    speed: float                    #boat speed in m/s
     simple_fuel_model: xr.Dataset   #xarray dataset containing
 
     def __init__(self):

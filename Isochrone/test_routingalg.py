@@ -5,7 +5,9 @@ import datetime
 
 import utils
 from IsoBased import IsoBased
+from IsoFuel import IsoFuel
 from Constraints import *
+from polars import Tanker
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -14,7 +16,7 @@ def generate_dummy_constraint_list():
     constraint_list = ConstraintsList(pars)
     return constraint_list
 
-def create_dummy_ra_object():
+def create_dummy_IsoBased_object():
     start = (30, 45)
     finish = (0, 20)
     date = datetime.date.today()
@@ -27,6 +29,21 @@ def create_dummy_ra_object():
     ra.set_pruning_settings(prune_sector_half, nof_prune_segments)
     ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
     return ra
+
+def create_dummy_IsoFuel_object():
+    start = (30, 45)
+    finish = (0, 20)
+    date = datetime.date.today()
+    prune_sector_half = 90
+    nof_prune_segments = 5
+    nof_hdgs_segments = 4
+    hdgs_increments = 1
+
+    ra = IsoFuel(start, finish, date, 999, "")
+    ra.set_pruning_settings(prune_sector_half, nof_prune_segments)
+    ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
+    return ra
+
 '''
     Test whether shapes of arrays are sensible after define_variants()
 '''
@@ -34,7 +51,7 @@ def test_define_variants_array_shapes():
     nof_hdgs_segments = 4
     hdgs_increments = 1
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     current_var = ra.get_current_azimuth()
     ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
 
@@ -58,7 +75,7 @@ def test_define_variants_array_shapes():
     test whether current_variant is correctly filled in define_variants()
 '''
 def test_define_variants_current_variant_filling():
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
 
     current_var = ra.get_current_azimuth()
 
@@ -81,7 +98,7 @@ def test_pruning_select_correct_idxs():
     nof_hdgs_segments = 8
     hdgs_increments = 1
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     ra.set_variant_segments(nof_hdgs_segments, hdgs_increments)
     ra.define_variants()
 
@@ -139,7 +156,7 @@ def test_check_bearing():
     dist_travel = 1007.091*1000
     az = 355.113
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
     ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
     ra.current_variant = np.array([az,az,az,az])
@@ -170,7 +187,7 @@ def test_check_constraints_land_crossing():
     move = {'lat2' : np.array([52.70, 53.55]),  #1st point: land crossing (failure), 2nd point: no land crossing(success)
             'lon2' : np.array([4.04, 5.45])}
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[52.76, 53.45]])
     ra.lons_per_step = np.array([[5.40, 3.72]])
 
@@ -199,7 +216,7 @@ def test_update_position_fail():
     az = 355.113
     az_till_start = 330.558
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[lat_start,lat_start,lat_start,lat_start]])
     ra.lons_per_step = np.array([[lon_start,lon_start,lon_start,lon_start]])
     ra.azimuth_per_step = np.array([[0,0,0,0]])
@@ -262,7 +279,7 @@ def test_update_position_success():
     az = 355.113
     az_till_start = 330.558
 
-    ra = create_dummy_ra_object()
+    ra = create_dummy_IsoBased_object()
     ra.lats_per_step = np.array([[lat_start,lat_start,lat_start,lat_start]])
     ra.lons_per_step = np.array([[lon_start,lon_start,lon_start,lon_start]])
     ra.azimuth_per_step = np.array([[0,0,0,0]])
@@ -286,3 +303,104 @@ def test_update_position_success():
 
     no_constraints = ra.full_dist_traveled > 0
     assert np.array_equal(no_constraints, np.array([1,1,1,1]))
+
+##
+# test wheather IsoBased::checkbearing correcly sets is_last_step to True and whether the returned variables are correct
+def test_check_bearing_true():
+
+    ra = create_dummy_IsoBased_object()
+
+    lat_start = 54.87
+    lon_start = 13.33
+    lat_end = 54.9
+    lon_end = 13.46
+
+    az = 68.087
+    az_test = np.array([az,az,az,az])
+    lon_test = np.array([lon_end,lon_end,lon_end,lon_end])
+    lat_test = np.array([lat_end, lat_end, lat_end, lat_end])
+    dist = np.array([10000000, 10000000, 10000000, 10000])
+
+
+    ra = create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
+    ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
+    ra.azimuth_per_step = np.array([[0, 0, 0, 0]])
+    ra.dist_per_step = np.array([[0, 0, 0, 0]])
+    ra.current_variant = np.array([az, az, az, az])
+    ra.finish = (lat_end, lon_end)
+
+    move = ra.check_bearing(dist)
+
+    assert ra.is_last_step == True
+    assert np.allclose(move['azi2'], az_test, 0.1)
+    assert np.array_equal(move['lon2'] ,lon_test)
+    assert np.array_equal(move['lat2'], lat_test)
+##
+# test wheather IsoBased::checkbearing correcly leaves is_last_step untouched if travelled distance is small enough
+def test_check_bearing_false():
+
+    ra = create_dummy_IsoBased_object()
+
+    lat_start = 54.87
+    lon_start = 13.33
+    lat_end = 54.9
+    lon_end = 13.46
+
+    az = 355.113
+    az_till_start = 330.558
+
+    ra = create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
+    ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
+    ra.azimuth_per_step = np.array([[0, 0, 0, 0]])
+    ra.dist_per_step = np.array([[0, 0, 0, 0]])
+    ra.current_variant = np.array([az, az, az, az])
+
+
+    dist = np.array([10000, 10000, 10000, 10000])
+
+    move = ra.check_bearing(dist)
+
+    assert ra.is_last_step == False
+
+##
+# test whether IsoFuel::get_delta_variables_netCDF_last_step returns correct dist and delta_time. delta_fuel can't be tested
+# with sensible amount of work
+def test_get_delta_variables_last_step():
+    lat_start = 54.87
+    lon_start = 13.33
+    lat_end = 54.9
+    lon_end = 13.46
+    boat_speed = 20
+
+    az = 68.087
+    dist_test = np.array([8987, 8987, 8987, 8987])
+    time_test = dist_test / boat_speed
+
+    ##
+    # initialise routing alg
+    ra = create_dummy_IsoFuel_object()
+    ra.lats_per_step = np.array([[lat_start, lat_start, lat_start, lat_start]])
+    ra.lons_per_step = np.array([[lon_start, lon_start, lon_start, lon_start]])
+    ra.azimuth_per_step = np.array([[0, 0, 0, 0]])
+    ra.dist_per_step = np.array([[0, 0, 0, 0]])
+    ra.time = np.array([datetime.datetime.now(), datetime.datetime.now(), datetime.datetime.now(), datetime.datetime.now()])
+    ra.current_variant = np.array([az, az, az, az])
+    ra.finish = (lat_end, lon_end)
+
+    ##
+    # initialise boat
+    tk = Tanker(-99)
+    tk.set_boat_speed(boat_speed)
+    tk.init_hydro_model_Route("/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/202102_02-10_Halmsstadt_to_Gotland.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
+
+    ##
+    # initialise wind
+    wind = {'tws' : np.array([5,5,5,5]), 'twa' : np.array([0,0,0,0])}
+
+    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(tk, wind, tk.boat_speed_function(wind))
+
+    assert np.allclose(dist, dist_test, 0.1)
+    assert np.allclose(delta_time, time_test, 0.1)
+

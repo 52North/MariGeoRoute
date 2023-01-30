@@ -15,11 +15,11 @@ DPI = 96
 
 # Defaults - self-explanatory
 DEFAULT_MAP = [53, 11,60,23]
-DEFAULT_ROUTE = [54.87, 13.33, 58.57, 19.78]  #english channel: [50.3, 0, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
+DEFAULT_ROUTE = [54.87, 13.33, 54.9, 13.46]  #test last step functionality: [54.87, 13.33, 54.9, 13.46]  # Rügen to Gotland: [54.87, 13.33, 58.57, 19.78]  #english channel: [50.3, 0, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
 TIME_FORECAST = 120     # [hours]
-ROUTING_STEPS = 5
+ROUTING_STEPS = 8
 DELTA_TIME_FORECAST = 3600 # [seconds]
-DELTA_FUEL = 0.002*1000000000*1 # [GW]
+DELTA_FUEL = 10000000*1000*1 # [Ws]
 #DEFAULT_GFS_DATETIME = '2020111600' #NCEP
 DEFAULT_GFS_DATETIME = '2021020407' #CMEMS
 DEFAULT_GFS_HOUR = '06'

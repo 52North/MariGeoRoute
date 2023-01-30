@@ -36,6 +36,7 @@ class RoutingAlg():
         """
     ncount: int  # total number of routing steps
     count: int  # current routing step
+    is_last_step : bool
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     gcr_azi: float  # azimut of great circle route
@@ -80,7 +81,7 @@ class RoutingAlg():
     route_ensemble : list
     figure_path : str
 
-    def __init__(self, start, finish, time, figure_path):
+    def __init__(self, start, finish, time, figure_path=""):
         self.count = 0
         self.start = start
         self.finish = finish
@@ -201,6 +202,9 @@ class RoutingAlg():
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
+            if(self.is_last_step):
+                logger.info('Initiating last step at routing step ' + str(self.count))
+                break
             self.pruning_per_step(True)
             #ut.print_current_time('move_boat: Step=' + str(i), start_time)
             self.update_fig()
@@ -252,7 +256,7 @@ class RoutingAlg():
         twa = winds['twa']
         tws = winds['tws']
         wind = {'tws': tws, 'twa': twa - self.get_current_azimuth()}
-        if(debug) : print('wind in move_boat_direct', wind)
+        #if(debug) : print('wind in move_boat_direct', wind)
 
         # get boat speed
         bs = boat.boat_speed_function(wind)
@@ -260,8 +264,20 @@ class RoutingAlg():
 
         #delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(boat, wind, bs)
+        if (debug):
+            print('delta_time: ', delta_time)
+            print('delta_fuel: ', delta_fuel)
+            print('dist: ', dist)
+            print('is_last_step:', self.is_last_step)
 
         move = self.check_bearing(dist)
+
+        if (debug):
+            print('move:', move)
+
+        if(self.is_last_step):
+            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(boat, wind, bs)
+
         is_constrained = self.check_constraints(move, constraint_list)
 
         self.update_position(move, is_constrained, dist)
@@ -273,28 +289,40 @@ class RoutingAlg():
         utils.print_line()
         print('Terminating...')
 
-        idx = self.get_final_index()
-        time = round(self.full_time_traveled[idx] / 3600,2 )
-
+        time = round(self.full_time_traveled / 3600,2 )
         route = RouteParams(
             self.count,  # routing step
             self.start,  # lat, lon at start
             self.finish,  # lat, lon at end
-            self.full_fuel_consumed[idx],  # sum of fuel consumption [t]
+            self.full_fuel_consumed / (3600 * 1000),  # sum of fuel consumption [kWh]
             boat.get_rpm(),  # propeller [revolutions per minute]
             'min_time_route',  # route name
-            time,  # time needed for the route [seconds]
-            self.lats_per_step[:, idx],
-            self.lons_per_step[:, idx],
-            self.azimuth_per_step[:, idx],
-            self.dist_per_step[:, idx],
-            self.speed_per_step[:, idx],
-            self.starttime_per_step[:, idx],
-            self.full_dist_traveled[idx]
+            time,  # time needed for the route [h]
+            self.lats_per_step[:],
+            self.lons_per_step[:],
+            self.azimuth_per_step[:],
+            self.dist_per_step[:],
+            self.speed_per_step[:],
+            self.starttime_per_step[:],
+            self.full_dist_traveled
         )
         #route.print_route()
-
+        self.check_destination()
+        self.check_positive_power()
         return route
+
+    def check_destination(self):
+        destination_lats = self.lats_per_step[self.lats_per_step.shape[0]-1]
+        destination_lons = self.lons_per_step[self.lons_per_step.shape[0]-1]
+
+        arrived_at_destination = (destination_lats==self.finish[0]) & (destination_lons == self.finish[1])
+        if not arrived_at_destination:
+            logger.error('Did not arrive at destination! Need further routing steps or lower resolution.')
+
+    def check_positive_power(self):
+        negative_power = self.full_fuel_consumed<0
+        if negative_power.any():
+            logging.error('Have negative values for power consumption. Needs to be checked!')
 
     def check_variant_def(self):
         pass

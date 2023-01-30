@@ -37,17 +37,17 @@ class RouteParams():
         self.count = count  # routing step
         self.start = start  # lat, lon at start
         self.finish = finish  # lat, lon at end
-        self.fuel = fuel  # sum of fuel consumption [t]
+        self.fuel = fuel  # sum of fuel consumption [kWh]
         self.rpm = rpm  # propeller [revolutions per minute]
         self.route_type = route_type  # route name
-        self.time = time  # time needed for the route [seconds]
+        self.time = time  # time needed for the route [h]
         self.lats_per_step = lats_per_step
         self.lons_per_step = lons_per_step
-        self.azimuths_per_step = azimuths_per_step
-        self.dists_per_step = dists_per_step
-        self.speed_per_step = speed_per_step
-        self.starttime_per_step =starttime_per_step
-        self.full_dist_traveled = full_dist_traveled
+        self.azimuths_per_step = azimuths_per_step # [degrees]
+        self.dists_per_step = dists_per_step    #[m]
+        self.speed_per_step = speed_per_step    #[m/s]
+        self.starttime_per_step =starttime_per_step	#datetime
+        self.full_dist_traveled = full_dist_traveled #[m]
 
     def print_route(self):
         utils.print_line()

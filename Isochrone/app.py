@@ -70,7 +70,7 @@ def plot_map():
     # suppress warnings from mariPower
     warnings.filterwarnings("ignore")
 
-    #graphics.merge_figs("/home/kdemmich/MariData/Code/Figures/Depth20m/", 5)
+    #graphics.merge_figs("/home/kdemmich/MariData/Code/Figures/NoDepthConstraint/", 5)
     #raise Exception('Stop here')
 
     """Route handling."""
