@@ -303,7 +303,7 @@ class WaterDepth(NegativeConstraintFromWeather):
         depth = self.wt.ds['depth'].where((self.wt.ds.depth < 0), drop=True)
 
         fig, ax = plt.subplots(figsize=(12, 10))
-        ax.axis('off')
+        ax.axis('off') 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
         depth.plot.contourf(ax=ax,
                             levels=np.arange(-100, 0, level_diff),

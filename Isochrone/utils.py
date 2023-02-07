@@ -2,6 +2,8 @@
 import datetime
 import math
 import time
+import numpy
+from json import JSONEncoder
 
 
 def mps_to_knots(vals):
@@ -52,3 +54,11 @@ def get_log_step(stepnote, istep=0):
 def print_current_time(function : str, start_time : time.time):
     time_passed=time.time()-start_time
     print('Time after ' + function + ':' + str(time_passed))
+
+class NumpyArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        #if isinstance(obj, (datetime.date, datetime.datetime)):
+        #    return obj.isoformat()
+        return JSONEncoder.default(self, obj)

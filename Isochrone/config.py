@@ -14,8 +14,8 @@ DPI = 96
 # SECRET_KEY = 'my precious'
 
 # Defaults - self-explanatory
-DEFAULT_MAP = [53, 11,60,17] #Rügen to Gotland: [53, 11,60,23]
-DEFAULT_ROUTE = [54.87, 13.33, 55.73, 16.96]  #test last step functionality: [54.87, 13.33, 54.9, 13.46]  # Rügen to Gotland: [54.87, 13.33, 58.57, 19.78]  #english channel: [50.3, 0, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
+DEFAULT_MAP = [53, 11,60,23] #Rügen to Gotland: [53, 11,60,23]
+DEFAULT_ROUTE = [54.87, 13.33, 58.57, 19.78] #plotting of isochrone approach [54.87, 13.33, 55.73, 16.96] #test last step functionality: [54.87, 13.33, 54.9, 13.46]  # Rügen to Gotland: [54.87, 13.33, 58.57, 19.78]  #english channel: [50.3, 0, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
 TIME_FORECAST = 120     # [hours]
 ROUTING_STEPS = 8
 DELTA_TIME_FORECAST = 3600 # [seconds]

@@ -147,7 +147,7 @@ def plot_map():
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
-    #constraint_list.add_neg_constraint(water_depth)
+    constraint_list.add_neg_constraint(water_depth)
     constraint_list.print_settings()
 
     '''min_time_route = router.modified_isochrone_routing(
@@ -172,23 +172,23 @@ def plot_map():
         figurepath
     )
 
-    #boat.write_netCDF_courses(min_fuel_route['route'].azimuths_per_step, min_fuel_route['route'].lats_per_step, min_fuel_route['route'].lons_per_step, min_fuel_route['route'].starttime_per_step)
-
     #if not (min_fuel_route.__eq__(min_time_route)):
     #    raise ValueError('Routes not matching!')'''
 
     fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
-    #fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
+#    fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
     fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
-    graphics.plot_power_vs_dist(min_fuel_route['route'])
+    #graphics.plot_power_vs_dist(min_fuel_route['route'])
 
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
 
+    min_fuel_route['route'].write_to_file(str(min_fuel_route['route'].route_type) + "route.json")
+
     #plot route in constraints
-    water_depth.plot_route_in_constraint(min_fuel_route['route'], graphics.get_colour(1), figurepath)
+    #water_depth.plot_route_in_constraint(min_fuel_route['route'], graphics.get_colour(1), figurepath)
 
     return Response(output.getvalue(), mimetype='image/png')
 

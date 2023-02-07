@@ -1,8 +1,11 @@
 import numpy as np
 import datetime as dt
 from typing import NamedTuple
+import json
+import dateutil.parser
 
 import utils
+from utils import NumpyArrayEncoder
 
 
 class RouteParams():
@@ -21,6 +24,9 @@ class RouteParams():
     count: int  # routing step
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
+    fuel: float
+    full_dist_traveled: tuple
+    gcr: tuple
     rpm: int  # propeller [revolutions per minute]
     route_type: str  # route name
     time: dt.timedelta  # time needed for the route [datetime]
@@ -98,3 +104,70 @@ class RouteParams():
             raise ValueError('Route full_dist_traveled not matching')
 
         return bool_equal
+
+    def convert_to_dict(self):
+        rp_dict = {
+            "count" : self.count,
+            "start" : self.start,
+            "finish": self.finish,
+            "fuel": self.fuel,
+            "full_dist_traveled": self.full_dist_traveled,
+            "gcr": self.gcr,
+            "rpm" : self.rpm,
+            "route type" : self.route_type,
+            "time" : self.time,
+            "fuel_per_step" : self.fuel_per_step,
+            "lats_per_step" : self.lats_per_step,
+            "lons_per_step" : self.lons_per_step,
+            "azimuths_per_step" : self.azimuths_per_step,
+            "dists_per_step" : self.dists_per_step,
+            "speed_per_step" : self.speed_per_step,
+            "starttime_per_step" : self.starttime_per_step,
+        }
+        return rp_dict
+
+    def write_to_file(self, filename):
+        rp_dict = self.convert_to_dict()
+        with open(filename, 'w') as file:
+            json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4, default = str)
+
+    @classmethod
+    def from_file(cls, filename):
+        with open(filename) as file:
+            rp_dict = json.load(file)
+
+        count = rp_dict['count']
+        start = rp_dict['start']
+        finish = rp_dict['finish']
+        fuel = rp_dict['fuel']
+        full_dist_traveled = rp_dict['full_dist_traveled']
+        gcr = rp_dict['gcr']
+        rpm = rp_dict['rpm']
+        route_type = rp_dict['route type']
+        time = rp_dict['time']
+        lats_per_step = np.asarray(rp_dict['lats_per_step'])
+        lons_per_step = np.asarray(rp_dict['lons_per_step'])
+        azimuths_per_step = np.asarray(rp_dict['azimuths_per_step'])
+        dists_per_step = np.asarray(rp_dict['dists_per_step'])
+        speed_per_step = np.asarray(rp_dict['speed_per_step'])
+        starttime_per_step = np.asarray(rp_dict['starttime_per_step'])
+        fuel_per_step = np.asarray(rp_dict['fuel_per_step'])
+
+        return cls(
+            count = count,
+            start = start,
+            finish = finish,
+            fuel = fuel,
+            full_dist_traveled = full_dist_traveled,
+            gcr = gcr,
+            rpm = rpm,
+            route_type = route_type,
+            time = time,
+            lats_per_step = lats_per_step,
+            lons_per_step = lons_per_step,
+            azimuths_per_step = azimuths_per_step,
+            dists_per_step = dists_per_step,
+            speed_per_step = speed_per_step,
+            starttime_per_step = starttime_per_step,
+            fuel_per_step = fuel_per_step
+        )
