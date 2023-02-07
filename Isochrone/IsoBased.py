@@ -19,6 +19,7 @@ from global_land_mask import globe
 from scipy.stats import binned_statistic
 from routeparams import RouteParams
 from RoutingAlg import RoutingAlg
+import graphics
 import utils
 
 logger = logging.getLogger('WRT.Pruning')
@@ -211,6 +212,7 @@ class IsoBased(RoutingAlg):
         self.dist_per_step=np.flip(self.dist_per_step,0)
         self.speed_per_step=np.flip(self.speed_per_step,0)
         self.starttime_per_step=np.flip(self.starttime_per_step,0)
+        self.fuel_per_step = np.flip(self.fuel_per_step,0)
 
         route = RoutingAlg.terminate(self, boat, wt)
 
@@ -357,17 +359,23 @@ class IsoBased(RoutingAlg):
         ax.plot( self.finish[1],self.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",markersize=10)
 
         self.route_ensemble = []
-        for iRoute in  range(0,self.prune_segments):
+        for iRoute in  range(0,self.prune_segments * self.variant_segments):
             route, = ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], 'r-')
             self.route_ensemble.append(route)
+
+        gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
+        lats_gcr = [x[0] for x in gcr]
+        lons_gcr = [x[1] for x in gcr]
+        ax.plot(lons_gcr, lats_gcr, 'g-')
+
         final_path = self.figure_path + '/fig0.png'
         print('Saving start figure to ', final_path)
         plt.savefig(final_path)
 
-    def update_fig(self):
+    def update_fig(self, status):
         fig = self.fig
 
-        for iRoute in range(0,self.prune_segments):
+        for iRoute in range(0,self.prune_segments * self.variant_segments):
             if iRoute>= self.lats_per_step.shape[1]:
                 self.route_ensemble[iRoute].set_xdata([0])
                 self.route_ensemble[iRoute].set_ydata([0])
@@ -378,7 +386,12 @@ class IsoBased(RoutingAlg):
             fig.canvas.draw()
             fig.canvas.flush_events()
 
-        final_path = self.figure_path + '/fig' + str(self.count) + '.png'
+        gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
+        lats_gcr = [x[0] for x in gcr]
+        lons_gcr = [x[1] for x in gcr]
+        self.fig.get_axes()[1].plot(lons_gcr, lats_gcr, 'g-')
+
+        final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
         print('Saving updated figure to ', final_path)
         plt.savefig(final_path)
 

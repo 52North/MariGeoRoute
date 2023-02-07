@@ -8,7 +8,9 @@ from geovectorslib import geod
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.figure import Figure
+import matplotlib.cm as cm
 from PIL import Image
+from physt import h1, h2, histogramdd
 
 from routeparams import RouteParams
 
@@ -129,7 +131,7 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     lons = [x[1] for x in path]
 
     ax = fig.get_axes()[0]
-    ax.plot(lons, lats, 'g', transform=ccrs.PlateCarree())
+    ax.plot(lons, lats, 'g')
     return fig
 
 
@@ -198,3 +200,54 @@ def merge_figs(path, ncounts):
 
         writergif = animation.PillowWriter(fps=1, bitrate=1000)
         ani.save(path + str(ani) + '.gif', writer=writergif)
+
+def get_hist_values_from_boundaries(bin_boundaries, contend_unnormalised):
+    centres = np.array([])
+    widths = np.array([])
+    contents = np.array([])
+    for i in range(0, bin_boundaries.shape[0]-1):
+        width_temp = (bin_boundaries[i+1]-bin_boundaries[i])
+        cent_temp = bin_boundaries[i] + width_temp/2
+        cont_temp = contend_unnormalised[i]/width_temp
+        centres=np.append(centres, cent_temp)
+        widths = np.append(widths, width_temp)
+        contents = np.append(contents, cont_temp)
+    return {"bin_content" : contents, "bin_centres" : centres, "bin_widths" : widths}
+
+def get_hist_values_from_widths(bin_widths, contend_unnormalised):
+    centres = np.array([])
+    contents = np.array([])
+    cent_temp = 0
+    for i in range(0, bin_widths.shape[0]):
+        cent_temp = cent_temp + bin_widths[i]/2
+        cont_temp = contend_unnormalised[i]/bin_widths[i]
+        centres=np.append(centres, cent_temp)
+        contents = np.append(contents, cont_temp)
+        cent_temp = cent_temp + bin_widths[i]/2
+    return {"bin_content" : contents, "bin_centres" : centres}
+
+def get_accumulated_dist(dist_arr):
+    dist_acc = np.array([])
+    full_dist = 0
+
+    for dist in dist_arr:
+        dist_acc_temp = dist + full_dist
+        dist_acc=np.append(dist_acc, dist_acc_temp)
+        full_dist = full_dist + dist
+
+    return dist_acc
+
+def plot_power_vs_dist(route):
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
+    power = route.fuel_per_step
+    dist = route.dists_per_step
+    lat = route.lats_per_step
+    lon = route.lons_per_step
+
+    hist_values = get_hist_values_from_widths(dist, power)
+
+    plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill = False)
+    plt.xlabel('travel distance (km)')
+    plt.ylabel('power/distance (kWh/km)')
+    plt.xticks()
+    plt.show()    

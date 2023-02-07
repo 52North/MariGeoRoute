@@ -205,9 +205,10 @@ class RoutingAlg():
             if(self.is_last_step):
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
+            #self.update_fig('bp')
             self.pruning_per_step(True)
             #ut.print_current_time('move_boat: Step=' + str(i), start_time)
-            self.update_fig()
+            #self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate(boat, wt)
@@ -291,20 +292,22 @@ class RoutingAlg():
 
         time = round(self.full_time_traveled / 3600,2 )
         route = RouteParams(
-            self.count,  # routing step
-            self.start,  # lat, lon at start
-            self.finish,  # lat, lon at end
-            self.full_fuel_consumed / (3600 * 1000),  # sum of fuel consumption [kWh]
-            boat.get_rpm(),  # propeller [revolutions per minute]
-            'min_time_route',  # route name
-            time,  # time needed for the route [h]
-            self.lats_per_step[:],
-            self.lons_per_step[:],
-            self.azimuth_per_step[:],
-            self.dist_per_step[:],
-            self.speed_per_step[:],
-            self.starttime_per_step[:],
-            self.full_dist_traveled
+            count = self.count,  # routing step
+            start = self.start,  # lat, lon at start
+            finish = self.finish,  # lat, lon at end
+            fuel = self.full_fuel_consumed / (3600 * 1000),  # sum of fuel consumption [kWh]
+            full_dist_traveled=np.sum(self.dist_per_step), # [m]
+            gcr = self.full_dist_traveled, #[m]
+            rpm = boat.get_rpm(),  # propeller [revolutions per minute]
+            route_type = 'min_time_route',  # route name
+            time = time,  # time needed for the route [h]
+            lats_per_step = self.lats_per_step[:],
+            lons_per_step = self.lons_per_step[:],
+            azimuths_per_step = self.azimuth_per_step[:],
+            dists_per_step = self.dist_per_step[:], #[m]
+            speed_per_step = self.speed_per_step[:],
+            starttime_per_step = self.starttime_per_step[:],
+            fuel_per_step = self.fuel_per_step[:] / (3600 * 1000),  # fuel consumption [kWh] per step
         )
         #route.print_route()
         self.check_destination()

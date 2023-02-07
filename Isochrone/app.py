@@ -182,6 +182,8 @@ def plot_map():
     fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
     fig = graphics.plot_legend(fig)
 
+    graphics.plot_power_vs_dist(min_fuel_route['route'])
+
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
 

@@ -33,21 +33,23 @@ class RouteParams():
     starttime_per_step: tuple
     full_dist_traveled: tuple  # full geodesic distance since start [m]
 
-    def __init__(self, count, start, finish, fuel, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, speed_per_step, starttime_per_step, full_dist_traveled):
+    def __init__(self, count, start, finish, fuel, full_dist_traveled,gcr, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, speed_per_step, starttime_per_step, fuel_per_step):
         self.count = count  # routing step
         self.start = start  # lat, lon at start
         self.finish = finish  # lat, lon at end
         self.fuel = fuel  # sum of fuel consumption [kWh]
+        self.full_dist_traveled = full_dist_traveled #full travel distance [m]
+        self.gcr = gcr
         self.rpm = rpm  # propeller [revolutions per minute]
         self.route_type = route_type  # route name
         self.time = time  # time needed for the route [h]
         self.lats_per_step = lats_per_step
         self.lons_per_step = lons_per_step
         self.azimuths_per_step = azimuths_per_step # [degrees]
-        self.dists_per_step = dists_per_step    #[m]
-        self.speed_per_step = speed_per_step    #[m/s]
-        self.starttime_per_step =starttime_per_step	#datetime
-        self.full_dist_traveled = full_dist_traveled #[m]
+        self.dists_per_step = dists_per_step    #travel distance per step [m]
+        self.speed_per_step = speed_per_step    #speed per step [m/s]
+        self.starttime_per_step =starttime_per_step	# time at start of every step
+        self.fuel_per_step = fuel_per_step 	#fuel consumption per step [kWh]
 
     def print_route(self):
         utils.print_line()
@@ -58,6 +60,8 @@ class RouteParams():
         print('routing steps ' + str(self.count))
         print('time ' + str(self.time))
         print('fuel ' + str(self.fuel))
+        print('full_dist_traveled ' + str(self.full_dist_traveled))
+        print('gcr ' + str(self.gcr))
         print('rpm ' + str(self.rpm))
         print('lats_per_step ' + str(self.lats_per_step))
         print('lons_per_step ' + str(self.lons_per_step))
@@ -65,7 +69,7 @@ class RouteParams():
         print('dists_per_step ' + str(self.dists_per_step))
         print('speed_per_step ' + str(self.speed_per_step))
         print('start_time_per_step' + str(self.starttime_per_step))
-        print('full_dist_traveled ' + str(self.full_dist_traveled))
+        print('fuel_per_step' + str(self.fuel_per_step))
         utils.print_line()
 
     def __eq__(self, route2):
