@@ -59,6 +59,6 @@ class NumpyArrayEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, numpy.ndarray):
             return obj.tolist()
-        #if isinstance(obj, (datetime.date, datetime.datetime)):
-        #    return obj.isoformat()
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return str(obj)
         return JSONEncoder.default(self, obj)

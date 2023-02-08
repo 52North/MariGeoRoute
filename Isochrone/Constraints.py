@@ -72,7 +72,7 @@ class ConstraintPars():
     bCheckCrossing: bool
 
     def __init__(self):
-        self.resolution = 1. / 10
+        self.resolution = 1. / 50
         self.bCheckEndPoints = True
         self.bCheckCrossing = True
 
@@ -299,36 +299,64 @@ class WaterDepth(NegativeConstraintFromWeather):
 
     def plot_route_in_constraint(self, route: RouteParams, colour, figure_file):
         level_diff = 10
+        plt.rcParams['font.size'] = 20
 
         depth = self.wt.ds['depth'].where((self.wt.ds.depth < 0), drop=True)
 
-        fig, ax = plt.subplots(figsize=(12, 10))
-        ax.axis('off') 
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.axis('off')
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        depth.plot.contourf(ax=ax,
-                            levels=np.arange(-100, 0, level_diff),
+        cp=depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
                             transform=ccrs.PlateCarree())
 
         fig.subplots_adjust(
-            left=0.05,
-            right=0.95,
-            bottom=0.05,
-            top=0.95,
+            left=0.1,
+            right=1.2,
+            bottom=0,
+            top=1,
             wspace=0,
             hspace=0)
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
         ax.gridlines(draw_labels=True)
 
+        fig.colorbar(cp, ax=ax, shrink=0.7, label = 'Wassertiefe (m)', pad=0.1)
+
         lats = route.lats_per_step
         lons = route.lons_per_step
-        time = route.time
         ax.plot(lons, lats, 'r-')
 
-        #plt.title('Route British Channel - ' + str(self.min_depth) + 'm drought')
+        plt.title('')
         ax.plot(route.start[1], route.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
                 markersize=10)
         ax.plot(route.finish[1], route.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
                 markersize=10)
+        ax.xaxis.set_tick_params(labelsize='large')
 
         plt.savefig(figure_file + '/route_waterdepth.png')
+
+
+class StayOnMap(NegativeContraint):
+    lat1: float
+    lon1: float
+    lat2: float
+    lon2: float
+
+    def __init__(self):
+        NegativeContraint.__init__(self, 'StayOnMap')
+        self.message += 'leaving wheather map!'
+        self.resource_type = 0
+
+    def constraint_on_point(self, lat, lon, time):
+        # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
+        is_on_map = (lat>self.lat2) + (lat<self.lat1) + (lon>self.lon2) + (lon<self.lon1)
+        return is_on_map
+
+    def print_info(self):
+        logger.info(ut.get_log_step('stay on wheather map',1))
+
+    def set_map(self, lat1, lon1, lat2, lon2):
+        self.lat1 = lat1
+        self.lon1 = lon1
+        self.lat2 = lat2
+        self.lon2 = lon2

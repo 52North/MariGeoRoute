@@ -144,10 +144,13 @@ def plot_map():
     water_depth = WaterDepth(wt)
     water_depth.set_drought(20)
     #water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
+    on_map = StayOnMap()
+    on_map.set_map(lat1,lon1,lat2,lon2)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(water_depth)
+    constraint_list.add_neg_constraint(on_map)
+    #constraint_list.add_neg_constraint(water_depth)
     constraint_list.print_settings()
 
     '''min_time_route = router.modified_isochrone_routing(

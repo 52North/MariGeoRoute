@@ -129,7 +129,7 @@ class RouteParams():
     def write_to_file(self, filename):
         rp_dict = self.convert_to_dict()
         with open(filename, 'w') as file:
-            json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4, default = str)
+            json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
     @classmethod
     def from_file(cls, filename):
