@@ -14,6 +14,24 @@ from graphics import *
 
 logger = logging.getLogger('WRT.Constraints')
 
+##
+# Constraint: Main class for handling of constraints
+# PositiveConstraint: handling of constraints where the ship NEEDS to take a certain route (e.g. waterways)
+# NegativeConstraint: handling of constraints where the ship MUST NOT pass a certain area (too low water depth, too high waves, danger areas...)
+# NegativeConstraintFrom weather: negative constraint which needs information from the weather (this includes depth information which are stored in the netCDF weather file)
+# ConstraintPars: class that initialises ConstraintList
+# ConstraintList: list of constraints
+#
+# constraints implemented so far: LandCrossing (prohibit land crossing), WaterDepth (prohibit crossing of areas with too low water depth), StayOnMap (prohibit leaving the area
+#           for which the weather data has been obtained
+#
+# Inclusion in routing algorithm:
+#       1) initialise all individual constraints that shall be considered (for example check Isochrones/app.py)
+#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check Isochrones/app.py)
+#       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start, lon_end, time) which looks for constraints in
+#           between starting point and destination;
+#           alternatively it can also be checked for a single point whether a constraint is hit via ConstraintList.safe_endpoint(lat, lon, time)
+
 class Constraint():
     name: str
     message: str
@@ -127,6 +145,9 @@ class ConstraintsList():
     def split_route(self):
         pass
 
+    ##
+    # Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops
+    # over all Constraints added to the ConstraintList
     def safe_endpoint(self, lat, lon, time, is_constrained):
         debug = False
 
@@ -140,6 +161,10 @@ class ConstraintsList():
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
 
+    ##
+    # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination (lat_end, lon_end).
+    # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
+    # calling ConstraintList.safe_endpoint()
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, time, is_constrained):
         debug = True
 
