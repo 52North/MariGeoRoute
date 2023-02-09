@@ -12,8 +12,6 @@ import matplotlib.cm as cm
 from PIL import Image
 from physt import h1, h2, histogramdd
 
-from routeparams import RouteParams
-
 
 """lat1 : initial latitude 
    lat2 : Final latitude
@@ -134,7 +132,7 @@ def plot_gcr(fig, lat1, lon1, lat2, lon2):
     ax.plot(lons, lats, 'g')
     return fig
 
-
+'''
 def plot_route(fig, route: RouteParams, colour):
     """
     Add isochrone to the map figure.
@@ -152,6 +150,7 @@ def plot_route(fig, route: RouteParams, colour):
     ax.plot(lons, lats, colour, label=legend_entry, transform=ccrs.PlateCarree())
 
     return fig
+    '''
 
 def plot_legend(fig):
     ax = fig.get_axes()[0]
@@ -237,17 +236,4 @@ def get_accumulated_dist(dist_arr):
 
     return dist_acc
 
-def plot_power_vs_dist(route):
-    fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
-    power = route.fuel_per_step
-    dist = route.dists_per_step
-    lat = route.lats_per_step
-    lon = route.lons_per_step
 
-    hist_values = get_hist_values_from_widths(dist, power)
-
-    plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill = False)
-    plt.xlabel('travel distance (km)')
-    plt.ylabel('power/distance (kWh/km)')
-    plt.xticks()
-    plt.show()    

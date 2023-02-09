@@ -1,13 +1,15 @@
 from routeparams import RouteParams
 from Constraints import *
 from weather import WeatherCondCMEMS
+import graphics
 import config
 
 if __name__ == "__main__":
-    filename = "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/min_time_routeroute.json"
+    filename1 = "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/min_time_routeroute.json"
+    filename2 = "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/depth.json"
     figurefile = "/home/kdemmich/MariData/Code/Figures"
-    rp_read = RouteParams.from_file(filename)
-    rp_read.print_route()
+    rp_read1 = RouteParams.from_file(filename1)
+    rp_read2 = RouteParams.from_file(filename2)
 
     ##
     # init wheather
@@ -27,6 +29,25 @@ if __name__ == "__main__":
     water_depth.set_drought(20)
 
     ##
-    # plotting
-    water_depth.plot_route_in_constraint(rp_read, 0, figurefile)
+    # plotting routes
+    fig, ax = plt.subplots(figsize=(12, 7))
+    fig, ax = water_depth.plot_constraint(fig, ax)
+    #water_depth.plot_route_in_constraint(rp_read, 0, fig, ax)
+    rp_read1.plot_route(ax, graphics.get_colour(0), "route 1")
+    rp_read2.plot_route(ax, graphics.get_colour(1), "route 2")
+    ax.legend()
+    plt.savefig(figurefile + '/route_waterdepth.png')
+
+    ##
+    # plotting power vs. distance
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=96)
+    rp_read1.plot_power_vs_dist(graphics.get_colour(0), "route 1")
+    rp_read2.plot_power_vs_dist(graphics.get_colour(1), "route 2")
+    ax.legend()
+    plt.savefig(figurefile + '/route_power.png')
+
+
+
+
+
 

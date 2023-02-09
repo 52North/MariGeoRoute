@@ -3,7 +3,7 @@ Data/Screenshots/*.png
 *.png
 Dicts/*
 *pycache*
-*idea/*
+.idea/**
 *.idx
 Data/ENC_example_files/*
 Data/2019122212/*.nc

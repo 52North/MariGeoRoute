@@ -5,6 +5,8 @@ import json
 import dateutil.parser
 
 import utils
+import matplotlib.pyplot as plt
+import graphics
 from utils import NumpyArrayEncoder
 
 
@@ -171,3 +173,27 @@ class RouteParams():
             starttime_per_step = starttime_per_step,
             fuel_per_step = fuel_per_step
         )
+    def plot_route(self, ax, colour, label):
+        lats = self.lats_per_step
+        lons = self.lons_per_step
+        ax.plot(lons, lats, color = colour, label = label)
+
+        ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
+                markersize=10)
+        ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
+                markersize=10)
+	return ax
+
+    def plot_power_vs_dist(self, color, label):
+        power = self.fuel_per_step
+        dist = self.dists_per_step
+        lat = self.lats_per_step
+        lon = self.lons_per_step
+
+        dist = dist/1000    # [m] -> [km]
+        hist_values = graphics.get_hist_values_from_widths(dist, power)
+
+        plt.bar(hist_values["bin_centres"], hist_values["bin_content"], dist, fill=False, color = color, edgecolor = color, label = label)
+        plt.xlabel('Weglänge (km)')
+        plt.ylabel('Energie (kWh/km)')
+        plt.xticks()

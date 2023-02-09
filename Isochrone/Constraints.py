@@ -8,7 +8,7 @@ import logging
 import utils as ut
 import xarray as xr
 import matplotlib.pyplot as plt
-import routeparams
+from routeparams import RouteParams
 from weather import WeatherCond
 from graphics import *
 
@@ -59,7 +59,11 @@ class Constraint():
     def print_info(self):
         pass
 
-    def plot_route_in_constraint(self):
+    def plot_route_in_constraint(self, route: RouteParams, colour, fig, ax):
+        fig, ax = self.plot_constraint(fig, ax)
+        route.plot_route(ax)
+
+    def plot_constraint(self):
         pass
 
 class PositiveConstraint(Constraint):
@@ -322,17 +326,18 @@ class WaterDepth(NegativeConstraintFromWeather):
 
         plt.show()
 
-    def plot_route_in_constraint(self, route: RouteParams, colour, figure_file):
+    def plot_constraint(self, fig, ax):
         level_diff = 10
         plt.rcParams['font.size'] = 20
+        ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
 
         depth = self.wt.ds['depth'].where((self.wt.ds.depth < 0), drop=True)
 
-        fig, ax = plt.subplots(figsize=(12, 7))
-        ax.axis('off')
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp=depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                            transform=ccrs.PlateCarree())
+        cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                 transform=ccrs.PlateCarree())
+        fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(
             left=0.1,
@@ -344,21 +349,9 @@ class WaterDepth(NegativeConstraintFromWeather):
         ax.add_feature(cf.LAND)
         ax.add_feature(cf.COASTLINE)
         ax.gridlines(draw_labels=True)
-
-        fig.colorbar(cp, ax=ax, shrink=0.7, label = 'Wassertiefe (m)', pad=0.1)
-
-        lats = route.lats_per_step
-        lons = route.lons_per_step
-        ax.plot(lons, lats, 'r-')
-
         plt.title('')
-        ax.plot(route.start[1], route.start[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
-                markersize=10)
-        ax.plot(route.finish[1], route.finish[0], marker="o", markerfacecolor="orange", markeredgecolor="orange",
-                markersize=10)
-        ax.xaxis.set_tick_params(labelsize='large')
 
-        plt.savefig(figure_file + '/route_waterdepth.png')
+        return fig, ax
 
 
 class StayOnMap(NegativeContraint):
