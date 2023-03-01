@@ -347,7 +347,7 @@ class WeatherCondNCEP(WeatherCond):
 
 class WeatherCondCMEMS(WeatherCond):
     def calculate_wind_function(self, time):
-        time_str=time.strftime('%Y-%m-%dT%H:%M:%S.000000000')
+        time_str=time.strftime('%Y-%m-%d %H:%M:%S')
         #print('Reading time', time_str)
 
         try:
@@ -397,7 +397,7 @@ class WeatherCondCMEMS(WeatherCond):
         lat2 = self.map_size.x2
         lon1 = self.map_size.y1
         lon2 = self.map_size.y2
-        time_str = time.strftime('%Y-%m-%dT%H:%M:%S.000000000')
+        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
 
         ds_time=self.ds.sel(time = time_str)
 
