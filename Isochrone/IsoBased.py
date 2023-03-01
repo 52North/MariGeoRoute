@@ -334,21 +334,23 @@ class IsoBased(RoutingAlg):
 
     def init_fig(self, wt):
         level_diff = 10
+        plt.rcParams['font.size'] = 20
 
         depth = wt.ds['depth'].where(wt.ds.depth < 0, drop=True)
 
         self.fig, ax = plt.subplots(figsize=(12, 10))
         ax.axis('off')
+        ax.xaxis.set_tick_params(labelsize='large')
         ax = self.fig.add_subplot(111, projection=ccrs.PlateCarree())
-        depth.plot.contourf(ax=ax,
-                            levels=np.arange(-100, 0, level_diff),
-                            transform=ccrs.PlateCarree())
+        cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+                                 transform=ccrs.PlateCarree())
+        self.fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         self.fig.subplots_adjust(
-            left=0.05,
-            right=0.95,
-            bottom=0.05,
-            top=0.95,
+            left=0.1,
+            right=1.2,
+            bottom=0,
+            top=1,
             wspace=0,
             hspace=0)
         ax.add_feature(cf.LAND)
@@ -360,13 +362,14 @@ class IsoBased(RoutingAlg):
 
         self.route_ensemble = []
         for iRoute in  range(0,self.prune_segments * self.variant_segments):
-            route, = ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], 'r-')
+            route, = ax.plot(self.lons_per_step[:, 0], self.lats_per_step[:, 0], color = "firebrick")
             self.route_ensemble.append(route)
 
         gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
         lats_gcr = [x[0] for x in gcr]
         lons_gcr = [x[1] for x in gcr]
-        ax.plot(lons_gcr, lats_gcr, 'g-')
+        ax.plot(lons_gcr, lats_gcr, color = "orange")
+        plt.title('')
 
         final_path = self.figure_path + '/fig0.png'
         print('Saving start figure to ', final_path)
@@ -389,7 +392,7 @@ class IsoBased(RoutingAlg):
         gcr = graphics.get_gcr_points(self.start[0], self.start[1], self.finish[0], self.finish[1], n_points=10)
         lats_gcr = [x[0] for x in gcr]
         lons_gcr = [x[1] for x in gcr]
-        self.fig.get_axes()[1].plot(lons_gcr, lats_gcr, 'g-')
+        self.fig.get_axes()[1].plot(lons_gcr, lats_gcr, color = "orange")
 
         final_path = self.figure_path + '/fig' + str(self.count) + status + '.png'
         print('Saving updated figure to ', final_path)

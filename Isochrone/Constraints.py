@@ -5,6 +5,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cf
 import logging
 
+import graphics
 import utils as ut
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -61,7 +62,7 @@ class Constraint():
 
     def plot_route_in_constraint(self, route: RouteParams, colour, fig, ax):
         fig, ax = self.plot_constraint(fig, ax)
-        route.plot_route(ax)
+        route.plot_route(ax, graphics.get_colour(0), "")
 
     def plot_constraint(self):
         pass
@@ -94,7 +95,7 @@ class ConstraintPars():
     bCheckCrossing: bool
 
     def __init__(self):
-        self.resolution = 1. / 50
+        self.resolution = 1. / 10
         self.bCheckEndPoints = True
         self.bCheckCrossing = True
 
@@ -292,7 +293,8 @@ class WaterDepth(NegativeConstraintFromWeather):
     def get_current_depth(self, lat, lon):
         rounded_ds = self.wt.ds['depth'].interp(latitude=lat, longitude=lon, method='linear')
         if np.isnan(rounded_ds):
-            raise Exception('Constraints: depth is nan!')
+            #raise Exception('Constraints: depth is nan!')
+            rounded_ds = 0
         return rounded_ds
 
     def plot_depth_map_from_file(self, path, lat_start, lon_start, lat_end, lon_end):

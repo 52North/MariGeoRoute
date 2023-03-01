@@ -184,11 +184,20 @@ def rebin(a,rebinx, rebiny):
 
 def merge_figs(path, ncounts):
         fig, ax = plt.subplots(figsize=(12, 8), dpi=500)
+        ax.axis('off')
         image_list = []
         impath = ''
 
-        for iIm in range(0,ncounts+1):
-            impath = path + 'fig' + str(iIm) + '.png'
+        fig.subplots_adjust(
+            left=0.01,
+            right=0.98,
+            bottom=0,
+            top=1,
+            wspace=0,
+            hspace=0)
+
+        for iIm in range(1,ncounts+1):
+            impath = path + 'fig' + str(iIm) + 'p.png'
             print('Reading image ', impath)
             im_temp = Image.open(impath)
             im_plot = plt.imshow(im_temp)
@@ -218,8 +227,9 @@ def get_hist_values_from_widths(bin_widths, contend_unnormalised):
     contents = np.array([])
     cent_temp = 0
     for i in range(0, bin_widths.shape[0]):
+        cont_temp = 0
         cent_temp = cent_temp + bin_widths[i]/2
-        cont_temp = contend_unnormalised[i]/bin_widths[i]
+        if(bin_widths[i]>0): cont_temp = contend_unnormalised[i]/bin_widths[i]
         centres=np.append(centres, cent_temp)
         contents = np.append(contents, cont_temp)
         cent_temp = cent_temp + bin_widths[i]/2

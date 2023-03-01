@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import xarray as xr
 import bbox as bbox
-import matplotlib
+import matplotlib.pyplot as plt
 from bbox import BBox2D, XYXY
 import sys
 import logging
@@ -14,6 +14,7 @@ from scipy.interpolate import RegularGridInterpolator
 
 import utils as ut
 from utils import round_time
+import graphics
 
 logger = logging.getLogger('WRT.weather')
 
@@ -346,14 +347,16 @@ class WeatherCondNCEP(WeatherCond):
 
 class WeatherCondCMEMS(WeatherCond):
     def calculate_wind_function(self, time):
-        time_str=time.strftime('%Y-%m-%d %H:%M:%S')
+        time_str=time.strftime('%Y-%m-%dT%H:%M:%S.000000000')
         #print('Reading time', time_str)
 
         try:
-            u = self.ds['u-component_of_wind_maximum_wind'].sel(time=time_str)
-            v = self.ds['v-component_of_wind_maximum_wind'].sel(time=time_str)
+            u = self.ds['u-component_of_wind_height_above_ground'].sel(time=time_str, height_above_ground2=10)
+            v = self.ds['v-component_of_wind_height_above_ground'].sel(time=time_str, height_above_ground2=10)
         except KeyError:
-            raise Exception('Please make sure that time stamps of environmental data match full hours')
+            time = self.ds['time']
+            print('time: ', time.to_numpy())
+            raise Exception('Please make sure that time stamps of environmental data match full hours: time = ' + time_str)
 
         twa, tws = self.get_twatws_from_uv(u,v)
 
@@ -394,16 +397,16 @@ class WeatherCondCMEMS(WeatherCond):
         lat2 = self.map_size.x2
         lon1 = self.map_size.y1
         lon2 = self.map_size.y2
-        time_str = time.strftime('%Y-%m-%d %H:%M:%S')
+        time_str = time.strftime('%Y-%m-%dT%H:%M:%S.000000000')
 
         ds_time=self.ds.sel(time = time_str)
 
-        u = ds_time['u-component_of_wind_maximum_wind'].where(
+        u = ds_time['u-component_of_wind_height_above_ground'].where(
             (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
-                    ds_time.longitude <= lon2), drop=True)
-        v = ds_time['v-component_of_wind_maximum_wind'].where(
+                    ds_time.longitude <= lon2) & (ds_time.height_above_ground2 == 10), drop=True)
+        v = ds_time['v-component_of_wind_height_above_ground'].where(
             (ds_time.latitude >= lat1) & (ds_time.latitude <= lat2) & (ds_time.longitude >= lon1) & (
-                    ds_time.longitude <= lon2), drop=True)
+                    ds_time.longitude <= lon2) & (ds_time.height_above_ground2 == 10), drop=True)
         lats_u_1D = ds_time['latitude'].where((ds_time.latitude >= lat1) & (ds_time.latitude <= lat2), drop=True)
         lons_u_1D = ds_time['longitude'].where((ds_time.longitude >= lon1) & (ds_time.longitude <= lon2), drop=True)
 
@@ -415,3 +418,37 @@ class WeatherCondCMEMS(WeatherCond):
         lons_u = np.tile(lons_u_1D, (u.shape[0], 1))
 
         return {'u': u, 'v': v, 'lats_u': lats_u, 'lons_u': lons_u, 'timestamp': time}
+
+    def plot_weather_map(self, fig, ax, time):
+        rebinx = 10
+        rebiny = 10
+
+        u = self.ds['u-component_of_wind_height_above_ground'].sel(
+            time=time, height_above_ground2=10)  # .where((ds_wind.latitude>=lat1) & (ds_wind.latitude<=lat2) & (ds_wind.longitude>=lon1) & (ds_wind.longitude<=lon2), drop=True)
+        v = self.ds['v-component_of_wind_height_above_ground'].sel(
+            time=time,  height_above_ground2=10)  # .where((ds_wind.latitude>=lat1) & (ds_wind.latitude<=lat2) & (ds_wind.longitude>=lon1) & (ds_wind.longitude<=lon2), drop=True)
+
+        u = u[::3, ::6]
+        v = u[::3, ::6]
+
+        #u = u.coarsen(latitude=100).to_numpy()
+        #v = v.coarsen(latitude=100).to_numpy()
+        #ds_rebin = self.ds.coarsen(latitude=100)
+        unp = u.to_numpy()
+        vnp = v.to_numpy()
+        unp = graphics.rebin(unp, rebinx, rebiny)
+        vnp = graphics.rebin(vnp, rebinx, rebiny)
+
+        windspeed = np.sqrt(u ** 2 + v ** 2)
+        windspeed.plot()
+        plt.title('ECMWF wind speed and direction, June 1, 1984')
+        plt.ylabel('latitude')
+        plt.xlabel('longitude')
+        x = windspeed.coords['longitude'].values
+        y = windspeed.coords['latitude'].values
+
+        print('x = ', x.shape)
+        print('y = ', y.shape)
+
+        #plt.barbs(x, y, u.values, v.values)
+        plt.quiver(x, y, u.values, v.values)

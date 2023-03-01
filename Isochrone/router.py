@@ -85,7 +85,7 @@ def min_fuel_routing(
     ra_fuel.init_fig(wt)
 
     min_fuel_route = ra_fuel.recursive_routing(boat, wt, constraint_list, verbose)
-    min_fuel_route['route'].print_route()
+    min_fuel_route.print_route()
     return min_fuel_route
 
 #

@@ -372,8 +372,9 @@ class Tanker(Boat):
                 ds_read_test = xr.load_dataset(filename_single)
                 courses_test = ds_read_test['courses']
                 ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
+                ut.print_step('speed' + str(ds_read_test['speed'].to_numpy()),1)
 
-            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path)
+            mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False, False)
 
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]

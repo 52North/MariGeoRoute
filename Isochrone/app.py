@@ -70,8 +70,8 @@ def plot_map():
     # suppress warnings from mariPower
     warnings.filterwarnings("ignore")
 
-    #graphics.merge_figs("/home/kdemmich/MariData/Code/Figures/NoDepthConstraint/", 5)
-    #raise Exception('Stop here')
+    graphics.merge_figs("/home/kdemmich/MariData/Code/Figures/Depth10m/", 5)
+    raise Exception('Stop here')
 
     """Route handling."""
     try:
@@ -114,43 +114,42 @@ def plot_map():
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    #boat.init_hydro_model_single_pars()
-    #boat.init_hydro_model(windfile)
+    # boat.init_hydro_model_single_pars()
+    # boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
     boat.set_boat_speed(15)
-    boat.calibrate_simple_fuel()
-    #boat.write_simple_fuel()
-    #boat.test_power_consumption_per_course()
-    #boat.test_power_consumption_per_speed()
+    # boat.calibrate_simple_fuel()
+    # boat.write_simple_fuel()
+    # boat.test_power_consumption_per_course()
+    # boat.test_power_consumption_per_speed()
 
-    #boat = SailingBoat(filepath=boatfile)
+    # boat = SailingBoat(filepath=boatfile)
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours,3)
+    wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
     wt.set_map_size(lat1, lon1, lat2, lon2)
     wt.add_depth_to_EnvData(depthfile)
-    #wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
-    #wt.check_ds_format()
+    # wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
+    # wt.check_ds_format()
     wt.init_wind_functions()
     wt.init_wind_vectors()
-    #vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
-
+    # vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
     # *******************************************
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(wt)
-    water_depth.set_drought(20)
-    #water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
+    water_depth.set_drought(10)
+    # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
-    on_map.set_map(lat1,lon1,lat2,lon2)
+    on_map.set_map(lat1, lon1, lat2, lon2)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
-    constraint_list.add_neg_constraint(on_map)
-    #constraint_list.add_neg_constraint(water_depth)
+    # constraint_list.add_neg_constraint(on_map)
+    constraint_list.add_neg_constraint(water_depth)
     constraint_list.print_settings()
 
     '''min_time_route = router.modified_isochrone_routing(
@@ -175,39 +174,41 @@ def plot_map():
         figurepath
     )
 
-    #if not (min_fuel_route.__eq__(min_time_route)):
+    # if not (min_fuel_route.__eq__(min_time_route)):
     #    raise ValueError('Routes not matching!')'''
 
-    fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
-#    fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
-    fig = graphics.plot_route(fig, min_fuel_route['route'], graphics.get_colour(1))
-    fig = graphics.plot_legend(fig)
+    # fig =  graphics.create_map(lat1, lon1, lat2, lon2, dpi)
+    #   # fig = graphics.plot_route(fig, min_time_route['route'], graphics.get_colour(1))
+    # fig = graphics.plot_route(fig, min_fuel_route, graphics.get_colour(1))
+    # fig = graphics.plot_legend(fig)
 
-    #graphics.plot_power_vs_dist(min_fuel_route['route'])
+    # graphics.plot_power_vs_dist(min_fuel_route['route'])
 
-    output = io.BytesIO()
-    FigureCanvas(fig).print_png(output)
+    # output = io.BytesIO()
+    # FigureCanvas(fig).print_png(output)
 
-    min_fuel_route['route'].write_to_file(str(min_fuel_route['route'].route_type) + "route.json")
+    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
 
-    #plot route in constraints
-    #water_depth.plot_route_in_constraint(min_fuel_route['route'], graphics.get_colour(1), figurepath)
+    # plot route in constraints
+    fig, ax = plt.subplots(figsize=(12, 7))
+    water_depth.plot_route_in_constraint(min_fuel_route, graphics.get_colour(1), fig, ax)
+    plt.savefig(figurepath + '/route_waterdepth.png')
 
-    return Response(output.getvalue(), mimetype='image/png')
+    return 0  # Response(output.getvalue(), mimetype='image/png')
 
 
 # Error handlers.
 @app.errorhandler(500)
 def internal_error(error):
     """Error handling."""
-    #return render_template('errors/500.html'), 500
+    # return render_template('errors/500.html'), 500
     return 'Error 500'
 
 
 @app.errorhandler(404)
 def not_found_error(error):
     """Error handling."""
-    #return render_template('errors/404.html'), 404
+    # return render_template('errors/404.html'), 404
     return 'Error 404'
 
 
@@ -222,7 +223,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    #app.run()
+    # app.run()
     app.run(host="localhost", port=5000, debug=True)
 
 # Or specify port manually:

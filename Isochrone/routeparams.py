@@ -176,13 +176,13 @@ class RouteParams():
     def plot_route(self, ax, colour, label):
         lats = self.lats_per_step
         lons = self.lons_per_step
-        ax.plot(lons, lats, color = colour, label = label)
+        ax.plot(lons, lats, color = colour, label = label, linewidth=2)
 
         ax.plot(self.start[1], self.start[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
                 markersize=10)
         ax.plot(self.finish[1], self.finish[0], marker="o", markerfacecolor=colour, markeredgecolor=colour,
                 markersize=10)
-	return ax
+        return ax
 
     def plot_power_vs_dist(self, color, label):
         power = self.fuel_per_step
