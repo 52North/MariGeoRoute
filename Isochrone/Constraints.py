@@ -4,6 +4,7 @@ from global_land_mask import globe
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import logging
+import time
 
 import graphics
 import utils as ut
@@ -153,15 +154,17 @@ class ConstraintsList():
     ##
     # Check whether there is a constraint on the space-time point defined by lat, lon, time. To do so, the code loops
     # over all Constraints added to the ConstraintList
-    def safe_endpoint(self, lat, lon, time, is_constrained):
+    def safe_endpoint(self, lat, lon, current_time, is_constrained):
         debug = False
 
         for iConst in range(0, self.neg_size):
-            is_constrained_temp = self.negative_constraints[iConst].constraint_on_point(lat, lon, time)
+            is_constrained_temp = self.negative_constraints[iConst].constraint_on_point(lat, lon, current_time)
             if is_constrained_temp.any(): self.constraints_crossed.append(self.negative_constraints[iConst].message)
             if (debug):
                 print('is_constrained_temp: ', is_constrained_temp)
                 print('is_constrained: ', is_constrained)
+                #ut.print_current_time('constraint execution', start_time)
+
             is_constrained += is_constrained_temp
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
         return is_constrained
@@ -170,7 +173,7 @@ class ConstraintsList():
     # Check whether there is a constraint on the way from a starting point (lat_start, lon_start) to the destination (lat_end, lon_end).
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
     # calling ConstraintList.safe_endpoint()
-    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, time, is_constrained):
+    def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
         debug = True
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
@@ -187,7 +190,7 @@ class ConstraintsList():
             x = x0 + delta_lats
             y = y0 + delta_lons
 
-            is_constrained = self.safe_endpoint(x, y, time, is_constrained)
+            is_constrained = self.safe_endpoint(x, y, current_time, is_constrained)
             x0 = x
             y0 = y
 
@@ -282,20 +285,17 @@ class WaterDepth(NegativeConstraintFromWeather):
         return returnvalue
 
     def check_weather(self, lat, lon, time):
-        self.current_depth = np.full(lat.shape, -99)
-
-        for i in range(0, lat.shape[0]):
-            self.current_depth[i] = self.get_current_depth(lat[i], lon[i])
+        lat_da = xr.DataArray(lat, dims="dummy")
+        lon_da = xr.DataArray(lon, dims="dummy")
+        rounded_ds = self.wt.ds['depth'].interp(latitude=lat_da, longitude=lon_da, method='linear')
+        self.current_depth = rounded_ds.to_numpy()
 
     def print_info(self):
         logger.info(ut.get_log_step('minimum water depth=' + str(self.min_depth) + 'm',1))
 
     def get_current_depth(self, lat, lon):
-        rounded_ds = self.wt.ds['depth'].interp(latitude=lat, longitude=lon, method='linear')
-        if np.isnan(rounded_ds):
-            #raise Exception('Constraints: depth is nan!')
-            rounded_ds = 0
-        return rounded_ds
+        self.check_weather(lat, lon, None)
+        return self.current_depth
 
     def plot_depth_map_from_file(self, path, lat_start, lon_start, lat_end, lon_end):
         level_diff = 10

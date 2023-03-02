@@ -208,7 +208,7 @@ class RoutingAlg():
             #self.update_fig('bp')
             self.pruning_per_step(True)
             #ut.print_current_time('move_boat: Step=' + str(i), start_time)
-            self.update_fig('p')
+            #self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate(boat, wt)

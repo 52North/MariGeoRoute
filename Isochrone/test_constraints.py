@@ -228,12 +228,14 @@ def test_depth_interpolation_depth():
     weather.add_depth_to_EnvData(depthfile)
     waterdepth = WaterDepth(weather)
 
-    depth_int = np.full(len(lat), -99)
+    depth_int = waterdepth.get_current_depth(lat, lon)
+    diff = (depth_int - depth_orig) < 1
+
     for i in range (0, len(lat)):
-       depth_int[i] = waterdepth.get_current_depth(lat[i], lon[i])
-       diff = depth_int[i] - depth_orig[i]
        if(debug): print('i=' + str(i) + ': [' + str(lat[i]) + ',' + str(lon[i]) + ']=' + str(depth_int[i]) + ', diff=' + str(diff))
-       assert diff<=1.
+
+    assert diff.all
+
 
 def test_depth_interpolation_weather():
     debug = True

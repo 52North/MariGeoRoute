@@ -1,6 +1,7 @@
 ## Classes Boat, Tanker, SailingBoat
 #
 #
+import time
 import numpy as np
 import pandas as pd
 import math
@@ -283,6 +284,8 @@ class Tanker(Boat):
         lons = [lons[index] for index in sorted(lon_ind)]
         time_reshape = time.reshape(ds['lat'].shape[0], ds['it'].shape[0])[:,0]
 
+        print('Request power calculation for ' + str(courses.shape) + ' courses, consequently ' + str(courses.shape[0]/len(lons)) + ' requests to mariPower')
+
         ds["lon"] = (['lat'], lons)
         ds["time"] = (['lat'], time_reshape)
         assert ds['lon'].shape == ds['lat'].shape
@@ -373,8 +376,9 @@ class Tanker(Boat):
                 courses_test = ds_read_test['courses']
                 ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
                 ut.print_step('speed' + str(ds_read_test['speed'].to_numpy()),1)
-
+            start_time = time.time()
             mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False, False)
+            ut.print_current_time('time for mariPower request:', start_time)
 
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]
