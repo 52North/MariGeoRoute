@@ -393,7 +393,7 @@ def test_get_delta_variables_last_step():
     # initialise boat
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
-    tk.init_hydro_model_Route("/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/202102_02-10_Halmsstadt_to_Gotland.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
+    tk.init_hydro_model_Route("/home/kdemmich/Downloads/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
 
     ##
     # initialise wind

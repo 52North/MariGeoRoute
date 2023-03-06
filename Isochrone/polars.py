@@ -298,6 +298,7 @@ class Tanker(Boat):
         if (debug):
             ds_read = xr.open_dataset(self.courses_path)
             print('read data set', ds_read)
+        ds.close()
 
     ##
     # extracts power from 'courses netCDF' which has been written by mariPower and returns it as 1D array.
@@ -391,6 +392,7 @@ class Tanker(Boat):
         ds_merged['time'] = ds_merged['time'].sel(it=1).drop('it')
 
         if (debug): ut.print_step('final merged dataset:' + str(ds_merged))
+        ds.close()
         return ds_merged
 
     ##
@@ -400,6 +402,7 @@ class Tanker(Boat):
         ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
         power = self.extract_fuel_from_netCDF(ds)
+        ds.close()
 
         return power
 

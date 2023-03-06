@@ -12,7 +12,7 @@ import datetime
 #    assert pol.inc(3) == 5
 
 def get_default_Tanker():
-    DEFAULT_GFS_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/38908a16-7a3c-11ed-b628-0242ac120003.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    DEFAULT_GFS_FILE = '/home/kdemmich/Downloads/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
     COURSES_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc'
 
     pol = Tanker(2)
@@ -64,6 +64,8 @@ def test_get_netCDF_courses():
             iprev=ilat*courses_read.shape[1]+iit
             assert courses[iprev]==courses_read[ilat][iit]
 
+    ds.close()
+
 '''
     test whether power is correctly extracted from courses netCDF
 '''
@@ -94,17 +96,19 @@ def test_get_fuel_from_netCDF():
 
     for i in range(0,power_ref.shape[0]):
         assert power_ref[i] == power_test[i]
+
+    ds.close()
 '''
     test whether all variablies and dimensions that are passed in courses netCDF to mariPower are returned back correctly
 '''
 def test_get_fuel_netCDF_return_values():
     lat = np.array([1.1, 2.2, 3.3, 4.4])
     it = np.array([1, 2])
-    time = np.array([datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 19)])
+    time = np.array([datetime.datetime(2022, 12, 19),datetime.datetime(2022, 12, 20),datetime.datetime(2022, 12, 21),datetime.datetime(2022, 12, 22)])
 
     lon = np.array([0.1,0.2,0.3,0.4])
-    speed = np.array([[5,5],[5,5],
-                      [5,5],[5,5]])
+    speed = np.array([[5,6],[5,6],
+                      [5,6],[5,6]])
     courses = np.array([[10,11],[12,14],
                        [14,16],[15,16]])
 
@@ -129,6 +133,7 @@ def test_get_fuel_netCDF_return_values():
     pol = get_default_Tanker()
 
     ds.to_netcdf(pol.courses_path)
+    ds.close()
     ds_read = pol.get_fuel_netCDF()
 
     lon_test = ds_read['lon'].to_numpy()
@@ -136,6 +141,8 @@ def test_get_fuel_netCDF_return_values():
     speed_test = ds_read['speed'].to_numpy()
     courses_test = ds_read['courses'].to_numpy()
     it_test = ds_read['it'].to_numpy()
+
+    ds_read.close()
 
     assert np.array_equal(lon_test, lon)
     assert np.array_equal(lat_test, lat)
@@ -181,6 +188,7 @@ def test_get_fuel_netCDF_loop():
     pol = get_default_Tanker()
 
     ds.to_netcdf(pol.courses_path)
+    ds.close()
     ds_read = pol.get_fuel_netCDF_loop()
 
     lon_test = ds_read['lon'].to_numpy()
@@ -200,6 +208,9 @@ def test_get_fuel_netCDF_loop():
     compare_times(time_test, time)
     assert power_test.shape == courses_test.shape
     assert (power_test < math.pow(10,30)).all
+
+    ds_read.close()
+
 
 def test_power_consumption_returned():
     #dummy weather file
@@ -248,6 +259,8 @@ def test_power_consumption_returned():
         VMDR=(["time", "latitude", "longitude"], vo),
         thetao=(["time", "latitude", "longitude"], vo),
         so=(["time", "latitude", "longitude"], vo),
+        Temperature_surface=(["time", "latitude", "longitude"], vo),
+        Pressure_surface = (["time", "latitude", "longitude"], vo)
     )
 
     coords = dict(
@@ -259,8 +272,8 @@ def test_power_consumption_returned():
     attrs = dict(description="Necessary descriptions added here.")
 
     ds = xr.Dataset(data_vars, coords, attrs)
-    ds['u-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], uwind)
-    ds['v-component_of_wind_maximum_wind'] = (['time', 'latitude', 'longitude'], vwind)
+    ds['u-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], uwind)
+    ds['v-component_of_wind_height_above_ground'] = (['time', 'latitude', 'longitude'], vwind)
 
     print(ds)
     ds.to_netcdf('/home/kdemmich/MariData/Code/sample.nc')
