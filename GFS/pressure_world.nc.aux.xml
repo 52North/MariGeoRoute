@@ -1,0 +1,14 @@
+<PAMDataset>
+  <Subdataset name="Pressure_surface">
+    <PAMDataset>
+      <PAMRasterBand band="1">
+        <Metadata>
+          <MDI key="STATISTICS_MAXIMUM">104182.046875</MDI>
+          <MDI key="STATISTICS_MEAN">98985.231618144</MDI>
+          <MDI key="STATISTICS_MINIMUM">48567.6484375</MDI>
+          <MDI key="STATISTICS_STDDEV">6397.3660579933</MDI>
+        </Metadata>
+      </PAMRasterBand>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>
