@@ -20,7 +20,8 @@ DEFAULT_ROUTE =  [54.87, 13.33, 58.28, 17.06]   #plotting of isochrone approach 
 TIME_FORECAST = 20     # [hours]
 ROUTING_STEPS = 10
 DELTA_TIME_FORECAST = 3600 # [seconds]
-DELTA_FUEL = 30000000*1000*1 # [Ws]
+#DELTA_FUEL = 30000000*1000*1 # [Ws]
+DELTA_FUEL = 1*1000 # [kg]
 #DEFAULT_GFS_DATETIME = '2020111600' #NCEP
 #DEFAULT_GFS_DATETIME = '202302007' #CMEMS
 DEFAULT_GFS_DATETIME = '2023021012' #CMEMS
@@ -45,7 +46,7 @@ COURSES_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute
 DEFAULT_GFS_MODEL = '2021020407'
 
 # Isochrone routing parameters
-ROUTER_HDGS_SEGMENTS =  30 #6            #total number of headings : put even number!!   #6
+ROUTER_HDGS_SEGMENTS =  30 #6            #total number of headings : put even number!!   #30
 ROUTER_HDGS_INCREMENTS_DEG = 6 #30         #increment of headings
 ROUTER_RPM_SEGMENTS = 1
 ROUTER_RPM_INCREMENTS_DEG = 1

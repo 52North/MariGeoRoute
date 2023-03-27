@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # boat.init_hydro_model_single_pars()
     # boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
-    boat.set_boat_speed(15)
+    boat.set_boat_speed(13)
     # boat.calibrate_simple_fuel()
     # boat.write_simple_fuel()
     # boat.test_power_consumption_per_course()

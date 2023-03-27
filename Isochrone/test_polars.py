@@ -74,9 +74,15 @@ def test_get_fuel_from_netCDF():
     it = np.array([1, 2])
     power = np.array([[1,4], [3.4,5.3],
                           [2.1,6], [1.,5.1]])
+    rpm = np.array([[10,14], [11,15],
+                          [20, 60], [15,5]])
+    fcr = np.array([[2, 3], [4, 5],
+                    [6, 7], [8, 9]])
 
     data_vars = dict(
         Power_delivered=(["lat", "it"], power),
+        RotationRate = (["lat", "it"], rpm),
+        Fuel_consumption_rate=(["lat", "it"], fcr),
     )
 
     coords = dict(
@@ -89,13 +95,20 @@ def test_get_fuel_from_netCDF():
     print(ds)
 
     pol = get_default_Tanker()
-    power_test = pol.extract_fuel_from_netCDF(ds)
+    ship_params = pol.extract_params_from_netCDF(ds)
+    power_test = ship_params.get_power()
+    rpm_test = ship_params.get_rpm()
+    fuel_test = ship_params.get_fuel()
+
     power_ref = np.array([1,4, 3.4,5.3, 2.1,6, 1.,5.1])
+    rpm_ref = np.array([10,14, 11,15, 20,60, 15,5])
+    fuel_ref = np.array([2,3,4,5,6,7,8,9])
 
-    print('power_test', power_test)
+    fuel_test=fuel_test*3.6
 
-    for i in range(0,power_ref.shape[0]):
-        assert power_ref[i] == power_test[i]
+    assert np.array_equal(power_test, power_ref)
+    assert np.array_equal(rpm_test, rpm_ref)
+    assert np.array_equal(fuel_test, fuel_ref)
 
     ds.close()
 '''

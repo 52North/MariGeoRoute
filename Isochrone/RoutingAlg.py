@@ -60,6 +60,8 @@ class RoutingAlg():
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
     speed_per_step: np.ndarray  # boat speed
     fuel_per_step: np.ndarray
+    power_per_step: np.ndarray
+    rpm_per_step: np.ndarray
     starttime_per_step: np.ndarray
 
     current_azimuth: np.ndarray  # current azimuth
@@ -91,6 +93,8 @@ class RoutingAlg():
         self.dist_per_step = np.array([[0]])
         self.speed_per_step = np.array([[0]])
         self.fuel_per_step = np.array([[0]])
+        self.power_per_step = np.array([[0]])
+        self.rpm_per_step = np.array([[0]])
         self.starttime_per_step = np.array([[time]])
 
         self.time = np.array([time])
@@ -129,6 +133,9 @@ class RoutingAlg():
         print('     dist_per_step = ', self.dist_per_step)
         print('     speed_per_step = ', self.speed_per_step)
         print('     starttime_per_step = ', self.starttime_per_step)
+        print('     fuel_per_step = ', self.fuel_per_step)
+        print('     power_per_step = ', self.power_per_step)
+        print('     rpm_per_step = ', self.rpm_per_step)
         print('per-variant variables')
         print('     time =', self.time)
         print('     full_dist_traveled = ', self.full_dist_traveled)
@@ -143,6 +150,9 @@ class RoutingAlg():
         print('     fuel_per_step =', self.fuel_per_step.shape)
         print('     azimuths = ', self.azimuth_per_step.shape)
         print('     dist_per_step = ', self.dist_per_step.shape)
+        print('     fuel_per_step = ', self.fuel_per_step.shape)
+        print('     power_per_step = ', self.power_per_step.shape)
+        print('     rpm_per_step = ', self.rpm_per_step.shape)
         print('per-variant variables:')
         print('     time =', self.time.shape)
         print('     full_dist_traveled = ', self.full_dist_traveled.shape)
@@ -205,8 +215,10 @@ class RoutingAlg():
             if(self.is_last_step):
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
+            #self.print_ra()
             #self.update_fig('bp')
             self.pruning_per_step(True)
+            self.print_shape()
             #ut.print_current_time('move_boat: Step=' + str(i), start_time)
             #self.update_fig('p')
 
@@ -225,6 +237,8 @@ class RoutingAlg():
         self.azimuth_per_step = np.repeat(self.azimuth_per_step, self.variant_segments + 1, axis=1)
         self.speed_per_step = np.repeat(self.speed_per_step, self.variant_segments + 1, axis=1)
         self.fuel_per_step = np.repeat(self.fuel_per_step, self.variant_segments + 1, axis=1)
+        self.power_per_step = np.repeat(self.power_per_step, self.variant_segments + 1, axis=1)
+        self.rpm_per_step = np.repeat(self.rpm_per_step, self.variant_segments + 1, axis=1)
         self.starttime_per_step = np.repeat(self.starttime_per_step, self.variant_segments + 1, axis=1)
 
         self.full_time_traveled = np.repeat(self.full_time_traveled, self.variant_segments + 1, axis=0)
@@ -251,7 +265,7 @@ class RoutingAlg():
             """
 
         # get wind speed (tws) and angle (twa)
-        debug = False
+        debug = True
 
         winds = self.get_wind_functions(wt) #wind is always a function of the variants
         twa = winds['twa']
@@ -263,8 +277,11 @@ class RoutingAlg():
         bs = boat.boat_speed_function(wind)
         self.speed_per_step = np.vstack((bs, self.speed_per_step))
 
-        #delta_time, delta_fuel, dist = self.get_delta_variables(boat,wind,bs)
-        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(boat, wind, bs)
+        ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
+                                                  self.get_current_lons(), self.time, wind)
+        ship_params.print()
+
+        delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
         if (debug):
             print('delta_time: ', delta_time)
             print('delta_fuel: ', delta_fuel)
@@ -277,14 +294,21 @@ class RoutingAlg():
             print('move:', move)
 
         if(self.is_last_step):
-            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(boat, wind, bs)
+            print('Last STep!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+            delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(ship_params, bs)
 
         is_constrained = self.check_constraints(move, constraint_list)
 
         self.update_position(move, is_constrained, dist)
         self.update_time(delta_time)
         self.update_fuel(delta_fuel)
+        self.update_additional(ship_params)
         self.count += 1
+
+    def update_additional(self, ship_params):
+        self.rpm_per_step = np.vstack((ship_params.get_rpm(), self.rpm_per_step))
+        self.power_per_step = np.vstack((ship_params.get_power(), self.power_per_step))
+        #self.speed_per_step = np.vstack((ship_params.get_speed(), self.speed_per_step))
 
     def terminate(self, boat: Boat, wt: WeatherCond):
         utils.print_line()
@@ -295,7 +319,7 @@ class RoutingAlg():
             count = self.count,  # routing step
             start = self.start,  # lat, lon at start
             finish = self.finish,  # lat, lon at end
-            fuel = self.full_fuel_consumed / (3600 * 1000),  # sum of fuel consumption [kWh]
+            fuel = float(self.full_fuel_consumed) ,  # sum of fuel consumption [kg]
             full_dist_traveled=np.sum(self.dist_per_step), # [m]
             gcr = self.full_dist_traveled, #[m]
             rpm = boat.get_rpm(),  # propeller [revolutions per minute]
@@ -307,7 +331,9 @@ class RoutingAlg():
             dists_per_step = self.dist_per_step[:], #[m]
             speed_per_step = self.speed_per_step[:],
             starttime_per_step = self.starttime_per_step[:],
-            fuel_per_step = self.fuel_per_step[:] / (3600 * 1000),  # fuel consumption [kWh] per step
+            fuel_per_step = self.fuel_per_step[:],  # fuel consumption rate [kg]
+            rpm_per_step=self.rpm_per_step[:],  # propeller revolution [Hz]
+            power_per_step=self.power_per_step[:] ,  # power consumption [W] per step
         )
         #route.print_route()
         self.check_destination()
