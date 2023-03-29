@@ -8,6 +8,7 @@ import utils
 import matplotlib.pyplot as plt
 import graphics
 from utils import NumpyArrayEncoder
+from shipparams import ShipParams
 
 
 class RouteParams():
@@ -26,20 +27,22 @@ class RouteParams():
     count: int  # routing step
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
-    fuel: float
-    full_dist_traveled: tuple
+    #fuel: float
+    #full_dist_traveled: tuple
     gcr: tuple
-    rpm: int  # propeller [revolutions per minute]
     route_type: str  # route name
     time: dt.timedelta  # time needed for the route [datetime]
-    fuel_per_step: tuple  # sum of power consumption [W]
-    rpm_per_step: tuple
-    power_per_step: tuple
+
+    ship_params_per_step: ShipParams
+    #fuel_per_step: tuple  # sum of power consumption [W]
+    #rpm_per_step: tuple
+    #power_per_step: tuple
+    #speed_per_step: tuple  # boat speed per step [m/s]
+
     lats_per_step: tuple  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
     lons_per_step: tuple  # longs: (M,N) array, N=headings+1, M=steps
     azimuths_per_step: tuple  # azimuth: (M,N) array, N=headings+1, M=steps [degree]
     dists_per_step: tuple  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps [m]
-    speed_per_step: tuple  # boat speed per step [m/s]
     starttime_per_step: tuple
     full_dist_traveled: tuple  # full geodesic distance since start [m]
 

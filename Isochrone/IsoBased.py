@@ -94,10 +94,11 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
-            self.speed_per_step = self.speed_per_step[:, idxs]
-            self.fuel_per_step = self.fuel_per_step[:, idxs]
-            self.power_per_step = self.power_per_step[:, idxs]
-            self.rpm_per_step = self.rpm_per_step[:, idxs]
+            #self.speed_per_step = self.speed_per_step[:, idxs]
+            #self.fuel_per_step = self.fuel_per_step[:, idxs]
+            #self.power_per_step = self.power_per_step[:, idxs]
+            #self.rpm_per_step = self.rpm_per_step[:, idxs]
+            self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
@@ -213,11 +214,12 @@ class IsoBased(RoutingAlg):
         self.lons_per_step=np.flip(self.lons_per_step,0)
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
-        self.speed_per_step=np.flip(self.speed_per_step,0)
+        #self.speed_per_step=np.flip(self.speed_per_step,0)
         self.starttime_per_step=np.flip(self.starttime_per_step,0)
-        self.fuel_per_step = np.flip(self.fuel_per_step,0)
-        self.power_per_step = np.flip(self.power_per_step,0)
-        self.rpm_per_step = np.flip(self.rpm_per_step,0)
+        #self.fuel_per_step = np.flip(self.fuel_per_step,0)
+        #self.power_per_step = np.flip(self.power_per_step,0)
+        #self.rpm_per_step = np.flip(self.rpm_per_step,0)
+        self.shipparams_per_step.flip()
 
         route = RoutingAlg.terminate(self, boat, wt)
 
@@ -268,6 +270,8 @@ class IsoBased(RoutingAlg):
 
     def update_position(self, move, is_constrained, dist):
         debug = False
+        print('move:', move['lat2'])
+        print('lats_per_step:', self.lats_per_step)
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))
@@ -324,7 +328,7 @@ class IsoBased(RoutingAlg):
         # print(self)
 
     def update_fuel(self, delta_fuel):
-        self.fuel_per_step = np.vstack((delta_fuel,  self.fuel_per_step))
+        self.shipparams_per_step.set_fuel(np.vstack((delta_fuel,  self.shipparams_per_step.get_fuel())))
         for i in range(0,self.full_fuel_consumed.shape[0]):
             self.full_fuel_consumed[i] += delta_fuel[i]
 

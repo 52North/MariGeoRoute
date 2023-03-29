@@ -311,7 +311,7 @@ class Tanker(Boat):
         rpm = ds['RotationRate'].to_numpy().flatten()
         fuel = ds['Fuel_consumption_rate'].to_numpy().flatten()*1000*1/3600		# mariPower provides fuel_consumption_rate [t/h] -> convert to kg/s
 
-        ship_params = ShipParams(fuel = fuel, power = power, rpm = rpm)
+        ship_params = ShipParams(fuel = fuel, power = power, rpm = rpm, speed = np.repeat(self.speed, power.shape, axis=0))
 
         if(debug):
             ut.print_step('Dataset with fuel' + str(ds),1)
