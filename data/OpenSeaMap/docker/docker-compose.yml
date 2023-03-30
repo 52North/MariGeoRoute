@@ -1,0 +1,37 @@
+version: '3.9'
+
+name: maridata-openseamap
+
+services:
+  db:
+    image: postgis/postgis:latest
+    container_name: db_${COMPOSE_PROJECT_NAME}
+    shm_size: 1g
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    env_file:
+      - .env.db
+    ports:
+      - "5432:5432"
+    restart: on-failure
+    healthcheck:
+      test: "exit 0"
+  init-db:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: init-db_${COMPOSE_PROJECT_NAME}
+    volumes:
+#      - ./data/iceland-latest.osm.pbf:/tmp/data.osm.pbf
+      - ./data/world.osm:/tmp/data.osm
+    env_file:
+      - .env.db
+#    entrypoint: /bin/sh
+#    stdin_open: true
+#    tty: true
+    depends_on:
+      - db
+
+volumes:
+  dbdata:
+    name: ${COMPOSE_PROJECT_NAME}-dbdata
