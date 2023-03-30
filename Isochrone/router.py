@@ -1,12 +1,12 @@
 """Routing functions."""
 import utils
+from Constraints import *
 from IsoChrone import IsoChrone
 from IsoFuel import IsoFuel
-from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from polars import Boat
 from routeparams import RouteParams
+from RoutingAlgTimeFuelMin import RoutingAlgTimeFuelMin
 from weather import WeatherCond
-from Constraints import *
 
 def modified_isochrone_routing(start, #r_la1, r_lo1
             finish, #r_la2, r_lo2

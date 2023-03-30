@@ -2,8 +2,9 @@
 import datetime
 import math
 import time
-import numpy
 from json import JSONEncoder
+
+import numpy
 
 
 def mps_to_knots(vals):

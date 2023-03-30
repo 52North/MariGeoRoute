@@ -1,24 +1,18 @@
-import numpy as np
 import datetime as dt
-import utils as ut
+import logging
 import time
 
-from polars import Boat
-from typing import NamedTuple
-from geovectorslib import geod
-from weather import WeatherCond
-from global_land_mask import globe
-from scipy.stats import binned_statistic
-from routeparams import RouteParams
+import numpy as np
 import matplotlib
-from matplotlib.figure import Figure
+from geovectorslib import geod
 from matplotlib.axes import Axes
-import graphics
-import logging
+from matplotlib.figure import Figure
 
 import utils
 from Constraints import *
-from shipparams import ShipParams
+from polars import Boat
+from routeparams import RouteParams
+from weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
 
@@ -59,10 +53,6 @@ class RoutingAlg():
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
     azimuth_per_step: np.ndarray    # heading
     dist_per_step: np.ndarray  # geodesic distance traveled per time stamp:
-    #speed_per_step: np.ndarray  # boat speed
-    #fuel_per_step: np.ndarray
-    #power_per_step: np.ndarray
-    #rpm_per_step: np.ndarray
     shipparams_per_step: ShipParams
     starttime_per_step: np.ndarray
 
@@ -93,10 +83,6 @@ class RoutingAlg():
         self.lons_per_step = np.array([[start[1]]])
         self.azimuth_per_step = np.array([[None]])
         self.dist_per_step = np.array([[0]])
-        #self.speed_per_step = np.array([[0]])
-        #self.fuel_per_step = np.array([[0]])
-        #self.power_per_step = np.array([[0]])
-        #self.rpm_per_step = np.array([[0]])
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
         self.starttime_per_step = np.array([[time]])
@@ -122,8 +108,8 @@ class RoutingAlg():
 
     def print_init(self):
         logger.info('Initialising routing:')
-        logger.info(ut.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
-        logger.info(ut.get_log_step('start time ' + str(self.time),1))
+        logger.info(utils.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
+        logger.info(utils.get_log_step('start time ' + str(self.time),1))
 
     def print_ra(self):
         print('PRINTING ALG SETTINGS')
@@ -217,13 +203,10 @@ class RoutingAlg():
             if(self.is_last_step):
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
-            self.print_ra()
+
             #self.update_fig('bp')
             self.pruning_per_step(True)
-            self.print_shape()
-            self.print_ra()
-
-            #ut.print_current_time('move_boat: Step=' + str(i), start_time)
+            #utils.print_current_time('move_boat: Step=' + str(i), start_time)
             #self.update_fig('p')
 
         self.final_pruning()

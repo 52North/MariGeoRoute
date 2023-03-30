@@ -1,25 +1,24 @@
 ## Classes Boat, Tanker, SailingBoat
 #
 #
+import math
+import sys
 import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import math
-import matplotlib.pyplot as plt
-import datetime as dt
-import netCDF4 as nc
-from scipy.interpolate import RegularGridInterpolator
-import xarray as xr
 import pytest
-import sys
+import xarray as xr
+from scipy.interpolate import RegularGridInterpolator
 
-import utils as ut
+
 import mariPower
+import utils as ut
 from mariPower import ship
 from mariPower import __main__
 from utils import knots_to_mps  # Convert  knot value in meter per second
 from weather import WeatherCond
-from shipparams import ShipParams
 
 ## Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
 # Tanker: implements interface to mariPower package which is used for power estimation.

@@ -1,12 +1,13 @@
-import numpy as np
 import datetime as dt
-from geovectorslib import geod
 
+import numpy as np
+from geovectorslib import geod
 from scipy.stats import binned_statistic
+
+import utils
 from routeparams import RouteParams
 from RoutingAlg import RoutingAlg
 from polars import Boat
-import utils
 
 class RoutingAlgTimeFuelMin(RoutingAlg):
 

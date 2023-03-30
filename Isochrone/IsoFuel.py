@@ -1,12 +1,12 @@
-import numpy as np
 import datetime as dt
-from geovectorslib import geod
-from global_land_mask import globe
 import logging
 
-from routeparams import RouteParams
-from IsoBased import IsoBased
+from geovectorslib import geod
+import numpy as np
+
 import utils
+from IsoBased import IsoBased
+from routeparams import RouteParams
 
 logger = logging.getLogger('WRT.routingalg')
 

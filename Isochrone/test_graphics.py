@@ -1,12 +1,11 @@
+import datetime
+
 import pytest
+import xarray
+
+import graphics
 from Constraints import *
 from weather import *
-import graphics
-
-
-import datetime
-import xarray
-import netCDF4 as nc4
 
 def test_plot_power_vs_dist():
     count = 3

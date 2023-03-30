@@ -1,11 +1,12 @@
-import pytest
-import numpy as np
-import xarray as xr
-import pandas as pd
+import datetime
 import math
 
+import numpy as np
+import pandas as pd
+import pytest
+import xarray as xr
+
 from polars import Tanker
-import datetime
 
 #def test_inc():
 #    pol = Tanker(2)

@@ -1,13 +1,13 @@
-import pytest
-import numpy as np
-import xarray as xr
 import datetime
 
+import numpy as np
+import pytest
+import xarray as xr
+
 import utils
+from Constraints import *
 from IsoBased import IsoBased
 from IsoFuel import IsoFuel
-from Constraints import *
-from shipparams import ShipParams
 from polars import Tanker
 
 def generate_dummy_constraint_list():

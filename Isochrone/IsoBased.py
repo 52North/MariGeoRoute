@@ -1,26 +1,20 @@
-import numpy as np
 import datetime as dt
-
-import utils as ut
-from polars import Boat
-from typing import NamedTuple
-from geovectorslib import geod
 import logging
-import logging.handlers
-import os
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-from PIL import Image
-
-from weather import WeatherCond
+import numpy as np
+import matplotlib.pyplot as plt
+from geovectorslib import geod
 from global_land_mask import globe
 from scipy.stats import binned_statistic
-from routeparams import RouteParams
-from RoutingAlg import RoutingAlg
+
 import graphics
 import utils
+from polars import Boat
+from RoutingAlg import RoutingAlg
+from routeparams import RouteParams
+from weather import WeatherCond
 
 logger = logging.getLogger('WRT.Pruning')
 
@@ -64,7 +58,7 @@ class IsoBased(RoutingAlg):
             for i in range(len(bin_edges) - 1):
                 try:
                     if(bin_stat[i]==0):
-                        #ut.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) + 'full_dist_traveled=' + str(self.full_dist_traveled))
+                        #utils.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) + 'full_dist_traveled=' + str(self.full_dist_traveled))
                         continue
                     idxs.append(
                         np.where(self.full_dist_traveled == bin_stat[i])[0][0])
@@ -248,22 +242,20 @@ class IsoBased(RoutingAlg):
             return {'azi2': dist_to_dest['azi1'], 'lat2': new_lat, 'lon2': new_lon, 'iterations' : -99}     #compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}' by geod.direct
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)   
-        #ut.print_step('move=' + str(move),1)
+        #utils.print_step('move=' + str(move),1)
         return move
 
     def check_constraints(self, move, constraint_list):
         debug = False
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
-        if(debug): ut.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
+        if(debug): utils.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
         is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], move['lat2'], self.lons_per_step[0], move['lon2'], self.time, is_constrained)
-        if(debug): ut.print_step('is_constrained after checking' + str(is_constrained),1)
+        if(debug): utils.print_step('is_constrained after checking' + str(is_constrained),1)
         return is_constrained
 
     def update_position(self, move, is_constrained, dist):
         debug = False
-        print('move:', move['lat2'])
-        print('lats_per_step:', self.lats_per_step)
         self.lats_per_step = np.vstack((move['lat2'], self.lats_per_step))
         self.lons_per_step = np.vstack((move['lon2'], self.lons_per_step))
         self.dist_per_step = np.vstack((dist, self.dist_per_step))

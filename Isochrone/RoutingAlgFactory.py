@@ -1,7 +1,7 @@
 import datetime as dt
 
-from IsoFuel import IsoFuel
 import config
+from IsoFuel import IsoFuel
 
 class RoutingAlgFactory():
 

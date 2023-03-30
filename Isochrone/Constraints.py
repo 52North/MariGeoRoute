@@ -1,18 +1,19 @@
-import numpy as np
 import datetime as dt
-from global_land_mask import globe
-import cartopy.crs as ccrs
-import cartopy.feature as cf
 import logging
 import time
 
+import cartopy.crs as ccrs
+import cartopy.feature as cf
+import matplotlib.pyplot as plt
+import numpy as np
+import xarray as xr
+from global_land_mask import globe
+
 import graphics
 import utils as ut
-import xarray as xr
-import matplotlib.pyplot as plt
+from graphics import *
 from routeparams import RouteParams
 from weather import WeatherCond
-from graphics import *
 
 logger = logging.getLogger('WRT.Constraints')
 

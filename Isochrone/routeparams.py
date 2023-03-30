@@ -1,12 +1,11 @@
-import numpy as np
 import datetime as dt
-from typing import NamedTuple
 import json
-import dateutil.parser
 
-import utils
+import numpy as np
 import matplotlib.pyplot as plt
+
 import graphics
+import utils
 from utils import NumpyArrayEncoder
 from shipparams import ShipParams
 
