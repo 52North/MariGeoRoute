@@ -94,10 +94,6 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
-            #self.speed_per_step = self.speed_per_step[:, idxs]
-            #self.fuel_per_step = self.fuel_per_step[:, idxs]
-            #self.power_per_step = self.power_per_step[:, idxs]
-            #self.rpm_per_step = self.rpm_per_step[:, idxs]
             self.shipparams_per_step.select(idxs)
 
             self.starttime_per_step = self.starttime_per_step[:, idxs]
@@ -214,11 +210,7 @@ class IsoBased(RoutingAlg):
         self.lons_per_step=np.flip(self.lons_per_step,0)
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
-        #self.speed_per_step=np.flip(self.speed_per_step,0)
         self.starttime_per_step=np.flip(self.starttime_per_step,0)
-        #self.fuel_per_step = np.flip(self.fuel_per_step,0)
-        #self.power_per_step = np.flip(self.power_per_step,0)
-        #self.rpm_per_step = np.flip(self.rpm_per_step,0)
         self.shipparams_per_step.flip()
 
         route = RoutingAlg.terminate(self, boat, wt)
@@ -296,36 +288,6 @@ class IsoBased(RoutingAlg):
         self.full_dist_traveled = gcrs['s12']
         if(debug):
             print('full_dist_traveled:', self.full_dist_traveled)
-
-
-
-
-
-
-        # for i in range(int((x2 - x1) / STEP) + 1): #62.3, 17.6, 59.5, 24.6
-        #     try:
-        #         x = x1 + i * STEP
-        #         y = (y1 - y2) / (x1 - x2) * (x - x1) + y1
-        #     except:
-        #         continue
-        #     is_on_land = globe.is_land(float(x), float(y))
-        #     print(is_on_land)
-        #     # if not is_on_land:
-        #     # print("in water")
-        #
-        #     if is_on_land:
-        #         # print("crosses land")
-        #
-        #         return True
-
-        # print('isonland',is_on_land)
-        # z = globe.is_land(lats, lons)
-        # print('value of z',type(z))
-        # if z=='True':
-        #     is_on_land = globe.is_land(move['lats2'], move['lons2'])
-        #     print(is_on_land)
-
-        # print(self)
 
     def update_fuel(self, delta_fuel):
         self.shipparams_per_step.set_fuel(np.vstack((delta_fuel,  self.shipparams_per_step.get_fuel())))

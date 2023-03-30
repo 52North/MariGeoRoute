@@ -11,10 +11,10 @@ from utils import NumpyArrayEncoder
 
 
 class ShipParams():
-    fuel: np.ndarray
-    power: np.ndarray
-    rpm: np.ndarray
-    speed: np.ndarray
+    fuel: np.ndarray    #  (kg)
+    power: np.ndarray   #  (W)
+    rpm: np.ndarray     #  (Hz)
+    speed: np.ndarray   #  (m/s)
     fuel_type: str
 
     def __init__(self, fuel, power, rpm, speed):
@@ -33,31 +33,20 @@ class ShipParams():
             rpm = np.array([[0]])
         )
 
-
-    #def set_default(self):
-    #    self.fuel = -99
-    #    self.power = -99
-    #    self.rpm = -99
-    #    self.speed = -99
-    #    self.fuel_type = -99
-
     def print(self):
-        print('fuel = ', self.fuel)
-        print('rpm = ', self.rpm)
-        print('power = ', self.power)
-        print('speed = ', self.speed)
-        print('fuel_type = ', self.fuel_type)
+        print('fuel: ', self.fuel)
+        print('rpm: ', self.rpm)
+        print('power: ', self.power)
+        print('speed: ', self.speed)
+        print('fuel_type: ', self.fuel_type)
 
     def print_shape(self):
-        print('fuel = ', self.fuel.shape)
-        print('rpm = ', self.rpm.shape)
-        print('power = ', self.power.shape)
-        print('speed = ', self.speed.shape)
-        print('fuel_type = ', self.fuel_type.shape)
+        print('fuel: ', self.fuel.shape)
+        print('rpm: ', self.rpm.shape)
+        print('power: ', self.power.shape)
+        print('speed: ', self.speed.shape)
 
     def define_variants(self, variant_segments):
-        print('speed:' , self.speed)
-
         self.speed = np.repeat(self.speed, variant_segments + 1, axis=1)
         self.fuel = np.repeat(self.fuel, variant_segments + 1, axis=1)
         self.power = np.repeat(self.power, variant_segments + 1, axis=1)
@@ -68,6 +57,10 @@ class ShipParams():
 
     def get_fuel(self):
         return self.fuel
+
+    def get_full_fuel(self):
+        fuel = np.sum(self.fuel)
+        return fuel
 
     def get_fuel_type(self):
         return self.fuel_type

@@ -99,11 +99,8 @@ class IsoFuel(IsoBased):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
-            self.speed_per_step = self.speed_per_step[:, idxs]
-            self.fuel_per_step = self.fuel_per_step[:, idxs]
-            self.power_per_step = self.power_per_step[:, idxs]
-            self.rpm_per_step = self.rpm_per_step[:, idxs]
             self.starttime_per_step = self.starttime_per_step[:, idxs]
+            self.shipparams_per_step.select(idxs)
 
             self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
