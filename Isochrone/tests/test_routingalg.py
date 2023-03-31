@@ -1,13 +1,14 @@
-import pytest
-import numpy as np
-import xarray as xr
 import datetime
 
-import utils
-from IsoBased import IsoBased
-from IsoFuel import IsoFuel
-from Constraints import *
-from polars import Tanker
+import numpy as np
+import pytest
+import xarray as xr
+
+import utils.formatting as form
+from constraints.constraints import *
+from algorithms.isobased import IsoBased
+from algorithms.isofuel import IsoFuel
+from ship.ship import Tanker
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -125,7 +126,7 @@ def test_pruning_select_correct_idxs():
     time_test = np.array([datetime.date.today(),datetime.date.today(),datetime.date.today(),datetime.date.today()])
 
     ra.print_ra()
-    utils.print_line()
+    form.print_line()
 
     ra.pruning(True, pruning_bins)
 
@@ -143,7 +144,7 @@ def test_pruning_select_correct_idxs():
     assert np.array_equal(lon_test, ra.lons_per_step)
     assert np.array_equal(time_test, ra.time)
 
-    #utils.print_line()
+    #form.print_line()
     #ra.print_ra()
 '''
     test shape and content of 'move' for known distance, start and end points
@@ -393,7 +394,7 @@ def test_get_delta_variables_last_step():
     # initialise boat
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
-    tk.init_hydro_model_Route("/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/202102_02-10_Halmsstadt_to_Gotland.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
+    tk.init_hydro_model_Route("/home/kdemmich/Downloads/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
 
     ##
     # initialise wind
@@ -403,4 +404,35 @@ def test_get_delta_variables_last_step():
 
     assert np.allclose(dist, dist_test, 0.1)
     assert np.allclose(delta_time, time_test, 0.1)
+
+##
+# test whether ship parameters for current routing step are correctly merged to previous arrays
+#
+def test_update_ship_params():
+    fuel=np.array([[0,1,2], [0.1,1.1,2.1],[0.2,1.2,2.2]])
+    power=np.array([[3,4,5], [3.1,4.1,5.1],[3.2,4.2,5.2]])
+    rpm=np.array([[5,6,7], [5.1,6.1,7.1],[5.2,6.2,7.2]])
+    speed=np.array([[8,9,8], [8.1,9.1,8.1],[8.2,9.2,8.2]])
+    sp = ShipParams(fuel = fuel, power = power, rpm = rpm, speed = speed)
+
+    fuel_single = np.array([0.01,0.02,0.03])
+    power_single = np.array([1.01,1.02,1.03])
+    rpm_single = np.array([2.01,2.02,2.03])
+    speed_single = np.array([3.01,3.02,3.03])
+    sp_single = ShipParams(fuel = fuel_single, power = power_single, rpm = rpm_single, speed = speed_single)
+
+    ra = create_dummy_IsoFuel_object()
+    ra.shipparams_per_step = sp
+    ra.update_shipparams(sp_single)
+
+    fuel_test = np.array([[0.01,0.02,0.03], [0,1,2], [0.1,1.1,2.1],[0.2,1.2,2.2]])
+    power_test =np.array([[1.01,1.02,1.03], [3,4,5], [3.1,4.1,5.1],[3.2,4.2,5.2]])
+    rpm_test =np.array([[2.01,2.02,2.03], [5,6,7], [5.1,6.1,7.1],[5.2,6.2,7.2]])
+    speed_test =np.array([[3.01,3.02,3.03], [8,9,8], [8.1,9.1,8.1],[8.2,9.2,8.2]])
+
+    assert np.array_equal(power_test, ra.shipparams_per_step.get_power())
+    assert np.array_equal(rpm_test, ra.shipparams_per_step.get_rpm())
+    assert np.array_equal(speed_test, ra.shipparams_per_step.get_speed())
+
+
 

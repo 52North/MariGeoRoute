@@ -1,23 +1,24 @@
 ## Classes Boat, Tanker, SailingBoat
 #
 #
+import math
+import sys
 import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import math
-import matplotlib.pyplot as plt
-import datetime as dt
-import netCDF4 as nc
-from scipy.interpolate import RegularGridInterpolator
-import xarray as xr
 import pytest
-import sys
+import xarray as xr
+from scipy.interpolate import RegularGridInterpolator
 
-import utils as ut
+
 import mariPower
+import utils as ut
 from mariPower import ship
 from mariPower import __main__
-from utils import knots_to_mps  # Convert  knot value in meter per second
+from utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
+from ship.shipparams import ShipParams
 from weather import WeatherCond
 
 ## Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
@@ -298,23 +299,27 @@ class Tanker(Boat):
         if (debug):
             ds_read = xr.open_dataset(self.courses_path)
             print('read data set', ds_read)
+        ds.close()
 
     ##
     # extracts power from 'courses netCDF' which has been written by mariPower and returns it as 1D array.
-    def extract_fuel_from_netCDF(self, ds):
+    def extract_params_from_netCDF(self, ds):
         debug = False
-        if(debug): ut.print_step('Dataset with fuel:' + str(ds),1)
+        if(debug): ut.print_step('Dataset with ship parameters:' + str(ds),1)
 
-        power_read = ds['Power_delivered']
-        power_flattened = power_read.to_numpy().flatten()
+        power = ds['Power_delivered'].to_numpy().flatten() 
+        rpm = ds['RotationRate'].to_numpy().flatten()
+        fuel = ds['Fuel_consumption_rate'].to_numpy().flatten()*1000*1/3600		# mariPower provides fuel_consumption_rate [t/h] -> convert to kg/s
+
+        ship_params = ShipParams(fuel = fuel, power = power, rpm = rpm, speed = np.repeat(self.speed, power.shape, axis=0))
 
         if(debug):
             ut.print_step('Dataset with fuel' + str(ds),1)
-            ut.print_step('original shape power' + str(power_read.shape), 1)
-            ut.print_step('flattened shape power' + str(power_flattened.shape), 1)
-            ut.print_step('power result' + str(power_flattened))
+            ut.print_step('original shape power' + str(power.shape), 1)
+            ut.print_step('flattened shape power' + str(ship_params.get_power.shape), 1)
+            ut.print_step('power result' + str(ship_params.get_power))
 
-        return power_flattened
+        return ship_params
 
     ##
     # dummy function uses to mimic writing of power estimation to 'courses netCDF'. Only used for testing purposes.
@@ -376,9 +381,9 @@ class Tanker(Boat):
                 courses_test = ds_read_test['courses']
                 ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
                 ut.print_step('speed' + str(ds_read_test['speed'].to_numpy()),1)
-            start_time = time.time()
+            #start_time = time.time()
             mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False, False)
-            ut.print_current_time('time for mariPower request:', start_time)
+            #ut.print_current_time('time for mariPower request:', start_time)
 
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]
@@ -391,6 +396,7 @@ class Tanker(Boat):
         ds_merged['time'] = ds_merged['time'].sel(it=1).drop('it')
 
         if (debug): ut.print_step('final merged dataset:' + str(ds_merged))
+        ds.close()
         return ds_merged
 
     ##
@@ -399,9 +405,10 @@ class Tanker(Boat):
         self.write_netCDF_courses(courses, lats, lons, time)
         ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
-        power = self.extract_fuel_from_netCDF(ds)
+        ship_params = self.extract_params_from_netCDF(ds)
+        ds.close()
 
-        return power
+        return ship_params
 
     ##
     # ToDo: deprecated?

@@ -2,26 +2,7 @@
 
 
 ## Environment
-### To be installed in system:-
-name: windrouter
-channels:
-  - defaults
-  - conda-forge
-dependencies:
-  - cartopy
-  - coverage
-  - flask
-  - matplotlib
-  - numpy
-  - pip
-  - pygrib
-  - pyproj
-  - python=3.7.7
-  - scipy
-  - pip:
-    - geovectorslib==1.1
-## Requirements
-* Python 3.7+
+  pip install -r requirements.txt
 
 ## Instructions 
 * Step 1 - Change the path of the datasets in all files

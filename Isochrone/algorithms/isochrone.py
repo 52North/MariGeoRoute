@@ -1,11 +1,8 @@
 import numpy as np
-import datetime as dt
-from geovectorslib import geod
-from global_land_mask import globe
+from geovectorslib import geod  #TODO: change to geopy?
 
+from algorithms.isobased import IsoBased
 from routeparams import RouteParams
-from IsoBased import IsoBased
-import utils
 
 class IsoChrone(IsoBased):
     delta_time : int

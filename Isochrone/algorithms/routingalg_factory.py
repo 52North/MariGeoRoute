@@ -1,7 +1,7 @@
 import datetime as dt
 
-from IsoFuel import IsoFuel
 import config
+from algorithms.isofuel import IsoFuel
 
 class RoutingAlgFactory():
 
@@ -14,7 +14,7 @@ class RoutingAlgFactory():
         r_la1, r_lo1, r_la2, r_lo2 = config.DEFAULT_ROUTE
         start = (r_la1, r_lo1)
         finish = (r_la2, r_lo2)
-        start_time = dt.datetime.strptime(config.DEFAULT_GFS_DATETIME, '%Y%m%d%H')
+        start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
         delta_fuel = config.DELTA_FUEL
         fig_path = config.FIGURE_PATH
         routing_steps = config.ROUTING_STEPS

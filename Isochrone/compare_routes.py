@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 
-from routeparams import RouteParams
-from Constraints import *
-
-from weather import WeatherCondCMEMS
-import graphics
+import utils.graphics as graphics
 import config
+from routeparams import RouteParams
+from constraints.constraints import *
+from weather import WeatherCondCMEMS
+
 
 if __name__ == "__main__":
     filename1 = "/home/kdemmich/MariData/Code/Figures/Depth10m/min_time_routeroute_10m2.json"

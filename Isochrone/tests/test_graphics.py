@@ -1,12 +1,11 @@
-import pytest
-from Constraints import *
-from weather import *
-import graphics
-
-
 import datetime
+
+import pytest
 import xarray
-import netCDF4 as nc4
+
+import utils.graphics as graphics
+from constraints.constraints import *
+from weather import *
 
 def test_plot_power_vs_dist():
     count = 3
@@ -30,9 +29,10 @@ def test_plot_power_vs_dist():
         speed_per_step = dummy_list,
         starttime_per_step = dummy_list,
         fuel_per_step= fuel_consumed,
-        full_dist_traveled = dummy_list
+        full_dist_traveled = dummy_list,
+        gcr = dummy_list
     )
-    graphics.plot_power_vs_dist(route)
+    route.plot_power_vs_dist("orange", "Route X")
 
 def test_get_accumulated_dist():
     dist_per_step = np.array([1,4,5,7])

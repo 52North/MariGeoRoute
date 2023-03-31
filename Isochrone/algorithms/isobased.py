@@ -1,26 +1,20 @@
-import numpy as np
 import datetime as dt
-
-import utils as ut
-from polars import Boat
-from typing import NamedTuple
-from geovectorslib import geod
 import logging
-import logging.handlers
-import os
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-from PIL import Image
-
-from weather import WeatherCond
+import numpy as np
+import matplotlib.pyplot as plt
+from geovectorslib import geod
 from global_land_mask import globe
 from scipy.stats import binned_statistic
+
+import utils.graphics as graphics
+import utils.formatting as form
+from ship.ship import Boat
+from algorithms.routingalg import RoutingAlg
 from routeparams import RouteParams
-from RoutingAlg import RoutingAlg
-import graphics
-import utils
+from weather import WeatherCond
 
 logger = logging.getLogger('WRT.Pruning')
 
@@ -64,7 +58,7 @@ class IsoBased(RoutingAlg):
             for i in range(len(bin_edges) - 1):
                 try:
                     if(bin_stat[i]==0):
-                        #ut.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) + 'full_dist_traveled=' + str(self.full_dist_traveled))
+                        #form.print_step('Pruning: sector ' + str(i) + 'is null (binstat[i])=' + str(bin_stat[i]) + 'full_dist_traveled=' + str(self.full_dist_traveled))
                         continue
                     idxs.append(
                         np.where(self.full_dist_traveled == bin_stat[i])[0][0])
@@ -94,8 +88,8 @@ class IsoBased(RoutingAlg):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
-            self.speed_per_step = self.speed_per_step[:, idxs]
-            self.fuel_per_step = self.fuel_per_step[:, idxs]
+            self.shipparams_per_step.select(idxs)
+
             self.starttime_per_step = self.starttime_per_step[:, idxs]
 
             self.current_azimuth = self.current_variant[idxs]
@@ -210,9 +204,8 @@ class IsoBased(RoutingAlg):
         self.lons_per_step=np.flip(self.lons_per_step,0)
         self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
         self.dist_per_step=np.flip(self.dist_per_step,0)
-        self.speed_per_step=np.flip(self.speed_per_step,0)
         self.starttime_per_step=np.flip(self.starttime_per_step,0)
-        self.fuel_per_step = np.flip(self.fuel_per_step,0)
+        self.shipparams_per_step.flip()
 
         route = RoutingAlg.terminate(self, boat, wt)
 
@@ -249,16 +242,16 @@ class IsoBased(RoutingAlg):
             return {'azi2': dist_to_dest['azi1'], 'lat2': new_lat, 'lon2': new_lon, 'iterations' : -99}     #compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}' by geod.direct
 
         move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)   
-        #ut.print_step('move=' + str(move),1)
+        #form.print_step('move=' + str(move),1)
         return move
 
     def check_constraints(self, move, constraint_list):
         debug = False
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
-        if(debug): ut.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
+        if(debug): form.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
         is_constrained = constraint_list.safe_crossing(self.lats_per_step[0], move['lat2'], self.lons_per_step[0], move['lon2'], self.time, is_constrained)
-        if(debug): ut.print_step('is_constrained after checking' + str(is_constrained),1)
+        if(debug): form.print_step('is_constrained after checking' + str(is_constrained),1)
         return is_constrained
 
     def update_position(self, move, is_constrained, dist):
@@ -288,38 +281,8 @@ class IsoBased(RoutingAlg):
         if(debug):
             print('full_dist_traveled:', self.full_dist_traveled)
 
-
-
-
-
-
-        # for i in range(int((x2 - x1) / STEP) + 1): #62.3, 17.6, 59.5, 24.6
-        #     try:
-        #         x = x1 + i * STEP
-        #         y = (y1 - y2) / (x1 - x2) * (x - x1) + y1
-        #     except:
-        #         continue
-        #     is_on_land = globe.is_land(float(x), float(y))
-        #     print(is_on_land)
-        #     # if not is_on_land:
-        #     # print("in water")
-        #
-        #     if is_on_land:
-        #         # print("crosses land")
-        #
-        #         return True
-
-        # print('isonland',is_on_land)
-        # z = globe.is_land(lats, lons)
-        # print('value of z',type(z))
-        # if z=='True':
-        #     is_on_land = globe.is_land(move['lats2'], move['lons2'])
-        #     print(is_on_land)
-
-        # print(self)
-
     def update_fuel(self, delta_fuel):
-        self.fuel_per_step = np.vstack((delta_fuel,  self.fuel_per_step))
+        self.shipparams_per_step.set_fuel(np.vstack((delta_fuel,  self.shipparams_per_step.get_fuel())))
         for i in range(0,self.full_fuel_consumed.shape[0]):
             self.full_fuel_consumed[i] += delta_fuel[i]
 

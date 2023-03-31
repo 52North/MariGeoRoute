@@ -1,20 +1,18 @@
 """Weather functions."""
-import numpy as np
 import datetime as dt
-import xarray as xr
+import logging
+import sys
+
 import bbox as bbox
 import matplotlib.pyplot as plt
+import numpy as np
+import xarray as xr
 from bbox import BBox2D, XYXY
-import sys
-import logging
-
-import pygrib as pg
-
 from scipy.interpolate import RegularGridInterpolator
 
-import utils as ut
-from utils import round_time
-import graphics
+import utils.graphics as graphics
+import utils.formatting as form
+from utils.unit_conversion import round_time
 
 logger = logging.getLogger('WRT.weather')
 
@@ -30,7 +28,7 @@ class WeatherCond():
     wind_vectors: None
 
     def __init__(self, filepath, model, time, hours, time_res):
-        ut.print_line()
+        form.print_line()
         logger.info('Initialising weather')
 
         self.read_dataset(filepath)
@@ -43,9 +41,9 @@ class WeatherCond():
         time_passed = self.time_end - self.time_start
         self.time_steps = int(time_passed.total_seconds()/self.time_res.total_seconds())
 
-        logger.info(ut.get_log_step('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end), 1))
-        logger.info(ut.get_log_step('nof time steps ' + str(self.time_steps),1))
-        ut.print_line()
+        logger.info(form.get_log_step('forecast from ' + str(self.time_start) + ' to ' + str(self.time_end), 1))
+        logger.info(form.get_log_step('nof time steps ' + str(self.time_steps),1))
+        form.print_line()
 
     def close_env_file(self):
         self.ds.close()
@@ -120,7 +118,7 @@ class WeatherCond():
     def time_res(self, value):
         if (value < 3): raise ValueError('Resolution below 3h not possible')
         self._time_res = dt.timedelta(hours=value)
-        logger.info(ut.get_log_step('time resolution: ' + str(self._time_res) + ' hours',1))
+        logger.info(form.get_log_step('time resolution: ' + str(self._time_res) + ' hours',1))
 
     @property
     def time_start(self):
@@ -155,7 +153,7 @@ class WeatherCond():
         return self.map_size
 
     def read_dataset(self, filepath):
-        logger.info(ut.get_log_step('Reading dataset from' + str(filepath),1))
+        logger.info(form.get_log_step('Reading dataset from' + str(filepath),1))
         self.ds = xr.open_dataset(filepath)
         print(self.ds)
 
@@ -163,7 +161,7 @@ class WeatherCond():
         print('Printing dataset', self.ds)
     '''
     def grib_to_wind_function(filepath):
-        """Vectorized wind functions from grib file.GRIB is a file format for the storage and transport of gridded meteorological data,
+        """Vectorized wind functions from grib file.GRIB is a file form for the storage and transport of gridded meteorological data,
         such as Numerical Weather Prediction model output."""
         grbs = pg.open(filepath)
 

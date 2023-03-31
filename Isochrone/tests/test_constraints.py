@@ -1,11 +1,10 @@
-import pytest
-from Constraints import *
-from weather import *
-
 import datetime
-import xarray
-import netCDF4 as nc4
 
+import xarray
+
+import pytest
+from constraints.constraints import *
+from weather import *
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()

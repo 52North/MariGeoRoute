@@ -1,0 +1,13 @@
+bbox
+cartopy
+geovectorslib
+global_land_mask
+matplotlib
+numpy
+pandas
+pytest
+python-dotenv
+PIL
+scipy
+setuptools
+xarray

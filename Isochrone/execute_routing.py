@@ -8,11 +8,11 @@ from logging import FileHandler, Formatter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import config
-import graphics
-from polars import *
+import utils.graphics as graphics
+from ship.ship import *
 from weather import *
-from Constraints import *
-from RoutingAlgFactory import *
+from constraints.constraints import *
+from algorithms.routingalg_factory import *
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
@@ -38,10 +38,10 @@ if __name__ == "__main__":
 
     # *******************************************
     # basic settings
-    model = config.DEFAULT_GFS_MODEL
+    model = config.START_TIME
     boatfile = config.DEFAULT_BOAT
-    windfile = config.DEFAULT_GFS_FILE
-    depthfile = config.DEFAULT_DEPTH_FILE
+    windfile = config.WEATHER_DATA
+    depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
     figurepath = config.FIGURE_PATH
     delta_time = config.DELTA_TIME_FORECAST
@@ -52,8 +52,7 @@ if __name__ == "__main__":
     r_la1, r_lo1, r_la2, r_lo2 = config.DEFAULT_ROUTE
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
-    start_time = dt.datetime.strptime(config.DEFAULT_GFS_DATETIME, '%Y%m%d%H')
-    dpi = config.DPI
+    start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
 
     # *******************************************
     # initialise boat

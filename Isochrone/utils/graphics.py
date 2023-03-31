@@ -1,17 +1,14 @@
 """Module to create map with route."""
-import numpy as np
 """Cartopy is a Python package designed for geospatial data processing in order to produce maps 
 and other geospatial data analyses"""
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-from geovectorslib import geod
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import numpy as np
+from geovectorslib import geod
 from matplotlib.figure import Figure
-import matplotlib.cm as cm
 from PIL import Image
-from physt import h1, h2, histogramdd
-
 
 """lat1 : initial latitude 
    lat2 : Final latitude

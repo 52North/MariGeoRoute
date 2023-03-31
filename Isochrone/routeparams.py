@@ -1,84 +1,65 @@
-import numpy as np
 import datetime as dt
-from typing import NamedTuple
 import json
-import dateutil.parser
 
-import utils
+import numpy as np
 import matplotlib.pyplot as plt
-import graphics
-from utils import NumpyArrayEncoder
 
+import utils.graphics as graphics
+import utils.formatting as form
+from utils.formatting import NumpyArrayEncoder
+from ship.shipparams import ShipParams
+
+##
+# Container class for route parameters
 
 class RouteParams():
-    """
-        Isochrone data structure with typing.
-                Parameters:
-                    count: int  (routing step)
-                    start: tuple    (lat,long at start)
-                    finish: tuple   (lat,lon and end)
-                    gcr_azi: float (initial gcr heading)
-                    lats1, lons1, azi1, s12: (M, N) arrays, N=headings+1, M=number of steps+1 (decreasing step number)
-                    azi0, s0: (M, 1) vectors without history
-                    time1: current datetime
-                    elapsed: complete elapsed timedelta
-        """
-    count: int  # routing step
-    start: tuple  # lat, lon at start
-    finish: tuple  # lat, lon at end
-    fuel: float
-    full_dist_traveled: tuple
-    gcr: tuple
-    rpm: int  # propeller [revolutions per minute]
-    route_type: str  # route name
-    time: dt.timedelta  # time needed for the route [datetime]
-    fuel_per_step: tuple  # sum of power consumption [W]
-    lats_per_step: tuple  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)
-    lons_per_step: tuple  # longs: (M,N) array, N=headings+1, M=steps
-    azimuths_per_step: tuple  # azimuth: (M,N) array, N=headings+1, M=steps [degree]
-    dists_per_step: tuple  # geodesic distance traveled per time stamp: (M,N) array, N=headings+1, M=steps [m]
-    speed_per_step: tuple  # boat speed per step [m/s]
-    starttime_per_step: tuple
-    full_dist_traveled: tuple  # full geodesic distance since start [m]
+    count: int          # routing step (starting from 0)
+    start: tuple        # lat, lon at start point (0 - 360°)
+    finish: tuple       # lat, lon of destination (0 - 360°)
+    gcr: tuple          # distance from start to end on great circle
+    route_type: str     # route name
+    time: dt.timedelta  # time needed for the route (h)
 
-    def __init__(self, count, start, finish, fuel, full_dist_traveled,gcr, rpm, route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step, speed_per_step, starttime_per_step, fuel_per_step):
-        self.count = count  # routing step
-        self.start = start  # lat, lon at start
-        self.finish = finish  # lat, lon at end
-        self.fuel = fuel  # sum of fuel consumption [kWh]
-        self.full_dist_traveled = full_dist_traveled #full travel distance [m]
+    ship_params_per_step: ShipParams # ship parameters per routing step
+    lats_per_step: tuple        # latitude at beginning of each step + latitude destination (0-360°)
+    lons_per_step: tuple        # longitude at beginning of each step + longitude destination (0-360°)
+    azimuths_per_step: tuple    # azimuth per step (0-360°)
+    dists_per_step: tuple       # distance traveled on great circle for every step (m)
+    starttime_per_step: tuple   # start time at beginning of each step + time when destination is reached (h)
+
+    def __init__(self, count, start, finish, gcr,  route_type, time, lats_per_step, lons_per_step, azimuths_per_step, dists_per_step,  starttime_per_step,   ship_params_per_step):
+        self.count = count
+        self.start = start
+        self.finish = finish
         self.gcr = gcr
-        self.rpm = rpm  # propeller [revolutions per minute]
-        self.route_type = route_type  # route name
-        self.time = time  # time needed for the route [h]
+        self.route_type = route_type
+        self.time = time
         self.lats_per_step = lats_per_step
         self.lons_per_step = lons_per_step
-        self.azimuths_per_step = azimuths_per_step # [degrees]
-        self.dists_per_step = dists_per_step    #travel distance per step [m]
-        self.speed_per_step = speed_per_step    #speed per step [m/s]
-        self.starttime_per_step =starttime_per_step	# time at start of every step
-        self.fuel_per_step = fuel_per_step 	#fuel consumption per step [kWh]
+        self.azimuths_per_step = azimuths_per_step
+        self.dists_per_step = dists_per_step
+        self.starttime_per_step =starttime_per_step
+        self.ship_params_per_step = ship_params_per_step
 
     def print_route(self):
-        utils.print_line()
+        form.print_line()
         print('Printing route:  ' + str(self.route_type))
         print('Going from', self.start)
-        print('to')
-        print(self.finish)
-        print('routing steps ' + str(self.count))
-        print('time ' + str(self.time))
-        print('fuel ' + str(self.fuel))
-        print('full_dist_traveled ' + str(self.full_dist_traveled))
-        print('gcr ' + str(self.gcr))
-        print('rpm ' + str(self.rpm))
-        print('lats_per_step ' + str(self.lats_per_step))
-        print('lons_per_step ' + str(self.lons_per_step))
-        print('azimuths_per_step ' + str(self.azimuths_per_step))
-        print('dists_per_step ' + str(self.dists_per_step))
-        print('speed_per_step ' + str(self.speed_per_step))
-        print('start_time_per_step' + str(self.starttime_per_step))
-        print('fuel_per_step' + str(self.fuel_per_step))
-        utils.print_line()
+        print('to', self.finish)
+        print('number of routing steps: ' + str(self.count))
+        print('latitude at start of each step: ' + str(self.lats_per_step))
+        print('longitude at start of each step: ' + str(self.lons_per_step))
+        print('azimuths for each step: ' + str(self.azimuths_per_step))
+        print('gcr traveled per step (m): ' + str(self.dists_per_step))
+        print('time at start of each step: ' + str(self.starttime_per_step))
+
+        self.ship_params_per_step.print()
+
+        print('full fuel consumed (kg): ' + str(self.ship_params_per_step.get_full_fuel()))
+        print('full travel time (h): ' + str(self.time))
+        print('travel distance on great circle (m): ' + str(self.gcr))
+
+        form.print_line()
 
     def __eq__(self, route2):
         bool_equal=True
@@ -102,8 +83,6 @@ class RouteParams():
             raise ValueError('Route azimuths_per_step not matching')
         if not (np.array_equal(self.dists_per_step, route2.dists_per_step)):
             raise ValueError('Route dists_per_step not matching')
-        if not (np.array_equal(self.full_dist_traveled, route2.full_dist_traveled)):
-            raise ValueError('Route full_dist_traveled not matching')
 
         return bool_equal
 
@@ -112,19 +91,14 @@ class RouteParams():
             "count" : self.count,
             "start" : self.start,
             "finish": self.finish,
-            "fuel": self.fuel,
-            "full_dist_traveled": self.full_dist_traveled,
+            "route type": self.route_type,
             "gcr": self.gcr,
-            "rpm" : self.rpm,
-            "route type" : self.route_type,
             "time" : self.time,
-            "fuel_per_step" : self.fuel_per_step,
             "lats_per_step" : self.lats_per_step,
             "lons_per_step" : self.lons_per_step,
             "azimuths_per_step" : self.azimuths_per_step,
             "dists_per_step" : self.dists_per_step,
-            "speed_per_step" : self.speed_per_step,
-            "starttime_per_step" : self.starttime_per_step,
+            "starttime_per_step" : self.starttime_per_step
         }
         return rp_dict
 
@@ -142,7 +116,6 @@ class RouteParams():
         start = rp_dict['start']
         finish = rp_dict['finish']
         fuel = rp_dict['fuel']
-        full_dist_traveled = rp_dict['full_dist_traveled']
         gcr = rp_dict['gcr']
         rpm = rp_dict['rpm']
         route_type = rp_dict['route type']
@@ -160,7 +133,6 @@ class RouteParams():
             start = start,
             finish = finish,
             fuel = fuel,
-            full_dist_traveled = full_dist_traveled,
             gcr = gcr,
             rpm = rpm,
             route_type = route_type,

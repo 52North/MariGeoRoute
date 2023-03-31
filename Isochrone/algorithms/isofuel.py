@@ -1,12 +1,12 @@
-import numpy as np
 import datetime as dt
-from geovectorslib import geod
-from global_land_mask import globe
 import logging
 
+from geovectorslib import geod
+import numpy as np
+
+import utils.formatting as form
+from algorithms.isobased import IsoBased
 from routeparams import RouteParams
-from IsoBased import IsoBased
-import utils
 
 logger = logging.getLogger('WRT.routingalg')
 
@@ -19,7 +19,7 @@ class IsoFuel(IsoBased):
 
     def print_init(self):
         IsoBased.print_init(self)
-        logger.info(utils.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
+        logger.info(form.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
 
     def check_isochrones(self, route : RouteParams):
         print('To be implemented')
@@ -47,10 +47,9 @@ class IsoFuel(IsoBased):
 
     ##
     #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
-    def get_delta_variables_netCDF(self, boat, wind, bs):
-        fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-                                                  self.get_current_lons(), self.time, wind)
-        #fuel = boat.get_fuel_per_time(self.get_current_azimuth(), wind)
+    def get_delta_variables_netCDF(self, ship_params, bs):
+        fuel = ship_params.get_fuel()
+
         delta_time = self.delta_fuel / fuel
         dist = self.get_dist(bs, delta_time)
 
@@ -63,9 +62,8 @@ class IsoFuel(IsoBased):
     
     ##
     #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
-    def get_delta_variables_netCDF_last_step(self, boat, wind, bs):
-        fuel = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
-                                                  self.get_current_lons(), self.time, wind)
+    def get_delta_variables_netCDF_last_step(self, ship_params,bs):
+        fuel = ship_params.get_fuel()
         dist = geod.inverse(self.get_current_lats(), self.get_current_lons(), np.full(self.get_current_lats().shape,self.finish[0]) , np.full(self.get_current_lons().shape, self.finish[1]))
         delta_time = self.get_time(bs, dist['s12'])
         delta_fuel = fuel * delta_time
@@ -101,9 +99,8 @@ class IsoFuel(IsoBased):
             self.lons_per_step = self.lons_per_step[:, idxs]
             self.azimuth_per_step = self.azimuth_per_step[:, idxs]
             self.dist_per_step = self.dist_per_step[:, idxs]
-            self.speed_per_step = self.speed_per_step[:, idxs]
-            self.fuel_per_step = self.fuel_per_step[:, idxs]
             self.starttime_per_step = self.starttime_per_step[:, idxs]
+            self.shipparams_per_step.select(idxs)
 
             self.current_azimuth = self.current_variant[idxs]
             self.current_variant = self.current_variant[idxs]
