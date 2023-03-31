@@ -6,6 +6,8 @@ matplotlib
 numpy
 pandas
 pytest
+python-dotenv
 PIL
 scipy
+setuptools
 xarray
