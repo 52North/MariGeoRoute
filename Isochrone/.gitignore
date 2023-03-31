@@ -13,3 +13,4 @@ log/
 Routes/*
 .gitignore
 *.json
+.env
