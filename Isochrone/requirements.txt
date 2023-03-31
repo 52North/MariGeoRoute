@@ -11,3 +11,4 @@ Pillow
 scipy == 1.9.2
 setuptools
 xarray
+netcdf4
