@@ -5,7 +5,6 @@ import cartopy.crs as ccrs
 import cartopy.feature as cf
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import matplotlib.cm as cm
 import numpy as np
 from geovectorslib import geod
 from matplotlib.figure import Figure

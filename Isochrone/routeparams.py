@@ -4,10 +4,10 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-import graphics
-import utils
-from utils import NumpyArrayEncoder
-from shipparams import ShipParams
+import utils.graphics as graphics
+import utils.formatting as form
+from utils.formatting import NumpyArrayEncoder
+from ship.shipparams import ShipParams
 
 ##
 # Container class for route parameters
@@ -42,7 +42,7 @@ class RouteParams():
         self.ship_params_per_step = ship_params_per_step
 
     def print_route(self):
-        utils.print_line()
+        form.print_line()
         print('Printing route:  ' + str(self.route_type))
         print('Going from', self.start)
         print('to', self.finish)
@@ -59,7 +59,7 @@ class RouteParams():
         print('full travel time (h): ' + str(self.time))
         print('travel distance on great circle (m): ' + str(self.gcr))
 
-        utils.print_line()
+        form.print_line()
 
     def __eq__(self, route2):
         bool_equal=True

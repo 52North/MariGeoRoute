@@ -8,10 +8,11 @@ from geovectorslib import geod
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-import utils
-from Constraints import *
-from polars import Boat
+import utils.formatting as form
+from constraints.constraints import *
+from ship.ship import Boat
 from routeparams import RouteParams
+from ship.shipparams import ShipParams
 from weather import WeatherCond
 
 logger = logging.getLogger('WRT.routingalg')
@@ -108,8 +109,8 @@ class RoutingAlg():
 
     def print_init(self):
         logger.info('Initialising routing:')
-        logger.info(utils.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
-        logger.info(utils.get_log_step('start time ' + str(self.time),1))
+        logger.info(form.get_log_step('route from ' + str(self.start) + ' to ' + str(self.finish),1))
+        logger.info(form.get_log_step('start time ' + str(self.time),1))
 
     def print_ra(self):
         print('PRINTING ALG SETTINGS')
@@ -195,7 +196,7 @@ class RoutingAlg():
         #start_time=time.time()
         # self.print_shape()
         for i in range(self.ncount):
-            utils.print_line()
+            form.print_line()
             print('Step ', i)
 
             self.define_variants_per_step()
@@ -206,7 +207,7 @@ class RoutingAlg():
 
             #self.update_fig('bp')
             self.pruning_per_step(True)
-            #utils.print_current_time('move_boat: Step=' + str(i), start_time)
+            #form.print_current_time('move_boat: Step=' + str(i), start_time)
             #self.update_fig('p')
 
         self.final_pruning()
@@ -298,7 +299,7 @@ class RoutingAlg():
         self.shipparams_per_step.set_speed(new_speed)
 
     def terminate(self, boat: Boat, wt: WeatherCond):
-        utils.print_line()
+        form.print_line()
         print('Terminating...')
 
         time = round(self.full_time_traveled / 3600,2 )

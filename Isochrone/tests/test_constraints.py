@@ -3,7 +3,7 @@ import datetime
 import xarray
 
 import pytest
-from Constraints import *
+from constraints.constraints import *
 from weather import *
 
 def generate_dummy_constraint_list():

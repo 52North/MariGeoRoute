@@ -17,7 +17,8 @@ import mariPower
 import utils as ut
 from mariPower import ship
 from mariPower import __main__
-from utils import knots_to_mps  # Convert  knot value in meter per second
+from utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
+from ship.shipparams import ShipParams
 from weather import WeatherCond
 
 ## Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it

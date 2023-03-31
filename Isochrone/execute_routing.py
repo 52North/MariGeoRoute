@@ -8,11 +8,11 @@ from logging import FileHandler, Formatter
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 import config
-import graphics
-from polars import *
+import utils.graphics as graphics
+from ship.ship import *
 from weather import *
-from Constraints import *
-from RoutingAlgFactory import *
+from constraints.constraints import *
+from algorithms.routingalg_factory import *
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)

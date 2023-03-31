@@ -1,7 +1,7 @@
 import numpy as np
 from geovectorslib import geod  #TODO: change to geopy?
 
-from IsoBased import IsoBased
+from algorithms.isobased import IsoBased
 from routeparams import RouteParams
 
 class IsoChrone(IsoBased):

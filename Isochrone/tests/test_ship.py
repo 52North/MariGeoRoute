@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from polars import Tanker
+from ship.ship import Tanker
 
 #def test_inc():
 #    pol = Tanker(2)

@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import utils
-from Constraints import *
-from IsoBased import IsoBased
-from IsoFuel import IsoFuel
-from polars import Tanker
+import utils.formatting as form
+from constraints.constraints import *
+from algorithms.isobased import IsoBased
+from algorithms.isofuel import IsoFuel
+from ship.ship import Tanker
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -126,7 +126,7 @@ def test_pruning_select_correct_idxs():
     time_test = np.array([datetime.date.today(),datetime.date.today(),datetime.date.today(),datetime.date.today()])
 
     ra.print_ra()
-    utils.print_line()
+    form.print_line()
 
     ra.pruning(True, pruning_bins)
 
@@ -144,7 +144,7 @@ def test_pruning_select_correct_idxs():
     assert np.array_equal(lon_test, ra.lons_per_step)
     assert np.array_equal(time_test, ra.time)
 
-    #utils.print_line()
+    #form.print_line()
     #ra.print_ra()
 '''
     test shape and content of 'move' for known distance, start and end points

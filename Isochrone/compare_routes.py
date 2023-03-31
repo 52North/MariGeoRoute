@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
-import graphics
+import utils.graphics as graphics
 import config
 from routeparams import RouteParams
-from Constraints import *
+from constraints.constraints import *
 from weather import WeatherCondCMEMS
 
 

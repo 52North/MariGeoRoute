@@ -4,8 +4,8 @@ import logging
 from geovectorslib import geod
 import numpy as np
 
-import utils
-from IsoBased import IsoBased
+import utils.formatting as form
+from algorithms.isobased import IsoBased
 from routeparams import RouteParams
 
 logger = logging.getLogger('WRT.routingalg')
@@ -19,7 +19,7 @@ class IsoFuel(IsoBased):
 
     def print_init(self):
         IsoBased.print_init(self)
-        logger.info(utils.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
+        logger.info(form.get_log_step('Fuel minimisation, delta power: ' + str(self.delta_fuel),1))
 
     def check_isochrones(self, route : RouteParams):
         print('To be implemented')

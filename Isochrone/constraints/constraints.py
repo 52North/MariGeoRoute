@@ -9,9 +9,8 @@ import numpy as np
 import xarray as xr
 from global_land_mask import globe
 
-import graphics
-import utils as ut
-from graphics import *
+import utils.graphics as graphics
+import utils.formatting as form
 from routeparams import RouteParams
 from weather import WeatherCond
 
@@ -103,8 +102,8 @@ class ConstraintPars():
 
     def print(self):
         logger.info('Print settings of Constraint Pars:')
-        logger.info(ut.get_log_step('resolution=' + str(self.resolution),1))
-        logger.info(ut.get_log_step('bCheckEndPoints=' + str(self.bCheckEndPoints),1))
+        logger.info(form.get_log_step('resolution=' + str(self.resolution),1))
+        logger.info(form.get_log_step('bCheckEndPoints=' + str(self.bCheckEndPoints),1))
 
 
 class ConstraintsList():
@@ -127,7 +126,7 @@ class ConstraintsList():
     def print_constraints_crossed(self):
         print('Discarding point as:')
         for iConst in range(0, len(self.constraints_crossed)):
-            ut.print_step(str(self.constraints_crossed[iConst]), 1)
+            form.print_step(str(self.constraints_crossed[iConst]), 1)
 
     def print_settings(self):
         self.pars.print()
@@ -164,7 +163,7 @@ class ConstraintsList():
             if (debug):
                 print('is_constrained_temp: ', is_constrained_temp)
                 print('is_constrained: ', is_constrained)
-                #ut.print_current_time('constraint execution', start_time)
+                #form.print_current_time('constraint execution', start_time)
 
             is_constrained += is_constrained_temp
         # if (is_constrained.any()) & (debug): self.print_constraints_crossed()
@@ -183,7 +182,7 @@ class ConstraintsList():
         y0 = lon_start
 
         # if (debug):
-        # ut.print_step('Constraints: Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
+        # form.print_step('Constraints: Moving from (' + str(lat_start) + ',' + str(lon_start) + ') to (' + str(
         #        lat_end) + ',' + str(lon_end), 0)
 
         nSteps = int(1. / self.pars.resolution)
@@ -201,9 +200,9 @@ class ConstraintsList():
             lat_end_constrained = lat_end[is_constrained == 1]
             lon_end_constrained = lon_end[is_constrained == 1]
 
-            if lat_start_constrained.shape[0] > 0: ut.print_step('transitions constrained:', 1)
+            if lat_start_constrained.shape[0] > 0: form.print_step('transitions constrained:', 1)
             for i in range(0, lat_start_constrained.shape[0]):
-                ut.print_step('[' + str(lat_start_constrained[i]) + ',' + str(lon_start_constrained[i]) + '] to [' +
+                form.print_step('[' + str(lat_start_constrained[i]) + ',' + str(lon_start_constrained[i]) + '] to [' +
                               str(lat_end_constrained[i]) + ',' + str(lon_end_constrained[i]) + ']', 2)
 
         # if not ((round(x0.all,8) == round(self.lats_per_step[0, :].all) and (x0.all == self.lons_per_step[0, :].all)):
@@ -241,7 +240,7 @@ class LandCrossing(NegativeContraint):
         return globe.is_land(lat, lon)
 
     def print_info(self):
-        logger.info(ut.get_log_step('no land crossing',1))
+        logger.info(form.get_log_step('no land crossing',1))
 
 
 class WaveHeight(NegativeConstraintFromWeather):
@@ -262,7 +261,7 @@ class WaveHeight(NegativeConstraintFromWeather):
         return self.current_wave_height > self.max_wave_height
 
     def print_info(self):
-        logger.info(ut.get_log_step('maximum wave height=' + str(self.max_wave_height) + 'm', 1))
+        logger.info(form.get_log_step('maximum wave height=' + str(self.max_wave_height) + 'm', 1))
 
 
 class WaterDepth(NegativeConstraintFromWeather):
@@ -282,7 +281,7 @@ class WaterDepth(NegativeConstraintFromWeather):
     def constraint_on_point(self, lat, lon, time):
         self.check_weather(lat, lon, time)
         returnvalue = self.current_depth > -self.min_depth
-        # ut.print_step('current_depth:' + str(self.current_depth), 1)
+        # form.print_step('current_depth:' + str(self.current_depth), 1)
         return returnvalue
 
     def check_weather(self, lat, lon, time):
@@ -292,7 +291,7 @@ class WaterDepth(NegativeConstraintFromWeather):
         self.current_depth = rounded_ds.to_numpy()
 
     def print_info(self):
-        logger.info(ut.get_log_step('minimum water depth=' + str(self.min_depth) + 'm',1))
+        logger.info(form.get_log_step('minimum water depth=' + str(self.min_depth) + 'm',1))
 
     def get_current_depth(self, lat, lon):
         self.check_weather(lat, lon, None)
@@ -374,7 +373,7 @@ class StayOnMap(NegativeContraint):
         return is_on_map
 
     def print_info(self):
-        logger.info(ut.get_log_step('stay on wheather map',1))
+        logger.info(form.get_log_step('stay on wheather map',1))
 
     def set_map(self, lat1, lon1, lat2, lon2):
         self.lat1 = lat1
