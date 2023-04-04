@@ -14,6 +14,8 @@ DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
 #DELTA_FUEL = 30000000*1000*1 # [Ws]
 DELTA_FUEL = 1*1000             # amount of fuel per routing step (kg)
 START_TIME = '2023021012'       # start time of travelling
+BOAT_SPEED = 15                 # (m/s)
+BOAT_DROUGHT = 10                 # (m)
 
 ##
 # File paths
@@ -23,6 +25,7 @@ PERFORMANCE_LOG_FILE = os.environ['PERFORMANCE_LOG_FILE']   # path to log file w
 INFO_LOG_FILE = os.environ['INFO_LOG_FILE'] # path to log file which logs information
 FIGURE_PATH = os.environ['FIGURE_PATH']     # path to figure repository
 COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'     # path to file that acts as intermediate storage for courses per routing step
+ROUTE_PATH = os.environ['ROUTE_PATH']
 
 ##
 # Isochrone routing parameters

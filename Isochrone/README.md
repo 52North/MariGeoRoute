@@ -1,15 +1,47 @@
 # ISOCHRONE CODE
 
 
-## Environment
-The routing tool can be installed by doing  
-  `` pip install . ``
-in the directory that contains the file setup.py. The installation requires the separate installation of the
-package mariPower. All other dependencies are installed automatically.
-
-## Instructions 
-* Step 1 - Change the path of the datasets in all files
-* Step 2 - Run the App.py file 
+## Installation instructions
+<ol>
+  <li> 
+    The routing tool can be installed by doing  
+    ``
+    pip install . 
+    ``<br>
+    in the directory that contains the file setup.py. The installation requires the separate installation of the
+    package mariPower. All other dependencies are installed automatically.
+  <li>
+  <li>
+    For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
+    <ul>
+      <li> u-component_of_wind_sigma (u-component of wind @ sigma level) </li>
+      <li> v-component_of_wind_sigma (v-component of wind @ sigma level) </li>
+      <li> vo (northward velocity) </li>
+      <li> uo (eastward velocity) </li>
+      <li> VHMO (wave significant height @ sea surface)</li>
+      <li> VMDR (wave direction @ sea surface)</li>
+      <li> thetao (potential temperature) </li>
+      <li> Pressure_surface (pressure at the water surface) </li>
+      <li> so (salinity) </li>
+    </ul>
+  </li>
+  <li>
+    For standalone execution, download data on the water depth from [here](https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc).
+  </li>
+  <li> 
+    Define the environment variables which are read by config.py in the sections 'File paths' and 'Boat settings' (e.g. in a separate .env file)
+  </li>
+  <li> 
+    Adjust the start and endpoint of the route as well as the departure time using the variables 'DEFAULT_ROUTE' and 'START_TIME'. The variable 'DEFAULT_MAP' needs to be set to 
+    a map size that encompasses the final route. The boat speed and drought can be configured via the variables 'BOAT_SPEED' and 'BOAT_DROUGHT'.
+  </li>
+  <li>
+    Initiate the routing procedure by executing the file 'execute_routing.py': <br>
+    ``
+    python execute_routing.py 
+    `` <br>
+  </li>
+</ol>
 
 ## References
 - https://github.com/omdv/wind-router

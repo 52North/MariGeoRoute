@@ -44,6 +44,7 @@ if __name__ == "__main__":
     depthfile = config.DEPTH_DATA
     coursesfile = config.COURSES_FILE
     figurepath = config.FIGURE_PATH
+    routepath = config.ROUTE_PATH
     delta_time = config.DELTA_TIME_FORECAST
     delta_fuel = config.DELTA_FUEL
     hours = config.TIME_FORECAST
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     # boat.init_hydro_model_single_pars()
     # boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
-    boat.set_boat_speed(15)
+    boat.set_boat_speed(config.BOAT_SPEED)
     # boat.calibrate_simple_fuel()
     # boat.write_simple_fuel()
     # boat.test_power_consumption_per_course()
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(wt)
-    water_depth.set_drought(10)
+    water_depth.set_drought(config.BOAT_DROUGHT)
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     min_fuel_route = min_fuel_route.recursive_routing(boat, wt, constraint_list)
     min_fuel_route.print_route()
     #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
-    min_fuel_route.return_route_to_API(str(min_fuel_route.route_type) + "route.json")
+    min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
 
     # *******************************************
     # plot route in constraints
