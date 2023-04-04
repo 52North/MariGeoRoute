@@ -3,11 +3,9 @@ import datetime as dt
 import logging
 import sys
 
-import bbox as bbox
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from bbox import BBox2D, XYXY
 from scipy.interpolate import RegularGridInterpolator
 
 import utils.graphics as graphics
@@ -16,13 +14,25 @@ from utils.unit_conversion import round_time
 
 logger = logging.getLogger('WRT.weather')
 
+class Map():
+    x1: float
+    x2: float
+    y1: float
+    y2: float
+
+    def __init__(self, x1, y1, x2, y2):
+        self.x1=x1
+        self.x2=x2
+        self.y1=y1
+        self.y2=y2
+
 class WeatherCond():
     model: str
     time_steps: int
     time_res: dt.timedelta
     time_start: dt.datetime
     time_end: dt.timedelta
-    map_size: bbox.BBox2D
+    map_size: Map
     ds: xr.Dataset
     wind_functions: None
     wind_vectors: None
@@ -147,7 +157,7 @@ class WeatherCond():
         return {'rounded_time' : rounded_time, 'idx' : idx}
 
     def set_map_size(self, lat1, lon1, lat2, lon2):
-        self.map_size=BBox2D([lat1, lon1, lat2, lon2], mode=XYXY)
+        self.map_size=Map(lat1, lon1, lat2, lon2)
 
     def get_map_size(self):
         return self.map_size

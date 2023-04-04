@@ -2,7 +2,10 @@
 
 
 ## Environment
-  pip install -r requirements.txt
+The routing tool can be installed by doing  
+  `` pip install . ``
+in the directory that contains the file setup.py. The installation requires the separate installation of the
+package mariPower. All other dependencies are installed automatically.
 
 ## Instructions 
 * Step 1 - Change the path of the datasets in all files

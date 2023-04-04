@@ -17,5 +17,21 @@ setup(
     license='',
     author='52N Developers',
     author_email='info@52north.org',
-    description='Python package for weather routing'
+    description='Python package for weather routing',
+    install_requires=[
+      'bbox',
+      'numpy > 1.23.4',
+      'cartopy',
+      'geovectorslib',
+      'global_land_mask',
+      'matplotlib',
+      'pandas',
+      'pytest',
+      'python-dotenv',
+      'Pillow',
+      'scipy == 1.9.2',
+      'setuptools',
+      'xarray',
+      'netcdf4'
+    ]
 )

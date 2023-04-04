@@ -107,6 +107,41 @@ class RouteParams():
         with open(filename, 'w') as file:
             json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
 
+    def return_route_to_API(self, filename):
+        rp_dict = {}
+        rp_dict['type'] = 'FeatureCollection'
+        feature_list = []
+
+        print('Writing params to ', filename)
+
+        for i in range(0, self.count):
+            feature = {}
+            geometry = {}
+            properties = {}
+
+            geometry['type'] = 'Point'
+            geometry['coordinates'] = [self.lats_per_step[i], self.lons_per_step[i]]
+
+            properties['time'] = self.starttime_per_step[i]
+            properties['speed'] = {'value' : self.ship_params_per_step.speed[i+1], 'unit' : 'm/s'}
+            properties['engine_power'] = {'value' : self.ship_params_per_step.power[i+1]/1000, 'unit' : 'kW'}
+            time_passed = (self.starttime_per_step[i+1]-self.starttime_per_step[i]).seconds/3600
+            properties['fuel_consumption'] = {'value' : self.ship_params_per_step.fuel[i+1]/(time_passed * 1000), 'unit' : 'mt/h'}
+            properties['fuel_type'] = self.ship_params_per_step.fuel_type
+            properties['propeller_revolution'] = {'value' : self.ship_params_per_step.rpm[i+1], 'unit' : 'Hz'}
+
+            feature['type'] = 'Feature'
+            feature['geometry'] = geometry
+            feature['property'] = properties
+
+            feature_list.append(feature)
+
+        rp_dict['features'] = feature_list
+
+        with open(filename, 'w') as file:
+            json.dump(rp_dict, file, cls=NumpyArrayEncoder, indent=4)
+
+
     @classmethod
     def from_file(cls, filename):
         with open(filename) as file:
