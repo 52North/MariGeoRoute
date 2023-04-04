@@ -5,12 +5,12 @@
 <ol>
   <li> 
     The routing tool can be installed by doing  
-    ``
+    ```
     pip install . 
-    ``<br>
+    ```<br>
     in the directory that contains the file setup.py. The installation requires the separate installation of the
     package mariPower. All other dependencies are installed automatically.
-  <li>
+  </li>
   <li>
     For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
     <ul>
@@ -37,9 +37,9 @@
   </li>
   <li>
     Initiate the routing procedure by executing the file 'execute_routing.py': <br>
-    ``
+    ```
     python execute_routing.py 
-    `` <br>
+    ``` <br>
   </li>
 </ol>
 
