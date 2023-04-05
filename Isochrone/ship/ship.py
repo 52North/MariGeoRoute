@@ -15,6 +15,7 @@ from scipy.interpolate import RegularGridInterpolator
 
 import mariPower
 import utils.formatting as form
+import utils.unit_conversion as units
 from mariPower import ship
 from mariPower import __main__
 from utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
@@ -134,15 +135,15 @@ class Tanker(Boat):
         angle = np.abs(course - wind_dir)
         if angle > 180: angle = np.abs(360 - angle)
         if debug:
-            ut.print_line()
-            ut.print_step('course = ' + str(course), 1)
-            ut.print_step('wind_speed = ' + str(wind_speed), 1)
-            ut.print_step('wind_dir = ' + str(wind_dir), 1)
-            ut.print_step('delta angle = ' + str(angle), 1)
+            form.print_line()
+            form.print_step('course = ' + str(course), 1)
+            form.print_step('wind_speed = ' + str(wind_speed), 1)
+            form.print_step('wind_dir = ' + str(wind_dir), 1)
+            form.print_step('delta angle = ' + str(angle), 1)
         wind_speed = wind_speed
         power = self.simple_fuel_model.interp(delta_angle=angle, wind_speed=wind_speed)['power'].to_numpy()
 
-        if debug: ut.print_step('power = ' + str(power), 1)
+        if debug: form.print_step('power = ' + str(power), 1)
         return power
 
     # def get_fuel_per_time_simple(self, delta_time):
@@ -157,12 +158,12 @@ class Tanker(Boat):
         # boat_speed = np.array([boat_speed])
         self.hydro_model.WindDirection = math.radians(wind_dir)
         self.hydro_model.WindSpeed = wind_speed
-        ut.print_step('course [degrees]= ' + str(course), 1)
-        course = ut.degree_to_pmpi(course)
-        ut.print_step('course [rad]= ' + str(course), 1)
-        ut.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
-        ut.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
-        ut.print_step('boat_speed = ' + str(boat_speed), 1)
+        form.print_step('course [degrees]= ' + str(course), 1)
+        course = units.degree_to_pmpi(course)
+        form.print_step('course [rad]= ' + str(course), 1)
+        form.print_step('wind dir = ' + str(self.hydro_model.WindDirection), 1)
+        form.print_step('wind speed = ' + str(self.hydro_model.WindSpeed), 1)
+        form.print_step('boat_speed = ' + str(boat_speed), 1)
         # Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotionSerial(course, boat_speed, aUseHeading=True,
         #                                                                 aUpdateCalmwaterResistanceEveryIteration=False)
         Fx, driftAngle, ptemp, n, delta = self.hydro_model.IterateMotion(course, boat_speed, aUseHeading=True,
@@ -175,7 +176,7 @@ class Tanker(Boat):
     def calibrate_simple_fuel(self):
         self.simple_fuel_model = xr.open_dataset(
             "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/SimpleFuelModel/simple_fuel_model.nc")
-        ut.print_line()
+        form.print_line()
         print('Initialising simple fuel model')
         print(self.simple_fuel_model)
 
@@ -187,8 +188,8 @@ class Tanker(Boat):
         n_angle = 10
         n_wind_speed = 20
         power = np.zeros((n_angle, n_wind_speed))
-        delta_angle = ut.get_bin_centers(0, 180, n_angle)
-        wind_speed = ut.get_bin_centers(0, 60, n_wind_speed)
+        delta_angle = units.get_bin_centers(0, 180, n_angle)
+        wind_speed = units.get_bin_centers(0, 60, n_wind_speed)
 
         coords = dict(
             delta_angle=(["delta_angle"], delta_angle),
@@ -221,7 +222,7 @@ class Tanker(Boat):
         if (debug):
             print('Requesting power calculation')
             course_str = 'Courses:' + str(courses)
-            ut.print_step(course_str, 1)
+            form.print_step(course_str, 1)
 
         P = np.zeros(courses.shape)
         for icours in range(0, courses.shape[0]):
@@ -230,7 +231,7 @@ class Tanker(Boat):
             if math.isnan(P[icours]): P[icours] = 1000000000000000
 
         if (debug):
-            ut.print_step('power consumption' + str(P))
+            form.print_step('power consumption' + str(P))
         return P
 
     ##
@@ -257,18 +258,18 @@ class Tanker(Boat):
             lons_str = 'Longitude:' + str(lons)
             course_str = 'Courses:' + str(courses)
             speed_str = 'Boat speed:' + str(speed.shape)
-            ut.print_step(time_str, 1)
-            ut.print_step(lats_str, 1)
-            ut.print_step(lons_str, 1)
-            ut.print_step(course_str, 1)
-            ut.print_step(speed_str, 1)
+            form.print_step(time_str, 1)
+            form.print_step(lats_str, 1)
+            form.print_step(lons_str, 1)
+            form.print_step(course_str, 1)
+            form.print_step(speed_str, 1)
 
         it = np.arange(np.unique(lons, return_counts=True)[1][0])+1
         it = np.hstack((it,)* np.unique(lons).shape[0])
 
         if(debug):
-            ut.print_step('it=' + str(it))
-            ut.print_step('lons=' + str(lons))
+            form.print_step('it=' + str(it))
+            form.print_step('lons=' + str(lons))
 
         df = pd.DataFrame({
             'lat': lats,
@@ -305,7 +306,7 @@ class Tanker(Boat):
     # extracts power from 'courses netCDF' which has been written by mariPower and returns it as 1D array.
     def extract_params_from_netCDF(self, ds):
         debug = False
-        if(debug): ut.print_step('Dataset with ship parameters:' + str(ds),1)
+        if(debug): form.print_step('Dataset with ship parameters:' + str(ds),1)
 
         power = ds['Power_delivered'].to_numpy().flatten() 
         rpm = ds['RotationRate'].to_numpy().flatten()
@@ -314,10 +315,10 @@ class Tanker(Boat):
         ship_params = ShipParams(fuel = fuel, power = power, rpm = rpm, speed = np.repeat(self.speed, power.shape, axis=0))
 
         if(debug):
-            ut.print_step('Dataset with fuel' + str(ds),1)
-            ut.print_step('original shape power' + str(power.shape), 1)
-            ut.print_step('flattened shape power' + str(ship_params.get_power.shape), 1)
-            ut.print_step('power result' + str(ship_params.get_power))
+            form.print_step('Dataset with fuel' + str(ds),1)
+            form.print_step('original shape power' + str(power.shape), 1)
+            form.print_step('flattened shape power' + str(ship_params.get_power.shape), 1)
+            form.print_step('power result' + str(ship_params.get_power))
 
         return ship_params
 
@@ -328,12 +329,12 @@ class Tanker(Boat):
         debug = False
 
         power = self.get_fuel_per_time(courses, wind)
-        if(debug): ut.print_step('power shape' + str(power.shape),1)
+        if(debug): form.print_step('power shape' + str(power.shape),1)
         power = power.reshape(ds['lat'].shape[0], ds['it'].shape[0])
         ds["power"] = (['lat', 'it'], power)
         if(debug):
-            ut.print_step('power new shape' + str(power.shape),1)
-            ut.print_step('ds' + str(ds),1)
+            form.print_step('power new shape' + str(power.shape),1)
+            form.print_step('ds' + str(ds),1)
 
         ds.to_netcdf(self.courses_path)
         ds_read = xr.open_dataset(self.courses_path)
@@ -366,9 +367,9 @@ class Tanker(Boat):
         ds_merged = xr.Dataset()
 
         if(debug):
-            ut.print_line()
-            ut.print_step('get_fuel_netCDF_loop: loop over all variants per space point', 0)
-            ut.print_step('original dataset: ' + str(ds), 0)
+            form.print_line()
+            form.print_step('get_fuel_netCDF_loop: loop over all variants per space point', 0)
+            form.print_step('original dataset: ' + str(ds), 0)
 
         for ivar in range(1,n_vars+1):
             ds_read_temp = ds.isel(it=[ivar-1])
@@ -379,11 +380,11 @@ class Tanker(Boat):
             if(debug):
                 ds_read_test = xr.load_dataset(filename_single)
                 courses_test = ds_read_test['courses']
-                ut.print_step('courses_test' + str(courses_test.to_numpy()),1)
-                ut.print_step('speed' + str(ds_read_test['speed'].to_numpy()),1)
-            #start_time = time.time()
+                form.print_step('courses_test' + str(courses_test.to_numpy()),1)
+                form.print_step('speed' + str(ds_read_test['speed'].to_numpy()),1)
+            start_time = time.time()
             mariPower.__main__.PredictPowerOrSpeedRoute(ship, filename_single, self.environment_path, None, False, False)
-            #form.print_current_time('time for mariPower request:', start_time)
+            form.print_current_time('time for mariPower request:', start_time)
 
             ds_temp = xr.load_dataset(filename_single)
             ds_temp.coords['it'] = [ivar]
@@ -391,11 +392,11 @@ class Tanker(Boat):
                 ds_merged = ds_temp.copy()
             else:
                 ds_merged = xr.concat([ds_merged, ds_temp], dim="it")
-            if(debug): ut.print_step('step ' + str(ivar) +  ': merged dataset:' + str(ds_merged),1)
+            if(debug): form.print_step('step ' + str(ivar) +  ': merged dataset:' + str(ds_merged),1)
         ds_merged['lon'] = ds_merged['lon'].sel(it=1).drop('it')
         ds_merged['time'] = ds_merged['time'].sel(it=1).drop('it')
 
-        if (debug): ut.print_step('final merged dataset:' + str(ds_merged))
+        if (debug): form.print_step('final merged dataset:' + str(ds_merged))
         ds.close()
         return ds_merged
 

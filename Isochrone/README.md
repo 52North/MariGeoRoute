@@ -4,12 +4,14 @@
 ## Installation instructions
 <ol>
   <li> 
-    The routing tool can be installed by doing  
-    ```
-    pip install . 
-    ```<br>
-    in the directory that contains the file setup.py. The installation requires the separate installation of the
-    package mariPower. All other dependencies are installed automatically.
+The routing tool can be installed by doing  
+
+```sh
+pip install . 
+```
+
+in the directory that contains the file setup.py. The installation requires the separate installation of the
+package mariPower. All other dependencies are installed automatically.
   </li>
   <li>
     For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
@@ -36,10 +38,12 @@
     a map size that encompasses the final route. The boat speed and drought can be configured via the variables 'BOAT_SPEED' and 'BOAT_DROUGHT'.
   </li>
   <li>
-    Initiate the routing procedure by executing the file 'execute_routing.py': <br>
-    ```
-    python execute_routing.py 
-    ``` <br>
+    Initiate the routing procedure by executing the file 'execute_routing.py': 
+
+```sh
+python execute_routing.py 
+``` 
+
   </li>
 </ol>
 
@@ -64,3 +68,8 @@
 - http://www.movable-type.co.uk/scripts/latlong.html?from=48.955550,-122.05169&to=48.965496,-122.072989
 - https://geographiclib.sourceforge.io/html/python/code.html#geographiclib.geodesic.Geodesic.Inverse
 - https://mathsathome.com/calculating-bearings/ 
+## Funding
+
+| Project/Logo | Description |
+| :-------------: | :------------- |
+| [<img alt="MariData" align="middle" width="267" height="50" src="https://52north.org/delivery/MariData/img/maridata_logo.png"/>](https://www.maridata.org/) | MariGeoRoute is funded by the German Federal Ministry of Economic Affairs and Energy (BMWi)[<img alt="BMWi" align="middle" width="144" height="72" src="https://52north.org/delivery/MariData/img/bmwi_logo_en.png" style="float:right"/>](https://www.bmvi.de/) |
