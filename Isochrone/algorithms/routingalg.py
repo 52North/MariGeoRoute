@@ -205,10 +205,10 @@ class RoutingAlg():
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
 
-            #self.update_fig('bp')
+            if i>10: self.update_fig('bp')
             self.pruning_per_step(True)
             #form.print_current_time('move_boat: Step=' + str(i), start_time)
-            #self.update_fig('p')
+            if i>10: self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate(boat, wt)

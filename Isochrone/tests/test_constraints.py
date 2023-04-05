@@ -1,8 +1,10 @@
 import datetime
+import os
 
 import xarray
-
 import pytest
+
+import config
 from constraints.constraints import *
 from weather import *
 
@@ -125,8 +127,8 @@ def test_safe_waterdepth():
         [2.05, 2.5],
     ])
     time = 0
-    depthfile = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/ETOPO_2022_v1_30s_N90W180_bed.nc'
-    windfile = "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/20221110/77175d34-9006-11ed-b628-0242ac120003_Brighton_Rotterdam.nc"
+    depthfile = config.DEPTH_DATA
+    windfile = os.environ['BASE_PATH'] +  "/tests/data/77175d34-9006-11ed-b628-0242ac120003_Brighton_Rotterdam.nc"
     model = '2020111600'
     start_time = datetime.datetime.now()
     hours = 0

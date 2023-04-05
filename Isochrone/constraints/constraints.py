@@ -28,8 +28,8 @@ logger = logging.getLogger('WRT.Constraints')
 #           for which the weather data has been obtained
 #
 # Inclusion in routing algorithm:
-#       1) initialise all individual constraints that shall be considered (for example check Isochrones/app.py)
-#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check Isochrones/app.py)
+#       1) initialise all individual constraints that shall be considered (for example check Isochrones/execute_routing.py)
+#       2) initialise ConstraintList object and add all constraints that shall be considered (for example check Isochrones/execute_routing.py)
 #       3) during the routing procedure, check for ConstraintList.safe_crossing(lat_start, lat_end, lon_start, lon_end, time) which looks for constraints in
 #           between starting point and destination;
 #           alternatively it can also be checked for a single point whether a constraint is hit via ConstraintList.safe_endpoint(lat, lon, time)
@@ -40,13 +40,13 @@ class Constraint():
     lat: np.ndarray
     lon: np.ndarray
     time: np.ndarray
-    resource_type: int
+    #resource_type: int
 
     def __init__(self, name):
         self.name = name
 
-    def get_resource_type(self):
-        return self.resource_type
+    #def get_resource_type(self):
+    #    return self.resource_type
 
     def print_constraint_message(self):
         print(self.message)
@@ -71,7 +71,6 @@ class Constraint():
 class PositiveConstraint(Constraint):
     def __init__(self, name):
         Constraint.__init__(self, name)
-
 
 class NegativeContraint(Constraint):
     def __init__(self, name):
@@ -233,7 +232,7 @@ class LandCrossing(NegativeContraint):
     def __init__(self):
         NegativeContraint.__init__(self, 'LandCrossing')
         self.message += 'crossing land!'
-        self.resource_type = 0
+        #self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
@@ -250,7 +249,7 @@ class WaveHeight(NegativeConstraintFromWeather):
     def __init__(self):
         NegativeContraint.__init__(self, 'WaveHeight')
         self.message += 'waves are to high!'
-        self.resource_type = 0
+        #self.resource_type = 0
         self.current_wave_height = np.array([-99])
         self.max_wave_height = 10
 
@@ -271,7 +270,7 @@ class WaterDepth(NegativeConstraintFromWeather):
     def __init__(self, weather):
         NegativeConstraintFromWeather.__init__(self, 'WaterDepth', weather)
         self.message += 'water not deep enough!'
-        self.resource_type = 0
+        #self.resource_type = 0
         self.current_depth = np.array([-99])
         self.min_depth = 50
 
@@ -365,7 +364,7 @@ class StayOnMap(NegativeContraint):
     def __init__(self):
         NegativeContraint.__init__(self, 'StayOnMap')
         self.message += 'leaving wheather map!'
-        self.resource_type = 0
+        #self.resource_type = 0
 
     def constraint_on_point(self, lat, lon, time):
         # self.print_debug('checking point: ' + str(lat) + ',' + str(lon))
