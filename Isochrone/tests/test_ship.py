@@ -1,10 +1,12 @@
 import datetime
 import math
+import os
 
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from dotenv import load_dotenv
 
 from ship.ship import Tanker
 
@@ -12,9 +14,11 @@ from ship.ship import Tanker
 #    pol = Tanker(2)
 #    assert pol.inc(3) == 5
 
+load_dotenv()
+
 def get_default_Tanker():
-    DEFAULT_GFS_FILE = '/home/kdemmich/Downloads/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
-    COURSES_FILE = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc'
+    DEFAULT_GFS_FILE = os.environ['BASE_PATH'] + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'  # CMEMS needs lat: 30 to 45, lon: 0 to 20
+    COURSES_FILE = os.environ['BASE_PATH'] + '/CoursesRoute.nc'
 
     pol = Tanker(2)
     pol.init_hydro_model_Route(DEFAULT_GFS_FILE, COURSES_FILE)

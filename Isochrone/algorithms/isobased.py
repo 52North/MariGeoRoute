@@ -217,7 +217,7 @@ class IsoBased(RoutingAlg):
         self.time += dt.timedelta(seconds=delta_time)
 
     def check_bearing(self, dist):
-        debug = False
+        debug = True
 
         nvariants = self.get_current_lons().shape[0]
         dist_to_dest =  geod.inverse(

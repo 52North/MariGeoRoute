@@ -5,6 +5,7 @@ import xarray
 
 import utils.graphics as graphics
 from constraints.constraints import *
+from ship.shipparams import ShipParams
 from weather import *
 
 def test_plot_power_vs_dist():
@@ -14,22 +15,26 @@ def test_plot_power_vs_dist():
     fuel_consumed = np.array([1,2,1])
     dist_per_step = np.array([1,4,5])
 
+
+    sp = ShipParams(fuel_consumed, dummy_list, dummy_list,dummy_list)
+
     route = RouteParams(
         count = count,  # routing step
         start = dummy_list,  # lat, lon at start
         finish = dummy_list,  # lat, lon at end
-        fuel = dummy_scalar,  # sum of fuel consumption [kWh]
-        rpm = dummy_scalar,  # propeller [revolutions per minute]
+        #fuel = dummy_scalar,  # sum of fuel consumption [kWh]
+        #rpm = dummy_scalar,  # propeller [revolutions per minute]
         route_type = 'min_time_route',  # route name
         time = dummy_scalar,  # time needed for the route [h]
         lats_per_step=dummy_list,
         lons_per_step=dummy_list,
         azimuths_per_step= dummy_list,
         dists_per_step = dist_per_step,
-        speed_per_step = dummy_list,
+        #speed_per_step = dummy_list,
         starttime_per_step = dummy_list,
-        fuel_per_step= fuel_consumed,
-        full_dist_traveled = dummy_list,
+        #fuel_per_step= fuel_consumed,
+        #full_dist_traveled = dummy_list,
+        ship_params_per_step=sp,
         gcr = dummy_list
     )
     route.plot_power_vs_dist("orange", "Route X")

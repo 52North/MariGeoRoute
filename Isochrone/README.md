@@ -42,10 +42,13 @@ package mariPower. All other dependencies are installed automatically.
 
 ```sh
 python execute_routing.py 
-``` 
-
+```
   </li>
 </ol>
+
+## Logging
+The routing tool writes log output using the python package logging. Information about basic settings are written to a file which is specified by the environment variable 'INFO_LOG_FILE'. Warnings and performance information are
+written to the file which is specified by the environment variable 'PERFORMANCE_LOG_FILE'. Further debug information are written to stdout.
 
 ## References
 - https://github.com/omdv/wind-router
