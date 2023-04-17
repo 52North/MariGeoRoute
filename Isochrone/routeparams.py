@@ -192,7 +192,7 @@ class RouteParams():
         return ax
 
     def plot_power_vs_dist(self, color, label):
-        power = self.fuel_per_step
+        power = self.ship_params_per_step.fuel
         dist = self.dists_per_step
         lat = self.lats_per_step
         lon = self.lons_per_step

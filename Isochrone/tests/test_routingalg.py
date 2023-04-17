@@ -1,14 +1,17 @@
 import datetime
+import os
 
 import numpy as np
 import pytest
 import xarray as xr
 
+import config
 import utils.formatting as form
 from constraints.constraints import *
 from algorithms.isobased import IsoBased
 from algorithms.isofuel import IsoFuel
 from ship.ship import Tanker
+from ship.shipparams import ShipParams
 
 def generate_dummy_constraint_list():
     pars = ConstraintPars()
@@ -63,8 +66,8 @@ def test_define_variants_array_shapes():
     assert ra.lats_per_step.shape[1] == nof_hdgs_segments+1
     assert ra.dist_per_step.shape == ra.lats_per_step.shape
     assert ra.azimuth_per_step.shape == ra.lats_per_step.shape
-    assert ra.speed_per_step.shape == ra.lats_per_step.shape
-    assert ra.fuel_per_step.shape == ra.lats_per_step.shape
+    assert ra.shipparams_per_step.speed.shape == ra.lats_per_step.shape
+    assert ra.shipparams_per_step.fuel.shape == ra.lats_per_step.shape
 
     #checking 1D arrays
     assert ra.full_time_traveled.shape[0] == nof_hdgs_segments+1
@@ -108,19 +111,22 @@ def test_pruning_select_correct_idxs():
     ra.current_azimuth = np.array([15,16 ,22,23, 44,45, 71,72,74])
     ra.full_dist_traveled = np.array([1,5, 6,1, 2,7, 10,1,8])
     ra.full_time_traveled = np.random.rand(9)
-    ra.full_fuel_consumed = np.random.rand(9)
+    full_fuel_consumed = np.random.rand(1,9)
+    speed_per_step = np.random.rand(1,9)
 
     ra.dist_per_step = np.array([ra.full_dist_traveled])
-    ra.fuel_per_step = np.array([ra.full_fuel_consumed])
     ra.azimuth_per_step = np.array([ra.current_azimuth])
-    ra.speed_per_step = np.random.rand(1,9)
+
+    sp = ShipParams(full_fuel_consumed, np.full(full_fuel_consumed.shape, 0), np.full(full_fuel_consumed.shape, 0), speed_per_step)
+    ra.shipparams_per_step = sp
 
     cur_var_test = np.array([16, 22, 45, 71])
     cur_azi_test = np.array([16, 22, 45, 71])
     full_dist_test = np.array([5, 6, 7, 10])
     full_time_test = np.array([ra.full_time_traveled[1],ra.full_time_traveled[2],ra.full_time_traveled[5],ra.full_time_traveled[6]])
-    full_fuel_test = np.array([ra.full_fuel_consumed[1],ra.full_fuel_consumed[2],ra.full_fuel_consumed[5],ra.full_fuel_consumed[6]])
-    speed_ps_test = np.array([ra.speed_per_step[0,1],ra.speed_per_step[0,2],ra.speed_per_step[0,5],ra.speed_per_step[0,6]])
+
+    full_fuel_test = np.array([full_fuel_consumed[0,1],full_fuel_consumed[0,2],full_fuel_consumed[0,5],full_fuel_consumed[0,6]])
+    speed_ps_test = np.array([speed_per_step[0,1],speed_per_step[0,2],speed_per_step[0,5],speed_per_step[0,6]])
     lat_test = np.array([[30,30,30,30]])
     lon_test = np.array([[45,45,45,45]])
     time_test = np.array([datetime.date.today(),datetime.date.today(),datetime.date.today(),datetime.date.today()])
@@ -133,13 +139,12 @@ def test_pruning_select_correct_idxs():
     assert np.array_equal(cur_var_test,ra.current_variant)
     assert np.array_equal(cur_azi_test, ra.current_azimuth)
     assert np.array_equal(full_time_test, ra.full_time_traveled)
-    assert np.array_equal(full_fuel_test, ra.full_fuel_consumed)
     assert np.array_equal(full_dist_test, ra.full_dist_traveled)
 
     assert np.array_equal(cur_azi_test,ra.azimuth_per_step[0])
     assert np.array_equal(full_dist_test, ra.dist_per_step[0])
-    assert np.array_equal(full_fuel_test, ra.fuel_per_step[0])
-    assert np.array_equal(speed_ps_test, ra.speed_per_step[0])
+    assert np.array_equal(full_fuel_test, ra.shipparams_per_step.fuel[0])
+    assert np.array_equal(speed_ps_test, ra.shipparams_per_step.speed[0])
     assert np.array_equal(lat_test, ra.lats_per_step)
     assert np.array_equal(lon_test, ra.lons_per_step)
     assert np.array_equal(time_test, ra.time)
@@ -392,15 +397,23 @@ def test_get_delta_variables_last_step():
 
     ##
     # initialise boat
+    weatherpath = os.environ['BASE_PATH'] + '/tests/data/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc'
+    routepath = os.environ['BASE_PATH'] + 'CoursesRoute.nc'
     tk = Tanker(-99)
     tk.set_boat_speed(boat_speed)
-    tk.init_hydro_model_Route("/home/kdemmich/Downloads/9a0c767e-abb5-11ed-b8e3-e3ae8824c4e4.nc", "/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRoute.nc")
+    tk.init_hydro_model_Route(weatherpath, routepath)
 
     ##
     # initialise wind
     wind = {'tws' : np.array([5,5,5,5]), 'twa' : np.array([0,0,0,0])}
 
-    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(tk, wind, tk.boat_speed_function(wind))
+    ship_params = tk.get_fuel_per_time_netCDF(ra.get_current_azimuth(),
+                                              ra.get_current_lats(),
+                                              ra.get_current_lons(),
+                                              ra.time, wind)
+    ship_params.print()
+
+    delta_time, delta_fuel, dist = ra.get_delta_variables_netCDF_last_step(ship_params, tk.boat_speed_function(wind))
 
     assert np.allclose(dist, dist_test, 0.1)
     assert np.allclose(delta_time, time_test, 0.1)
