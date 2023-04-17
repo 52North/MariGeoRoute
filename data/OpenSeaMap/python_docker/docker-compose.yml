@@ -1,0 +1,32 @@
+version: "3.8"
+
+name: osm_mari_data
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: app_${COMPOSE_PROJECT_NAME}
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    restart: on-failure
+    volumes:
+      - ./data:/data
+      
+    depends_on:
+      - db
+
+  db:
+    image: postgis/postgis:latest
+    container_name: db_${COMPOSE_PROJECT_NAME}
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data

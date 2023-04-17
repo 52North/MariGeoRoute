@@ -22,6 +22,10 @@ RUN wget https://github.com/openstreetmap/osmosis/releases/download/0.48.3/osmos
 # Downloaded from https://tiles.openseamap.org/seamark/world.osm
 # COPY ./data/world.osm /tmp/data.osm
 
+RUN if [ ! -f /tmp/data.osm ]; then \
+        wget http://tiles.openseamap.org/seamark/world.osm -O /tmp/data.osm; \
+    fi
+
 COPY ./init-db.sh /init-db.sh
 
 RUN chmod +x /init-db.sh
