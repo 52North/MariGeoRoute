@@ -205,10 +205,12 @@ class RoutingAlg():
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
 
-            if i>9: self.update_fig('bp')
+            #if i>9:
+            #self.update_fig('bp')
             self.pruning_per_step(True)
             #form.print_current_time('move_boat: Step=' + str(i), start_time)
-            if i>9: self.update_fig('p')
+            #if i>9:
+            self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate(boat, wt)
@@ -218,6 +220,16 @@ class RoutingAlg():
     def define_variants(self):
         # branch out for multiple headings
         nof_input_routes = self.lats_per_step.shape[1]
+
+        new_finish_one = np.repeat(self.finish[0], nof_input_routes)
+        new_finish_two = np.repeat(self.finish[1], nof_input_routes)
+
+        new_azi = geod.inverse(
+            self.lats_per_step[0],
+            self.lons_per_step[0],
+            new_finish_one,
+            new_finish_two
+        )
 
         self.lats_per_step = np.repeat(self.lats_per_step, self.variant_segments + 1, axis=1)
         self.lons_per_step = np.repeat(self.lons_per_step, self.variant_segments + 1, axis=1)
@@ -239,6 +251,8 @@ class RoutingAlg():
             +self.variant_segments/2 * self.variant_increments_deg,
             self.variant_segments + 1)
         delta_hdgs = np.tile(delta_hdgs, nof_input_routes)
+
+        self.current_variant = new_azi['azi1']	# center courses around gcr
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
 
