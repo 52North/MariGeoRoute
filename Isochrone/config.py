@@ -12,7 +12,7 @@ TIME_FORECAST = 20              # forecast hours weather
 ROUTING_STEPS = 11               # number of routing steps
 DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
 #DELTA_FUEL = 30000000*1000*1 # [Ws]
-DELTA_FUEL = 1*1000             # amount of fuel per routing step (kg)
+DELTA_FUEL = 1*1500             # amount of fuel per routing step (kg)
 START_TIME = '2023021012'       # start time of travelling
 BOAT_SPEED = 15                 # (m/s)
 BOAT_DROUGHT = 10                 # (m)
@@ -33,8 +33,8 @@ ROUTER_HDGS_SEGMENTS =  30               # total number of courses : put even nu
 ROUTER_HDGS_INCREMENTS_DEG = 6           # increment of headings
 ROUTER_RPM_SEGMENTS = 1                  # not used yet
 ROUTER_RPM_INCREMENTS_DEG = 1            # not used yet
-ISOCHRONE_EXPECTED_SPEED_KTS = 8
-ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91     # angular range of azimuth angle that is considered for pruning (only one half)
+ISOCHRONE_EXPECTED_SPEED_KTS = 8         # not used yet
+ISOCHRONE_PRUNE_SECTOR_DEG_HALF = 91     # angular range of azimuth angle that is considered for pruning (only one half!)
 ISOCHRONE_PRUNE_SEGMENTS = 20            # total number of azimuth bins that are used for pruning in prune sector which is 2x ISOCHRONE_PRUNE_SECTOR_DEG_HALF : put even number !
 
 ##

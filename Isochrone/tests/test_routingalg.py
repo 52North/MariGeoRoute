@@ -1,6 +1,7 @@
 import datetime
 import os
 
+from geovectorslib import geod
 import numpy as np
 import pytest
 import xarray as xr
@@ -79,9 +80,16 @@ def test_define_variants_array_shapes():
     test whether current_variant is correctly filled in define_variants()
 '''
 def test_define_variants_current_variant_filling():
+    start = (30, 45)
+    finish = (0, 20)
     ra = create_dummy_IsoBased_object()
 
-    current_var = ra.get_current_azimuth()
+    new_azi = geod.inverse(
+        [start[0]],
+        [start[1]],
+        [finish[0]],
+        [finish[1]]
+    )
 
     ra.define_variants()
     ra.print_shape()
@@ -90,7 +98,7 @@ def test_define_variants_current_variant_filling():
     # checking current_variant
     assert ra.current_variant.shape[0] == ra.lats_per_step.shape[1]
 
-    test_current_var = np.array([current_var+2, current_var+1, current_var, current_var-1, current_var-2])
+    test_current_var = np.array([new_azi['azi1']+2, new_azi['azi1']+1, new_azi['azi1'], new_azi['azi1']-1, new_azi['azi1']-2])
 
     for i in range(0,test_current_var.shape[0]):
        assert test_current_var[i] == ra.current_variant[i]
