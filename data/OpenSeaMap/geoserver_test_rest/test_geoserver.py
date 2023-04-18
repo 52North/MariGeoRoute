@@ -27,8 +27,8 @@ class CONNECTDB:
 
         # PostgreSQL connection details
         self.database = 'geoserver'
-        self.user = 'geonode-postgres-admin'
-        self.password = 'geonode-postgres-admin-passwort'
+        self.user = 'geonode'
+        self.password = 'geonode'
         self.host = 'localhost'
         self.port = '5432'
 
