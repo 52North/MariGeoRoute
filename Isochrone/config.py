@@ -6,7 +6,7 @@ load_dotenv()
 ##
 # Defaults
 #DEFAULT_MAP = [51, 1.2,60,12] #Rügen to Gotland: [53, 11,60,23]  [54.87, 13.33, 58.28, 16.97]
-DEFAULT_MAP = [32, -15, 52, 5] # med sea
+DEFAULT_MAP = [32, -17.5, 52, 2.5] # med sea
 #DEFAULT_MAP = [51.5131, 43.0086, 1.28952, 3.093081] # Route 2 Simulationsstudie
 
 #DEFAULT_MAP = [53, 12,60,19.5] #Rügen to Gotland: [53, 11,60,23]  [54.87, 13.33, 58.28, 16.97]
