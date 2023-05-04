@@ -98,7 +98,7 @@ if __name__ == "__main__":
     #over_waypoint2 = PositiveConstraintPoint(35.96, -5.53)    #Route 2, good weather
     #over_waypoint = PositiveConstraintPoint(38.78, -9.63)
     over_waypoint  = PositiveConstraintPoint(48.67, -5.28)
-    over_waypoint = PositiveConstraintPoint(47, -5.55)
+    over_waypoint1 = PositiveConstraintPoint(47, -5.55)
     over_waypoint2 = PositiveConstraintPoint(46.97, -5.55)
     over_waypoint3 = PositiveConstraintPoint(45.715000, -5.502222)
 
@@ -107,6 +107,7 @@ if __name__ == "__main__":
     constraint_list.add_neg_constraint(on_map)
     #constraint_list.add_neg_constraint(water_depth)
     constraint_list.add_pos_constraint(over_waypoint)
+    constraint_list.add_pos_constraint(over_waypoint1)
     constraint_list.add_pos_constraint(over_waypoint2)
     constraint_list.add_pos_constraint(over_waypoint3)
     #constraint_list.add_pos_constraint(over_waypoint1)
