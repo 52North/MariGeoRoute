@@ -33,6 +33,7 @@ class RoutingAlg():
     ncount: int  # total number of routing steps
     count: int  # current routing step
     is_last_step : bool
+    is_pos_constraint_step : bool
     start: tuple  # lat, lon at start
     finish: tuple  # lat, lon at end
     gcr_azi: float  # azimut of great circle route
@@ -50,6 +51,9 @@ class RoutingAlg():
             - speed_per_step
         are 0 to satisfy this definition.
     '''
+    start_temp : tuple
+    finish_temp : tuple
+
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)    #
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
     azimuth_per_step: np.ndarray    # heading
@@ -192,6 +196,7 @@ class RoutingAlg():
                         iso (Isochrone) - next isochrone
             """
         self.check_settings()
+        self.check_for_positive_constraints(constraints_list)
         self.define_initial_variants()
         #start_time=time.time()
         # self.print_shape()
@@ -201,28 +206,55 @@ class RoutingAlg():
 
             self.define_variants_per_step()
             self.move_boat_direct(wt, boat, constraints_list)
-            if(self.is_last_step):
+            if self.is_last_step:
                 logger.info('Initiating last step at routing step ' + str(self.count))
                 break
+
+            if self.is_pos_constraint_step:
+                logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
+                self.final_pruning()
+                self.expand_axis_for_intermediate()
+                constraints_list.reached_positive()
+                self.finish_temp = constraints_list.get_current_destination()
+                self.start_temp = constraints_list.get_current_start()
+                self.is_pos_constraint_step = False
+
+                logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
+                continue
 
             #if i>9:
             #self.update_fig('bp')
             self.pruning_per_step(True)
             #form.print_current_time('move_boat: Step=' + str(i), start_time)
             #if i>9:
-            self.update_fig('p')
+            #self.update_fig('p')
 
         self.final_pruning()
         route = self.terminate(boat, wt)
         return route
 
+    def check_for_positive_constraints(self, constraint_list):
+        have_pos_points = constraint_list.have_positive()
+        if not have_pos_points:
+            self.finish_temp = self.finish
+            self.start_temp = self.start
+            return
+
+        constraint_list.init_positive_lists(self.start, self.finish)
+        self.finish_temp = constraint_list.get_current_destination()
+        self.start_temp = constraint_list.get_current_start()
+
+        print('Currently going from')
+        print(self.start_temp)
+        print('to')
+        print(self.finish_temp)
 
     def define_variants(self):
         # branch out for multiple headings
         nof_input_routes = self.lats_per_step.shape[1]
 
-        new_finish_one = np.repeat(self.finish[0], nof_input_routes)
-        new_finish_two = np.repeat(self.finish[1], nof_input_routes)
+        new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
+        new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
 
         new_azi = geod.inverse(
             self.lats_per_step[0],
@@ -265,7 +297,7 @@ class RoutingAlg():
             """
 
         # get wind speed (tws) and angle (twa)
-        debug = True
+        debug = False
 
         winds = self.get_wind_functions(wt) #wind is always a function of the variants
         twa = winds['twa']
@@ -278,7 +310,7 @@ class RoutingAlg():
 
         ship_params = boat.get_fuel_per_time_netCDF(self.get_current_azimuth(), self.get_current_lats(),
                                                   self.get_current_lons(), self.time, wind)
-        ship_params.print()
+        #ship_params.print()
 
         delta_time, delta_fuel, dist = self.get_delta_variables_netCDF(ship_params, bs)
         if (debug):
@@ -292,7 +324,7 @@ class RoutingAlg():
         if (debug):
             print('move:', move)
 
-        if(self.is_last_step):
+        if(self.is_last_step or self.is_pos_constraint_step):
             delta_time, delta_fuel, dist = self.get_delta_variables_netCDF_last_step(ship_params, bs)
 
         is_constrained = self.check_constraints(move, constraint_list)

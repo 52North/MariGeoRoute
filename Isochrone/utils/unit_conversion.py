@@ -26,6 +26,12 @@ def round_time(dt=None, round_to=60):
         dt = datetime.datetime.now()
     seconds = (dt.replace(tzinfo=None) - dt.min).seconds
     rounding = (seconds + round_to / 2) // round_to * round_to
+
+    print('dt = ', dt)
+    print('seconds = ', seconds)
+    print('rounging = ', rounding)
+    print('return = ', dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond))
+
     return dt + datetime.timedelta(0, rounding - seconds, - dt.microsecond)
 
 def degree_to_pmpi(degrees):

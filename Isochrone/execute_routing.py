@@ -73,7 +73,7 @@ if __name__ == "__main__":
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
     wt.set_map_size(lat1, lon1, lat2, lon2)
-    wt.add_depth_to_EnvData(depthfile)
+    #wt.add_depth_to_EnvData(depthfile)
     # wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
     # wt.check_ds_format()
     wt.init_wind_functions()
@@ -89,24 +89,41 @@ if __name__ == "__main__":
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
+    #over_waypoint = PositiveConstraintPoint(55.796111, 3.100278)   #Route 1, good weather
+    #over_waypoint = PositiveConstraintPoint(54.608889, 6.179722)    #Route 1, ok weather
+    #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)    #Route 1, ok weather
+    #over_waypoint = PositiveConstraintPoint(45.715000, -5.502222)    #Route 2, good weather
+    #over_waypoint = PositiveConstraintPoint(41.70, 3.96)  # Route 2, good weather
+    #over_waypoint1 = PositiveConstraintPoint(36.03, -5.21)
+    #over_waypoint2 = PositiveConstraintPoint(35.96, -5.53)    #Route 2, good weather
+    #over_waypoint = PositiveConstraintPoint(38.78, -9.63)
+    over_waypoint  = PositiveConstraintPoint(48.67, -5.28)
+    over_waypoint = PositiveConstraintPoint(47, -5.55)
+    over_waypoint2 = PositiveConstraintPoint(46.97, -5.55)
+    over_waypoint3 = PositiveConstraintPoint(45.715000, -5.502222)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
-    # constraint_list.add_neg_constraint(on_map)
-    constraint_list.add_neg_constraint(water_depth)
+    constraint_list.add_neg_constraint(on_map)
+    #constraint_list.add_neg_constraint(water_depth)
+    constraint_list.add_pos_constraint(over_waypoint)
+    constraint_list.add_pos_constraint(over_waypoint2)
+    constraint_list.add_pos_constraint(over_waypoint3)
+    #constraint_list.add_pos_constraint(over_waypoint1)
+    #constraint_list.add_pos_constraint(over_waypoint2)
     constraint_list.print_settings()
 
     # *******************************************
     # initialise rout
     route_factory = RoutingAlgFactory()
     min_fuel_route = route_factory.get_routing_alg('ISOFUEL')
-    min_fuel_route.init_fig(wt)
+    #min_fuel_route.init_fig(wt)
 
     # *******************************************
     # routing
     min_fuel_route = min_fuel_route.recursive_routing(boat, wt, constraint_list)
     min_fuel_route.print_route()
-    #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
+    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
     min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
 
     # *******************************************

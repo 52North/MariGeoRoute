@@ -24,6 +24,7 @@ class IsoBased(RoutingAlg):
         RoutingAlg.__init__(self, start, finish, time, figurepath)
         self.current_variant=self.current_azimuth
         self.is_last_step = False
+        self.is_pos_constraint_step = False
 
     def print_init(self):
         RoutingAlg.print_init(self)
@@ -176,6 +177,11 @@ class IsoBased(RoutingAlg):
 
     def get_wind_functions(self, wt):
         debug = False
+
+        print('current_lat: ', self.get_current_lats())
+        print('current_lon: ', self.get_current_lons())
+        print('current_time: ', self.full_time_traveled)
+
         winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
         if (debug):
             print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
@@ -223,25 +229,40 @@ class IsoBased(RoutingAlg):
         dist_to_dest =  geod.inverse(
             self.get_current_lats(),
             self.get_current_lons(),
-            np.full(nvariants, self.finish[0]),
-            np.full(nvariants, self.finish[1])
+            np.full(nvariants, self.finish_temp[0]),
+            np.full(nvariants, self.finish_temp[1])
         )
         if(debug):
             print('dist_to_dest:', dist_to_dest['s12'])
             print('dist traveled:', dist)
 
-        reaching_dest = dist_to_dest['s12'] < dist
+        reaching_dest = np.any(dist_to_dest['s12'] < dist)
 
         if(debug):
             print('reaching dest:', reaching_dest)
 
-        if(np.any(reaching_dest)):
-            self.is_last_step = True
-            new_lat = np.full(nvariants, self.finish[0])
-            new_lon = np.full(nvariants, self.finish[1])
-            return {'azi2': dist_to_dest['azi1'], 'lat2': new_lat, 'lon2': new_lon, 'iterations' : -99}     #compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}' by geod.direct
+        if(reaching_dest):
+            reached_final = (self.finish_temp[0] == self.finish[0]) & (
+                        self.finish_temp[1] == self.finish[1])
 
-        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)   
+            if(debug):
+                print('reaching final:', reached_final)
+
+            new_lat = np.full(nvariants, self.finish_temp[0])
+            new_lon = np.full(nvariants, self.finish_temp[1])
+
+            if reached_final:
+                self.is_last_step = True
+            else:
+                self.is_pos_constraint_step = True
+
+            return {
+                'azi2'      : dist_to_dest['azi1'],
+                'lat2'      : new_lat,
+                'lon2'      : new_lon, 'iterations': -99
+            }  # compare to  'return {'lat2': lat2, 'lon2': lon2, 'azi2': azi2, 'iterations': iterations}' by geod.direct
+
+        move = geod.direct(self.get_current_lats(), self.get_current_lons(), self.current_variant, dist)
         #form.print_step('move=' + str(move),1)
         return move
 
@@ -361,3 +382,11 @@ class IsoBased(RoutingAlg):
         print('Saving updated figure to ', final_path)
         plt.savefig(final_path)
 
+    def expand_axis_for_intermediate(self):
+        self.lats_per_step =  np.expand_dims(self.lats_per_step, axis=1)
+        self.lons_per_step = np.expand_dims(self.lons_per_step, axis=1)
+        self.azimuth_per_step = np.expand_dims(self.azimuth_per_step, axis=1)
+        self.dist_per_step = np.expand_dims(self.dist_per_step, axis=1)
+        self.starttime_per_step = np.expand_dims(self.starttime_per_step, axis=1)
+
+        self.shipparams_per_step.expand_axis_for_intermediate()
