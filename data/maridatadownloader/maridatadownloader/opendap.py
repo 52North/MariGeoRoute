@@ -315,3 +315,9 @@ class DownloaderOpendapCMEMS(DownloaderOpendap):
         except Exception as err:
             raise err
         return data_store
+
+    def set_product(self, product, product_type='nrt'):
+        self.product = product
+        self.product_type = product_type
+        self.filename_or_obj = self.get_filename_or_obj()
+        self.open_dataset()
