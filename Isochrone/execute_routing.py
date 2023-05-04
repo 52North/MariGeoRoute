@@ -100,8 +100,8 @@ if __name__ == "__main__":
     over_waypoint  = PositiveConstraintPoint(48.67, -5.28)
     over_waypoint1 = PositiveConstraintPoint(47, -5.55)
     over_waypoint2 = PositiveConstraintPoint(46.97, -5.55)
-    #over_waypoint2 = PositiveConstraintPoint(46.5, -5.55)
-    over_waypoint3 = PositiveConstraintPoint(45.715000, -5.502222)
+    over_waypoint3 = PositiveConstraintPoint(46.5, -5.55)
+    over_waypoint4 = PositiveConstraintPoint(45.715000, -5.502222)
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
@@ -111,6 +111,7 @@ if __name__ == "__main__":
     constraint_list.add_pos_constraint(over_waypoint1)
     constraint_list.add_pos_constraint(over_waypoint2)
     constraint_list.add_pos_constraint(over_waypoint3)
+    constraint_list.add_pos_constraint(over_waypoint4)
     #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
     constraint_list.print_settings()

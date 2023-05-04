@@ -44,7 +44,7 @@ class IsoBased(RoutingAlg):
                     self.lats_per_step.shape[0]))
 
     def pruning(self, trim, bins):
-        debug = False
+        debug = True
         valid_pruning_segments = -99
 
         if (debug):
@@ -267,7 +267,7 @@ class IsoBased(RoutingAlg):
         return move
 
     def check_constraints(self, move, constraint_list):
-        debug = False
+        debug = True
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
         if(debug): form.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)
