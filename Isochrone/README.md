@@ -1,9 +1,9 @@
 # ISOCHRONE CODE
 
 ## To Do
-[ ] add figures for definition of basic variables
-[ ] improve the definition of heading/azimuthal angle
-[ ] sketch the basic steps of the routing procedure
+- [ ] add figures for definition of basic variables
+- [ ] improve the definition of heading/azimuthal angle
+- [ ] sketch the basic steps of the routing procedure
 
 ## Installation instructions
 <ol>
