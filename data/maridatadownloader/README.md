@@ -8,3 +8,9 @@ Currently supported platforms/provider:
 
 Currently supported access services/APIs:
  - OPeNDAP
+
+### Install
+
+```
+pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader
+```
