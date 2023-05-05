@@ -48,47 +48,51 @@ class DownloaderOpendap(DownloaderBase):
         References:
          - https://docs.xarray.dev/en/stable/user-guide/indexing.html
         """
-        # ToDo: add implicit resampling?
+        # Copy the sel/isel dicts because key-value pairs might be deleted from them
         if sel_dict:
             assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
+            sel_dict_copy = dict(sel_dict)
+            isel_dict_copy = None
         if isel_dict:
             assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
+            isel_dict_copy = dict(isel_dict)
+            sel_dict_copy = None
 
         try:
-            dataset = self._preprocessing(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict)
+            dataset = self._preprocessing(parameters=parameters, sel_dict=sel_dict_copy, isel_dict=isel_dict_copy)
         except NotImplementedError:
             dataset = self.dataset
 
         # Parameter and coordinate subsetting
         if parameters:
-            if sel_dict:
+            if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict.keys()):
+                for key in list(sel_dict_copy.keys()):
                     if key not in dataset[parameters].coords:
-                        del sel_dict[key]
-                dataset_sub = dataset[parameters].sel(**sel_dict)
-            elif isel_dict:
+                        del sel_dict_copy[key]
+                dataset_sub = dataset[parameters].sel(**sel_dict_copy)
+            elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict.keys()):
+                for key in list(isel_dict_copy.keys()):
                     if key not in dataset[parameters].coords:
-                        del isel_dict[key]
-                dataset_sub = dataset[parameters].isel(**isel_dict)
+                        del isel_dict_copy[key]
+                dataset_sub = dataset[parameters].isel(**isel_dict_copy)
             else:
                 dataset_sub = dataset[parameters]
         else:
             # all parameters
-            if sel_dict:
+            if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict.keys()):
+                for key in list(sel_dict_copy.keys()):
                     if key not in dataset.coords:
-                        del sel_dict[key]
-                dataset_sub = dataset.sel(**sel_dict)
-            elif isel_dict:
+                        del sel_dict_copy[key]
+                dataset_sub = dataset.sel(**sel_dict_copy)
+            elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict.keys()):
+                for key in list(isel_dict_copy.keys()):
                     if key not in dataset.coords:
-                        del isel_dict[key]
-                dataset_sub = dataset.isel(**isel_dict)
+                        del isel_dict_copy[key]
+                dataset_sub = dataset.isel(**isel_dict_copy)
             else:
                 dataset_sub = dataset
 
