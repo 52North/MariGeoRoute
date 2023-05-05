@@ -20,6 +20,7 @@ setup(
     description='Python package for downloading of weather data',
     install_requires=[
       'pydap',
-      'xarray'
+      'xarray',
+      'netCDF4==1.5.8'
     ]
 )
