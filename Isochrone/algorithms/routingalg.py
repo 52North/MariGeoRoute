@@ -288,6 +288,8 @@ class RoutingAlg():
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
 
+        print('Current courses: ', self.current_variant)
+
     def define_initial_variants(self):
         pass
 

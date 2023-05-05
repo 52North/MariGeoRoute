@@ -49,7 +49,8 @@ class IsoBased(RoutingAlg):
 
         if (debug):
             print('binning for pruning', bins)
-            print('current courses', self.current_azimuth)
+            print('current courses', self.current_variant)
+            print('full_dist_traveled', self.full_time_traveled)
 
         idxs = []
         bin_stat, bin_edges, bin_number = binned_statistic(
@@ -121,18 +122,37 @@ class IsoBased(RoutingAlg):
                    """
         debug = False
         if(debug): print('Pruning...')
+        gcr_point = {}
 
-        mean_dist = np.mean(self.full_dist_traveled)
+        #if (self.is_last_step or self.is_pos_constraint_step):
+        '''middle_lats = self.lats_per_step.shape[0] / 2
+
+        dist_to_dest = geod.inverse(
+            self.lats_per_step[1][middle_lats],
+            self.lons_per_step[1][middle_lats],
+            self.finish_temp[0],
+            self.finish_temp[1]
+        )
+
         gcr_point = geod.direct(
-            [self.start[0]],
-            [self.start[1]],
-            self.gcr_azi, mean_dist)
+            [self.start_temp[0]],
+            [self.start_temp[1]],
+            self.gcr_azi,
+            dist_to_dest
+        )
+        #else:
+        #    mean_dist = np.mean(self.full_dist_traveled)
+
+        #    gcr_point = geod.direct(
+        #        [self.start_temp[0]],
+        #        [self.start_temp[1]],
+        #self.gcr_azi, mean_dist)
 
         new_azi = geod.inverse(
             gcr_point['lat2'],
             gcr_point['lon2'],
-            [self.finish[0]],
-            [self.finish[1]]
+            [self.finish_temp[0]],
+            [self.finish_temp[1]]
         )
 
         if (debug): print('mean azimuth', new_azi['azi1'])
@@ -143,12 +163,41 @@ class IsoBased(RoutingAlg):
 
         # determine bins
         delta_hdgs = np.linspace(
-            -self.prune_sector_deg_half,
-            +self.prune_sector_deg_half,
+            #-self.prune_sector_deg_half,
+            #+self.prune_sector_deg_half,
             self.prune_segments + 1)  # -90,+90,181
 
         bins = azi0s - delta_hdgs
+        bins = np.sort(bins)'''
+
+        nof_input_routes = self.lats_per_step.shape[1]
+
+        new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
+        new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
+
+        new_azi = geod.inverse(
+            self.lats_per_step[0],
+            self.lons_per_step[0],
+            new_finish_one,
+            new_finish_two
+        )
+
+        new_azi_sorted = np.sort(new_azi['azi1'])
+        mean_indx = new_azi_sorted.shape[0]/2
+        mean_indx = int(np.round(mean_indx))
+
+        print('mean_indx: ', mean_indx)
+
+        mean_azimuth = new_azi_sorted[mean_indx]
+
+        bins = np.linspace(
+            mean_azimuth-self.prune_sector_deg_half,
+            mean_azimuth+self.prune_sector_deg_half,
+            self.prune_segments + 1)
+
         bins = np.sort(bins)
+
+        print('bins: ', bins)
 
         self.pruning(trim, bins)
 
@@ -291,8 +340,8 @@ class IsoBased(RoutingAlg):
             print('dist', dist)
             print('bs=', self.speed_per_step)
 
-        start_lats = np.repeat(self.start[0], self.lats_per_step.shape[1])
-        start_lons = np.repeat(self.start[1], self.lons_per_step.shape[1])
+        start_lats = np.repeat(self.start_temp[0], self.lats_per_step.shape[1])
+        start_lons = np.repeat(self.start_temp[1], self.lons_per_step.shape[1])
         gcrs = geod.inverse(start_lats, start_lons, move['lat2'], move['lon2'])       #calculate full distance traveled, azimuth of gcr connecting start and new position
         self.current_variant = gcrs['azi1']
         self.current_azimuth = gcrs['azi1']
