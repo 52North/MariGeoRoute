@@ -1,5 +1,9 @@
 # ISOCHRONE CODE
 
+## To Do
+[ ] add figures for definition of basic variables
+[ ] improve the definition of heading/azimuthal angle
+[ ] sketch the basic steps of the routing procedure
 
 ## Installation instructions
 <ol>
@@ -53,7 +57,7 @@ written to the file which is specified by the environment variable 'PERFORMANCE_
 ## Isochrone Algorithm
 ### Parameter definitions
 pruning = the process of chosing the route that maximises the distance for one routing segment
-heading/course/azimuth = the angular distance towards North on the grand circle route
+heading/course/azimuth = the angular distance towards North on the grand circle route 
 route segment = distance of one starting point of the routing step to one end point
 
 ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process
