@@ -50,6 +50,17 @@ python execute_routing.py
 The routing tool writes log output using the python package logging. Information about basic settings are written to a file which is specified by the environment variable 'INFO_LOG_FILE'. Warnings and performance information are
 written to the file which is specified by the environment variable 'PERFORMANCE_LOG_FILE'. Further debug information are written to stdout.
 
+## Isochrone Algorithm
+### Parameter definitions
+pruning = the process of chosing the route that maximises the distance for one routing segment
+heading/course/azimuth = the angular distance towards North on the grand circle route
+route segment = distance of one starting point of the routing step to one end point
+
+ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process
+ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)
+ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step
+ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments
+
 ## References
 - https://github.com/omdv/wind-router
 - [Henry H.T. Chen's PhD Thesis](http://resolver.tudelft.nl/uuid:a6112879-4298-40a6-91c7-d9a431a674c7)
