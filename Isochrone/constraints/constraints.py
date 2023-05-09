@@ -72,6 +72,22 @@ class PositiveConstraint(Constraint):
     def __init__(self, name):
         Constraint.__init__(self, name)
 
+    def get_points(self):
+        pass
+
+class PositiveConstraintPoint(PositiveConstraint):
+    coord: tuple
+
+    def __init__(self, lat, lon):
+        self.coord = (lat,lon)
+
+        super().__init__('OverWaypoint')
+
+    def get_points(self):
+        return self.coord
+
+
+
 class NegativeContraint(Constraint):
     def __init__(self, name):
         Constraint.__init__(self, name)
@@ -109,10 +125,15 @@ class ConstraintsList():
     pars: ConstraintPars
     positive_constraints: list
     negative_constraints: list
-    constraints_crossed: list
-    weather: WeatherCond
     neg_size: int
     pos_size: int
+
+    positive_point_dict: dict
+    current_positive: int
+
+    constraints_crossed: list
+    weather: WeatherCond
+
 
     def __init__(self, pars):
         self.pars = pars
@@ -137,6 +158,50 @@ class ConstraintsList():
 
         for Const in self.positive_constraints:
             Const.print_info()
+
+    def have_positive(self):
+        if self.pos_size > 0:
+            return True
+        else:
+            return False
+
+    def have_negative(self):
+        if self.neg_size > 0:
+            return True
+        else:
+            return False
+
+    def init_positive_lists(self, start, finish):
+        lat = []
+        lon = []
+        lat.append(start[0])
+        lon.append(start[1])
+        for iconst in self.positive_constraints:
+            lat.append(iconst.get_points()[0])
+            lon.append(iconst.get_points()[1])
+
+        lat.append(finish[0])
+        lon.append(finish[1])
+
+        print('Tuple of positive constraints:')
+        print('lat: ', lat)
+        print('lon: ', lon)
+
+        self.positive_point_dict = {'lat' : lat, 'lon' : lon}
+        self.current_positive = 0
+
+    def reached_positive(self):
+        self.current_positive=self.current_positive+1
+
+    def get_current_destination(self):
+        finish_lat = self.positive_point_dict['lat'][self.current_positive+1]
+        finish_lon = self.positive_point_dict['lon'][self.current_positive+1]
+        return (finish_lat, finish_lon)
+
+    def get_current_start(self):
+        start_lat = self.positive_point_dict['lat'][self.current_positive]
+        start_lon = self.positive_point_dict['lon'][self.current_positive]
+        return (start_lat, start_lon)
 
     def shall_I_pass(self, lat, lon, time):
         is_constrained = [False for i in range(0, lat.shape[1])]
@@ -173,7 +238,7 @@ class ConstraintsList():
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
     # calling ConstraintList.safe_endpoint()
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
-        debug = True
+        debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
         delta_lons = (lon_end - lon_start) * self.pars.resolution
@@ -336,9 +401,9 @@ class WaterDepth(NegativeConstraintFromWeather):
         depth = self.wt.ds['depth'].where((self.wt.ds.depth < 0), drop=True)
 
         ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
-        cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
-                                 transform=ccrs.PlateCarree())
-        fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
+        #cp = depth.plot.contourf(ax=ax, levels=np.arange(-100, 0, level_diff),
+        #                        transform=ccrs.PlateCarree())
+        #fig.colorbar(cp, ax=ax, shrink=0.7, label='Wassertiefe (m)', pad=0.1)
 
         fig.subplots_adjust(
             left=0.1,

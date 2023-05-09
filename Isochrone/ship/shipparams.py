@@ -84,3 +84,10 @@ class ShipParams():
         self.fuel = np.flip(self.fuel,0)
         self.power = np.flip(self.power,0)
         self.rpm = np.flip(self.rpm,0)
+
+    def expand_axis_for_intermediate(self):
+        self.speed = np.expand_dims(self.speed, axis=1)
+        self.fuel = np.expand_dims(self.fuel, axis=1)
+        self.power = np.expand_dims(self.power, axis=1)
+        self.rpm = np.expand_dims(self.rpm, axis=1)
+

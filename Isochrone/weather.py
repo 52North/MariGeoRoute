@@ -162,9 +162,35 @@ class WeatherCond():
     def get_map_size(self):
         return self.map_size
 
+    def manipulate_dataset(self):
+        #condition =  4
+        #lat = 54.608889
+        #lon = 6.179722
+        condition = 8
+        lat = 55.048333
+        lon = 5.130000
+
+        #condition = 4
+        #condition = 8
+
+        dim = 0.25
+        xmin = lon - dim
+        xmax = lon + dim
+        ymin = lat - dim
+        ymax = lat + dim
+        ll = dict(longitude=slice(xmin, xmax), latitude=slice(ymin, ymax))
+        print('before: ', self.ds["VHM0"].loc[ll].to_numpy())
+        self.ds["VHM0"].loc[ll] = condition
+        print('after: ', self.ds["VHM0"].loc[ll].to_numpy())
+        self.ds.to_netcdf('/home/kdemmich/MariData/Simulationsstudie_April23/manipulated_data.nc')
+
+        return self.ds
+
     def read_dataset(self, filepath):
         logger.info(form.get_log_step('Reading dataset from' + str(filepath),1))
         self.ds = xr.open_dataset(filepath)
+        #self.ds = self.manipulate_dataset()
+
         print(self.ds)
 
     def check_ds_format(self):
@@ -364,6 +390,7 @@ class WeatherCondCMEMS(WeatherCond):
         except KeyError:
             time = self.ds['time']
             print('time: ', time.to_numpy())
+            print('time string: ', time_str)
             raise Exception('Please make sure that time stamps of environmental data match full hours: time = ' + time_str)
 
         twa, tws = self.get_twatws_from_uv(u,v)
