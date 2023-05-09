@@ -91,11 +91,11 @@ if __name__ == "__main__":
     on_map.set_map(lat1, lon1, lat2, lon2)
     #over_waypoint = PositiveConstraintPoint(55.796111, 3.100278)   #Route 1, good weather
     #over_waypoint = PositiveConstraintPoint(54.608889, 6.179722)   #Route 1, ok weather
-    #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)   #Route 1, ok weather
-    over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, ok weather WP1
-    #over_waypoint1 = PositiveConstraintPoint(46.923056, -4.176667)  #Route 2, ok weather WP2
-    #over_waypoint1 = PositiveConstraintPoint(45.715, -5.502222)  #Route 2, ok weather WP2
-    over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  # Route 2, bad weather WP3
+    #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)   #Route 1, bad weather
+    over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, intermediate weather 
+    #over_waypoint1 = PositiveConstraintPoint(45.715, -5.502222)    #Route 2, good weather WP2
+    #over_waypoint1 = PositiveConstraintPoint(46.923056, -4.176667) #Route 2, ok weather WP2
+    over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  #Route 2, bad weather WP3
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)

@@ -44,7 +44,7 @@ class IsoBased(RoutingAlg):
                     self.lats_per_step.shape[0]))
 
     def pruning(self, trim, bins):
-        debug = True
+        debug = False
         valid_pruning_segments = -99
 
         if (debug):
@@ -103,50 +103,30 @@ class IsoBased(RoutingAlg):
         except IndexError:
             raise Exception('Pruned indices running out of bounds.')
 
-    def pruning_per_step(self,  trim=True):
-        """
-              generate view of the iso that only contains the longests route per azimuth segment
+    def pruning_per_step(self, trim = True):
+        # self.pruning_headings_centered(trim)
+        self.pruning_gcr_centered(trim)
 
-              Binned statistic.
-              +            iso2 = prune_isochrone(iso2, 'azi02', 's02', bins, True)
-              print('iso2 ',iso2)  #
+    def pruning_gcr_centered(self, trim = True):
+        '''
+        For every pruning segment, select the route that maximises the distance towards the starting point (or last
+        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is defined based on the gcr
+        of the current 'mean' position towards the (temporary) destination.
+        '''
 
-                    Parameters:
-                    iso: isochrone dictionary
-                    x: values to binarize
-                    y: values to apply max to
-                    bins: bins edges, dimension is n_bins + 1
-                    trim: whether return just one of max values
-                    Returns:
-                        pruned isochrone dictionary with max values in each bin
-                   """
         debug = False
-        if(debug): print('Pruning...')
-        gcr_point = {}
+        if debug:
+            print('Pruning... Pruning symmetry axis defined by gcr')
 
-        #if (self.is_last_step or self.is_pos_constraint_step):
-        '''middle_lats = self.lats_per_step.shape[0] / 2
-
-        dist_to_dest = geod.inverse(
-            self.lats_per_step[1][middle_lats],
-            self.lons_per_step[1][middle_lats],
-            self.finish_temp[0],
-            self.finish_temp[1]
-        )
-
+        # Calculate the auxiliary coordinate for the definition of pruning symmetry axis. The route is propagated towards the coordinate
+        # which is reached if one travels from the starting point (or last intermediate waypoint) in the direction
+        # of the azimuth defined by the distance between the start point and the destination for the mean distance travelled
+        # during the current routing step.
+        mean_dist = np.mean(self.full_dist_traveled)
         gcr_point = geod.direct(
             [self.start_temp[0]],
             [self.start_temp[1]],
-            self.gcr_azi,
-            dist_to_dest
-        )
-        #else:
-        #    mean_dist = np.mean(self.full_dist_traveled)
-
-        #    gcr_point = geod.direct(
-        #        [self.start_temp[0]],
-        #        [self.start_temp[1]],
-        #self.gcr_azi, mean_dist)
+            self.gcr_azi_temp, mean_dist)
 
         new_azi = geod.inverse(
             gcr_point['lat2'],
@@ -155,23 +135,38 @@ class IsoBased(RoutingAlg):
             [self.finish_temp[1]]
         )
 
-        if (debug): print('mean azimuth', new_azi['azi1'])
+        if (debug):
+            print('current mean end point: (' + str(gcr_point['lat2']) + ',' + str(gcr_point['lon2']) + ')')
+            print('current temporary destination: ', self.finish_temp)
+            print('mean azimuth', new_azi['azi1'])
 
+        #define pruning area
         azi0s = np.repeat(
             new_azi['azi1'],
             self.prune_segments + 1)
 
-        # determine bins
         delta_hdgs = np.linspace(
-            #-self.prune_sector_deg_half,
-            #+self.prune_sector_deg_half,
+            -self.prune_sector_deg_half,
+            +self.prune_sector_deg_half,
             self.prune_segments + 1)  # -90,+90,181
 
         bins = azi0s - delta_hdgs
-        bins = np.sort(bins)'''
+        bins = np.sort(bins)
 
+        self.pruning(trim, bins)
+
+    def pruning_headings_centered(self, trim = True):
+        '''
+        For every pruning segment, select the route that maximises the distance towards the starting point (or last
+        intermediate waypoint). All other routes are discarded. The symmetry axis of the pruning segments is given by
+        the median of all considered courses.
+        '''
+
+        debug = False
+        if debug: print('Pruning... Pruning symmetry axis defined by median of considered headings.')
+
+        # propagate current end points towards temporary destination
         nof_input_routes = self.lats_per_step.shape[1]
-
         new_finish_one = np.repeat(self.finish_temp[0], nof_input_routes)
         new_finish_two = np.repeat(self.finish_temp[1], nof_input_routes)
 
@@ -182,24 +177,29 @@ class IsoBased(RoutingAlg):
             new_finish_two
         )
 
+        # sort azimuths and select (approximate) median
         new_azi_sorted = np.sort(new_azi['azi1'])
-        mean_indx = new_azi_sorted.shape[0]/2
-        mean_indx = int(np.round(mean_indx))
+        meadian_indx = int(np.round(new_azi_sorted.shape[0] / 2))
 
-        print('mean_indx: ', mean_indx)
+        if debug:
+            print('sorted azimuths: ', new_azi_sorted)
+            print('median index: ', meadian_indx)
 
-        mean_azimuth = new_azi_sorted[mean_indx]
+        mean_azimuth = new_azi_sorted[meadian_indx]
 
+        # define pruning area
         bins = np.linspace(
-            mean_azimuth-self.prune_sector_deg_half,
-            mean_azimuth+self.prune_sector_deg_half,
+            mean_azimuth - self.prune_sector_deg_half,
+            mean_azimuth + self.prune_sector_deg_half,
             self.prune_segments + 1)
 
         bins = np.sort(bins)
 
-        print('bins: ', bins)
+        if debug:
+            print('bins: ', bins)
 
         self.pruning(trim, bins)
+
 
     def define_variants_per_step(self):
         self.define_variants()
@@ -226,11 +226,6 @@ class IsoBased(RoutingAlg):
 
     def get_wind_functions(self, wt):
         debug = False
-
-        print('current_lat: ', self.get_current_lats())
-        print('current_lon: ', self.get_current_lons())
-        print('current_time: ', self.full_time_traveled)
-
         winds = wt.get_wind_function((self.get_current_lats(), self.get_current_lons()), self.time[0])
         if (debug):
             print('obtaining wind function for position: ', self.get_current_lats(), self.get_current_lons())
@@ -272,7 +267,7 @@ class IsoBased(RoutingAlg):
         self.time += dt.timedelta(seconds=delta_time)
 
     def check_bearing(self, dist):
-        debug = True
+        debug = False
 
         nvariants = self.get_current_lons().shape[0]
         dist_to_dest =  geod.inverse(
@@ -316,7 +311,7 @@ class IsoBased(RoutingAlg):
         return move
 
     def check_constraints(self, move, constraint_list):
-        debug = True
+        debug = False
 
         is_constrained = [False for i in range(0, self.lats_per_step.shape[1])]
         if(debug): form.print_step('shape is_constraint before checking:' + str(len(is_constrained)),1)

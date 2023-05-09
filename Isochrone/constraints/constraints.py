@@ -183,7 +183,7 @@ class ConstraintsList():
         lat.append(finish[0])
         lon.append(finish[1])
 
-        print('Tuple of positive constraints:', )
+        print('Tuple of positive constraints:')
         print('lat: ', lat)
         print('lon: ', lon)
 
@@ -238,7 +238,7 @@ class ConstraintsList():
     # To do so, the code segments the travel distance into steps (step length given by ConstraintPars.resolution) and loops through all these steps
     # calling ConstraintList.safe_endpoint()
     def safe_crossing(self, lat_start, lat_end, lon_start, lon_end, current_time, is_constrained):
-        debug = True
+        debug = False
 
         delta_lats = (lat_end - lat_start) * self.pars.resolution
         delta_lons = (lon_end - lon_start) * self.pars.resolution

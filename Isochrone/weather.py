@@ -117,8 +117,6 @@ class WeatherCond():
             raise Exception('element of depth is nan!')
         self.ds = weather_int
 
-        print('self ds: ', self.ds)
-
         if bWriteEnvData:
             self.ds.to_netcdf('/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/Data/Depth_u_EnvData/EnvData_Depth.nc')
 

@@ -53,6 +53,7 @@ class RoutingAlg():
     '''
     start_temp : tuple
     finish_temp : tuple
+    gcr_azi_temp : tuple
 
     lats_per_step: np.ndarray  # lats: (M,N) array, N=headings+1, M=steps (M decreasing)    #
     lons_per_step: np.ndarray  # longs: (M,N) array, N=headings+1, M=steps
@@ -217,6 +218,7 @@ class RoutingAlg():
                 constraints_list.reached_positive()
                 self.finish_temp = constraints_list.get_current_destination()
                 self.start_temp = constraints_list.get_current_start()
+                self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
                 self.is_pos_constraint_step = False
 
                 logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
@@ -243,6 +245,7 @@ class RoutingAlg():
         constraint_list.init_positive_lists(self.start, self.finish)
         self.finish_temp = constraint_list.get_current_destination()
         self.start_temp = constraint_list.get_current_start()
+        self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
 
         print('Currently going from')
         print(self.start_temp)
@@ -287,8 +290,6 @@ class RoutingAlg():
         self.current_variant = new_azi['azi1']	# center courses around gcr
         self.current_variant = np.repeat(self.current_variant, self.variant_segments + 1)
         self.current_variant = self.current_variant - delta_hdgs
-
-        print('Current courses: ', self.current_variant)
 
     def define_initial_variants(self):
         pass
