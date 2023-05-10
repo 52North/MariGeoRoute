@@ -5,16 +5,15 @@ load_dotenv()
 
 ##
 # Defaults
-DEFAULT_MAP = [53, 11,60,22] #Rügen to Gotland: [53, 11,60,23]  [54.87, 13.33, 58.28, 16.97]
-#DEFAULT_MAP = [53, 12,60,19.5] #Rügen to Gotland: [53, 11,60,23]  [54.87, 13.33, 58.28, 16.97]
-DEFAULT_ROUTE =[54.87, 13.33, 58.28, 17.06]   #plotting of isochrone approach [54.87, 13.33, 55.73, 16.96] #test last step functionality: [54.87, 13.33, 54.9, 13.46]  # Rügen to Gotland: [54.87, 13.33, 58.57, 19.78]  #english channel: [50.3, 0, 51.90, 3.92], mediteranen sea: [43.5,7.2, 33.8,35.5], kiel canal: [53, 7, 55, 12]
-TIME_FORECAST = 20              # forecast hours weather
-ROUTING_STEPS = 11               # number of routing steps
+DEFAULT_MAP = [32, -17.5, 52, 2.5] # med sea
+DEFAULT_ROUTE = [51.08, 1.53, 45.4907, -1.491394]
+TIME_FORECAST = 80              # forecast hours weather
+ROUTING_STEPS = 30             # number of routing steps
 DELTA_TIME_FORECAST = 3600      # time resolution of weather forecast (seconds)
 #DELTA_FUEL = 30000000*1000*1 # [Ws]
-DELTA_FUEL = 1*1500             # amount of fuel per routing step (kg)
-START_TIME = '2023021012'       # start time of travelling
-BOAT_SPEED = 15                 # (m/s)
+DELTA_FUEL = 1*1000             # amount of fuel per routing step (kg)
+START_TIME = '2023042109'       # start time of travelling
+BOAT_SPEED = 20                 # (m/s)
 BOAT_DROUGHT = 10                 # (m)
 
 ##

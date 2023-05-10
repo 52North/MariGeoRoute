@@ -64,7 +64,7 @@ class IsoFuel(IsoBased):
     #returns fuel (= power) [W], dist [m], delta_time [s], delta_fuel [Ws]
     def get_delta_variables_netCDF_last_step(self, ship_params,bs):
         fuel = ship_params.get_fuel()
-        dist = geod.inverse(self.get_current_lats(), self.get_current_lons(), np.full(self.get_current_lats().shape,self.finish[0]) , np.full(self.get_current_lons().shape, self.finish[1]))
+        dist = geod.inverse(self.get_current_lats(), self.get_current_lons(), np.full(self.get_current_lats().shape,self.finish_temp[0]) , np.full(self.get_current_lons().shape, self.finish_temp[1]))
         delta_time = self.get_time(bs, dist['s12'])
         delta_fuel = fuel * delta_time
 
