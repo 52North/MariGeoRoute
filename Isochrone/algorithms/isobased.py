@@ -11,6 +11,7 @@ from scipy.stats import binned_statistic
 
 import utils.graphics as graphics
 import utils.formatting as form
+from constraints.constraints import *
 from ship.ship import Boat
 from ship.shipparams import ShipParams
 from algorithms.routingalg import RoutingAlg
@@ -63,8 +64,8 @@ class IsoBased(RoutingAlg):
     prune_sector_deg_half: int  # angular range of azimuth that is considered for pruning (only one half)
     prune_segments: int  # number of azimuth bins that are used for pruning
 
-    def __init__(self, start, finish, time, figurepath=""):
-        super().__init__(self, start, finish, figurepath)
+    def __init__(self, start, finish, departure_time, figurepath=""):
+        super().__init__(start, finish, figurepath)
 
         self.lats_per_step = np.array([[start[0]]])
         self.lons_per_step = np.array([[start[1]]])
@@ -72,9 +73,9 @@ class IsoBased(RoutingAlg):
         self.dist_per_step = np.array([[0]])
         sp = ShipParams.set_default_array()
         self.shipparams_per_step = sp
-        self.starttime_per_step = np.array([[time]])
+        self.starttime_per_step = np.array([[departure_time]])
 
-        self.time = np.array([time])
+        self.time = np.array([departure_time])
         self.full_time_traveled = np.array([0])
         self.full_fuel_consumed = np.array([0])
         self.full_dist_traveled = np.array([0])
@@ -85,6 +86,26 @@ class IsoBased(RoutingAlg):
 
     def print_init(self):
         RoutingAlg.print_init(self)
+
+    def print_current_status(self):
+        print('PRINTING ALG SETTINGS')
+        print('step = ', self.count)
+        print('start', self.start)
+        print('finish', self.finish)
+        print('per-step variables:')
+        print('     lats_per_step = ', self.lats_per_step)
+        print('     lons_per_step = ', self.lons_per_step)
+        print('     variants = ', self.azimuth_per_step)
+        print('     dist_per_step = ', self.dist_per_step)
+        print('     starttime_per_step = ', self.starttime_per_step)
+
+        self.shipparams_per_step.print()
+
+        print('per-variant variables')
+        print('     time =', self.time)
+        print('     full_dist_traveled = ', self.full_dist_traveled)
+        print('     full_time_traveled = ', self.full_time_traveled)
+        print('     full_fuel_consumed = ', self.full_fuel_consumed )
 
     def print_shape(self):
         print('PRINTING SHAPE')
@@ -108,15 +129,6 @@ class IsoBased(RoutingAlg):
         print('lons = ', self.current_lons)
         print('azimuth = ', self.current_azimuth)
         print('full_time_traveled = ', self.full_time_traveled)
-
-    def get_current_lats(self):
-        pass
-
-    def get_current_lons(self):
-        pass
-
-    def get_current_speed(self):
-        pass
 
     def define_variants(self):
         # branch out for multiple headings
@@ -159,6 +171,66 @@ class IsoBased(RoutingAlg):
 
     def define_initial_variants(self):
         pass
+
+    def execute_routing(self, boat: Boat, wt : WeatherCond, constraints_list : ConstraintsList, verbose=False):
+        """
+            Progress one isochrone with pruning/optimising route for specific time segment
+
+                    Parameters:
+                        iso1 (Isochrone) - starting isochrone
+                        start_point (tuple) - starting point of the route
+                        end_point (tuple) - end point of the route
+                        x1_coords (tuple) - tuple of arrays (lats, lons)
+                        x2_coords (tuple) - tuple of arrays (lats, lons)
+                        boat (dict) - boat profile
+                        winds (dict) - wind functions
+                        start_time (datetime) - start time
+                        delta_time (float) - time to move in seconds
+                        params (dict) - isochrone calculation parameters
+
+                    Returns:
+                        iso (Isochrone) - next isochrone
+            """
+
+        self.check_settings()
+        self.check_for_positive_constraints(constraints_list)
+        self.define_initial_variants()
+        #start_time=time.time()
+        # self.print_shape()
+        for i in range(self.ncount):
+            form.print_line()
+            print('Step ', i)
+
+            self.define_variants_per_step()
+            self.move_boat_direct(wt, boat, constraints_list)
+            if self.is_last_step:
+                logger.info('Initiating last step at routing step ' + str(self.count))
+                break
+
+            if self.is_pos_constraint_step:
+                logger.info('Initiating pruning for intermediate waypoint at routing step' + str(self.count))
+                self.final_pruning()
+                self.expand_axis_for_intermediate()
+                constraints_list.reached_positive()
+                self.finish_temp = constraints_list.get_current_destination()
+                self.start_temp = constraints_list.get_current_start()
+                self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+                self.is_pos_constraint_step = False
+
+                logger.info('Initiating routing for next segment going from ' + str(self.start_temp) + ' to ' + str(self.finish_temp))
+                continue
+
+            #if i>9:
+            #self.update_fig('bp')
+            self.pruning_per_step(True)
+            #form.print_current_time('move_boat: Step=' + str(i), start_time)
+            #if i>9:
+            #self.update_fig('p')
+
+        self.final_pruning()
+        route = self.terminate()
+        return route
+
 
     def move_boat_direct(self, wt : WeatherCond, boat: Boat, constraint_list: ConstraintsList):
         """
@@ -434,17 +506,35 @@ class IsoBased(RoutingAlg):
         idx = np.argmax(self.full_dist_traveled)
         return idx
 
-    def terminate(self, boat : Boat, wt: WeatherCond):
-        self.lats_per_step=np.flip(self.lats_per_step,0)
-        self.lons_per_step=np.flip(self.lons_per_step,0)
-        self.azimuth_per_step=np.flip(self.azimuth_per_step,0)
-        self.dist_per_step=np.flip(self.dist_per_step,0)
-        self.starttime_per_step=np.flip(self.starttime_per_step,0)
+    def terminate(self):
+        super().terminate()
+
+        self.lats_per_step = np.flip(self.lats_per_step, 0)
+        self.lons_per_step = np.flip(self.lons_per_step, 0)
+        self.azimuth_per_step = np.flip(self.azimuth_per_step, 0)
+        self.dist_per_step = np.flip(self.dist_per_step, 0)
+        self.starttime_per_step = np.flip(self.starttime_per_step, 0)
         self.shipparams_per_step.flip()
 
-        route = RoutingAlg.terminate(self, boat, wt)
+        time = round(self.full_time_traveled / 3600,2 )
+        route = RouteParams(
+            count = self.count,
+            start = self.start,
+            finish = self.finish,
+            gcr = self.full_dist_traveled,
+            route_type = 'min_time_route',
+            time = time,
+            lats_per_step = self.lats_per_step[:],
+            lons_per_step = self.lons_per_step[:],
+            azimuths_per_step = self.azimuth_per_step[:],
+            dists_per_step = self.dist_per_step[:],
+            starttime_per_step = self.starttime_per_step[:],
+            ship_params_per_step = self.shipparams_per_step
+        )
+        #route.print_route()
+        #self.check_destination()
+        #self.check_positive_power()
 
-        self.check_isochrones(route)
         return route
 
     def update_time(self, delta_time):
@@ -536,9 +626,6 @@ class IsoBased(RoutingAlg):
         for i in range(0,self.full_fuel_consumed.shape[0]):
             self.full_fuel_consumed[i] += delta_fuel[i]
 
-    def check_isochrones(self, route : RouteParams):
-        pass
-
     def get_delta_variables(self, boat, wind, bs):
         pass
 
@@ -620,26 +707,39 @@ class IsoBased(RoutingAlg):
 
         self.shipparams_per_step.expand_axis_for_intermediate()
 
-    def check_variant_def(self):
-        pass
-
-    def define_variants_per_step(self):
-        pass
-
-    def pruning_per_step(self, trim=True):
-        pass
-
     def final_pruning(self):
-        pass
-
-    def get_current_azimuth(self):
         pass
 
     def update_dist(self, delta_time, bs):
         pass
 
-    def update_time(self, delta_time, bs, current_lats, current_lons):
-        pass
+    def check_for_positive_constraints(self, constraint_list):
+        have_pos_points = constraint_list.have_positive()
+        if not have_pos_points:
+            self.finish_temp = self.finish
+            self.start_temp = self.start
+            self.gcr_azi_temp = self.gcr_azi
+            return
 
-    def get_final_index(self):
-        pass
+        constraint_list.init_positive_lists(self.start, self.finish)
+        self.finish_temp = constraint_list.get_current_destination()
+        self.start_temp = constraint_list.get_current_start()
+        self.gcr_azi_temp = self.calculate_gcr(self.start_temp, self.finish_temp)
+
+        print('Currently going from')
+        print(self.start_temp)
+        print('to')
+        print(self.finish_temp)
+
+    def check_destination(self):
+        destination_lats = self.lats_per_step[self.lats_per_step.shape[0]-1]
+        destination_lons = self.lons_per_step[self.lons_per_step.shape[0]-1]
+
+        arrived_at_destination = (destination_lats==self.finish[0]) & (destination_lons == self.finish[1])
+        if not arrived_at_destination:
+            logger.error('Did not arrive at destination! Need further routing steps or lower resolution.')
+
+    def check_positive_power(self):
+        negative_power = self.full_fuel_consumed<0
+        if negative_power.any():
+            logging.error('Have negative values for power consumption. Needs to be checked!')

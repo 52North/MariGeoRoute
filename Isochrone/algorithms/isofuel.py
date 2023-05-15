@@ -13,9 +13,9 @@ logger = logging.getLogger('WRT.routingalg')
 class IsoFuel(IsoBased):
     delta_fuel : float
 
-    def __init__(self, start, finish, time, delta_fuel, figurepath):
+    def __init__(self, start, finish, departure_time, delta_fuel, figurepath):
         self.delta_fuel = delta_fuel
-        super().__init__(self, start, finish, time, figurepath)
+        super().__init__(start, finish,  departure_time, figurepath)
 
     def print_init(self):
         IsoBased.print_init(self)
