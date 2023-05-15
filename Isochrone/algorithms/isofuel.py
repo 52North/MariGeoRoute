@@ -15,7 +15,7 @@ class IsoFuel(IsoBased):
 
     def __init__(self, start, finish, time, delta_fuel, figurepath):
         self.delta_fuel = delta_fuel
-        IsoBased.__init__(self, start, finish, time, figurepath)
+        super().__init__(self, start, finish, time, figurepath)
 
     def print_init(self):
         IsoBased.print_init(self)
