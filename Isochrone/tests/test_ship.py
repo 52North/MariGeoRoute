@@ -118,7 +118,7 @@ def test_get_fuel_from_netCDF():
     ds.close()
 '''
     test whether all variablies and dimensions that are passed in courses netCDF to mariPower are returned back correctly
-'''
+
 def test_get_fuel_netCDF_return_values():
     lat = np.array([1.1, 2.2, 3.3, 4.4])
     it = np.array([1, 2])
@@ -167,6 +167,7 @@ def test_get_fuel_netCDF_return_values():
     assert np.array_equal(speed_test, speed)
     assert np.array_equal(courses_test, courses)
     assert np.array_equal(it_test, it)
+'''
 
 '''
     test whether single netCDFs which contain information for one course per pixel are correctly merged

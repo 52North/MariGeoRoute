@@ -84,6 +84,10 @@ class IsoBased(RoutingAlg):
         self.is_last_step = False
         self.is_pos_constraint_step = False
 
+        self.finish_temp = self.finish
+        self.start_temp = self.start
+        self.gcr_azi_temp = self.gcr_azi
+
     def print_init(self):
         RoutingAlg.print_init(self)
 
