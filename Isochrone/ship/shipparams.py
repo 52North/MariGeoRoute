@@ -23,6 +23,15 @@ class ShipParams():
             rpm = np.array([[0]])
         )
 
+    @classmethod
+    def set_default_array_1D(cls, ncoorinate_points):
+        return cls(
+            speed = np.full(shape = ncoorinate_points, fill_value=0),
+            fuel = np.full(shape = ncoorinate_points, fill_value=0),
+            power = np.full(shape = ncoorinate_points, fill_value=0),
+            rpm = np.full(shape = ncoorinate_points, fill_value=0),
+        )
+
     def print(self):
         print('fuel: ', self.fuel)
         print('rpm: ', self.rpm)
