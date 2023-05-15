@@ -111,7 +111,7 @@ class ConstraintPars():
     bCheckCrossing: bool
 
     def __init__(self):
-        self.resolution = 1. / 10
+        self.resolution = 1. / 20
         self.bCheckEndPoints = True
         self.bCheckCrossing = True
 

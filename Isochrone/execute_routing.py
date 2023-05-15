@@ -92,16 +92,36 @@ if __name__ == "__main__":
     #over_waypoint = PositiveConstraintPoint(55.796111, 3.100278)   #Route 1, good weather
     #over_waypoint = PositiveConstraintPoint(54.608889, 6.179722)   #Route 1, ok weather
     #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)   #Route 1, bad weather
-    over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, intermediate weather 
+    #over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, intermediate weather
     #over_waypoint1 = PositiveConstraintPoint(45.715, -5.502222)    #Route 2, good weather WP2
     #over_waypoint1 = PositiveConstraintPoint(46.923056, -4.176667) #Route 2, ok weather WP2
-    over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  #Route 2, bad weather WP3
+    #over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  #Route 2, bad weather WP3
+
+    #Simulationsstudie 2, Thames <-> Gothenburg
+    #over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
+    #over_waypoint2 = PositiveConstraintPoint(51.753670, 2.600120)
+    #over_waypoint3 = PositiveConstraintPoint(53.121505, 2.722398)
+    #over_waypoint4 = PositiveConstraintPoint(55.796111, 3.100278)  # good weather
+    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
+    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
+
+    #Simulationsstudie 2, Thames <-> Bordeaux
+    over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
+    over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
+    over_waypoint3 = PositiveConstraintPoint(49.988757, 2.915933)
+    over_waypoint4 = PositiveConstraintPoint(48.850777, 5.870718)
+    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)  # good weather
+    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
+    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
+
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
-    constraint_list.add_pos_constraint(over_waypoint)
     constraint_list.add_pos_constraint(over_waypoint1)
+    constraint_list.add_pos_constraint(over_waypoint2)
+    constraint_list.add_pos_constraint(over_waypoint3)
+    constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
     # *******************************************
