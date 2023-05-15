@@ -1,3 +1,4 @@
 *.nc
 **.ipynb_checkpoints
 .idea/**
+.env
