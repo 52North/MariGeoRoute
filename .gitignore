@@ -1,3 +1,5 @@
 *.nc
 **.ipynb_checkpoints
 .idea/**
+.env
+data/zarr/datacube-zarr
