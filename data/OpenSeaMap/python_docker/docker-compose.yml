@@ -30,3 +30,17 @@ services:
       - "5434:5432"
     volumes:
       - ./dbdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_${COMPOSE_PROJECT_NAME}
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: shiwakotisurendra@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+      # PGADMIN_CONFIG_DIR: /pgadmin/config
+      # PGADMIN_SERVER_JSON_FILE: /pgadmin/servers.json
+    ports:
+      - 5051:80
+    # volumes:
+    #   - ./pgadmin-data:/pgadmin
