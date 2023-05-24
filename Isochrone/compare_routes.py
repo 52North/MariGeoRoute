@@ -8,23 +8,26 @@ from weather import WeatherCondCMEMS
 
 
 if __name__ == "__main__":
-    filename1 = "/home/kdemmich/MariData/Code/Figures/Depth10m/min_time_routeroute_10m2.json"
-    filename2 = "/home/kdemmich/MariData/Code/Figures/NoDepthConstraint2/no_depth_constraint.json"
+    filename1 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP1_WH0.json"
+    filename2 = "/home/kdemmich/MariData/Simulationsstudie_April23/Route_Thames_Bordeaux/230515_results/Thames_Bordeaux_WP2_WH4.json"
     figurefile = "/home/kdemmich/MariData/Code/Figures"
     rp_read1 = RouteParams.from_file(filename1)
     rp_read2 = RouteParams.from_file(filename2)
 
+    rp_read1.print_route()
+    rp_read2.print_route()
+
     ##
     # init wheather
-    windfile = config.DEFAULT_GFS_FILE
-    model = config.DEFAULT_GFS_MODEL
-    start_time = dt.datetime.strptime(config.DEFAULT_GFS_DATETIME, '%Y%m%d%H')
+    windfile = config.WEATHER_DATA
+    model = config.START_TIME
+    start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
     hours = config.TIME_FORECAST
     lat1, lon1, lat2, lon2 = config.DEFAULT_MAP
-    depthfile = config.DEFAULT_DEPTH_FILE
+    depthfile = config.DEPTH_DATA
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
     wt.set_map_size(lat1, lon1, lat2, lon2)
-    wt.add_depth_to_EnvData(depthfile)
+    #wt.add_depth_to_EnvData(depthfile)
 
     ##
     # init Constraints
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     ##
     # plotting routes in depth profile
     fig, ax = plt.subplots(figsize=(12, 7))
-    fig, ax = water_depth.plot_constraint(fig, ax)
+    #fig, ax = water_depth.plot_constraint(fig, ax)
     #water_depth.plot_route_in_constraint(rp_read, 0, fig, ax)
     rp_read1.plot_route(ax, 'orangered', "10m Tiefgang")
     rp_read2.plot_route(ax, 'cyan', "kein Tiefgang")
