@@ -5,7 +5,7 @@ Collection of tools and prototypes for the [MariData project](https://maridata.o
 ## Included Python packages
 
 - [maridatadownloader](https://github.com/52North/MariGeoRoute/tree/main/data/maridatadownloader)
-- [Weather Routing Tool](https://github.com/52North/MariGeoRoute/tree/main/Isochrone)
+- [WeatherRoutingTool](https://github.com/52North/MariGeoRoute/tree/main/WeatherRoutingTool)
 
 ## Funding
 
