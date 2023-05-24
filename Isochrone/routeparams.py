@@ -1,3 +1,4 @@
+import datetime
 import datetime as dt
 import json
 
@@ -147,38 +148,56 @@ class RouteParams():
         with open(filename) as file:
             rp_dict = json.load(file)
 
-        count = rp_dict['count']
-        start = rp_dict['start']
-        finish = rp_dict['finish']
-        fuel = rp_dict['fuel']
-        gcr = rp_dict['gcr']
-        rpm = rp_dict['rpm']
-        route_type = rp_dict['route type']
-        time = rp_dict['time']
-        lats_per_step = np.asarray(rp_dict['lats_per_step'])
-        lons_per_step = np.asarray(rp_dict['lons_per_step'])
-        azimuths_per_step = np.asarray(rp_dict['azimuths_per_step'])
-        dists_per_step = np.asarray(rp_dict['dists_per_step'])
-        speed_per_step = np.asarray(rp_dict['speed_per_step'])
-        starttime_per_step = np.asarray(rp_dict['starttime_per_step'])
-        fuel_per_step = np.asarray(rp_dict['fuel_per_step'])
+        point_list = rp_dict['features']
+        count = len(point_list)
+
+        print('Reading ' + str(count) + ' coordinate pairs from file')
+
+        lats_per_step = np.full(count,-99.)
+        lons_per_step = np.full(count,-99.)
+        start_time_per_step = np.full(count, datetime.datetime.now())
+        speed = np.full(count, -99)
+        power = np.full(count, -99)
+        fuel = np.full(count, -99)
+        rpm = np.full(count, -99)
+        azimuths_per_step = np.full(count, -99)
+        dists_per_step = np.full(count, -99)
+
+        #fuel_type = np.full(count, -99)
+
+        for ipoint in range(0,count-1):
+            coord_pair = point_list[ipoint]['geometry']['coordinates']
+            lats_per_step[ipoint] = coord_pair[0]
+            lons_per_step[ipoint] = coord_pair[1]
+
+            property = point_list[ipoint]['property']
+            start_time_per_step[ipoint] = dt.datetime.strptime(property['time'], '%Y-%m-%d %H:%M:%S')
+            speed[ipoint] = property['speed']['value']
+            power[ipoint] = property['engine_power']['value']
+            fuel[ipoint] = property['fuel_consumption']['value']
+            #fuel_type[ipoint] = property['fuel_type']
+            rpm[ipoint] = property['propeller_revolution']['value']
+
+        start = (lats_per_step[0],lons_per_step[0])
+        finish = (lats_per_step[count-1],lons_per_step[count-1])
+        gcr = -99
+        route_type = 'read_from_file'
+        time = start_time_per_step[count-1] - start_time_per_step[0]
+        ship_params_per_step = ShipParams(fuel, power, rpm, speed)
 
         return cls(
             count = count,
             start = start,
             finish = finish,
-            fuel = fuel,
             gcr = gcr,
-            rpm = rpm,
             route_type = route_type,
             time = time,
             lats_per_step = lats_per_step,
             lons_per_step = lons_per_step,
             azimuths_per_step = azimuths_per_step,
             dists_per_step = dists_per_step,
-            speed_per_step = speed_per_step,
-            starttime_per_step = starttime_per_step,
-            fuel_per_step = fuel_per_step
+            starttime_per_step = start_time_per_step,
+            ship_params_per_step = ship_params_per_step
         )
     def plot_route(self, ax, colour, label):
         lats = self.lats_per_step

@@ -110,6 +110,7 @@ if __name__ == "__main__":
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
     #over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
     #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
+    
     #over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)  # good weather
     #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
@@ -118,6 +119,7 @@ if __name__ == "__main__":
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
+
     #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
     #constraint_list.add_pos_constraint(over_waypoint3)
