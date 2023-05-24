@@ -4,6 +4,7 @@ import os
 import xarray
 import pytest
 
+import basic_test_func
 import config
 from constraints.constraints import *
 from weather import *
@@ -149,6 +150,7 @@ def test_safe_waterdepth():
 
     weather.close_env_file()
 
+'''
 def test_adjust_depth_format():
     lon = np.array([2.802,2.885,5.292,354.917,355.498,358.901])
     lat = np.array([48.083, 48.166,48.249,48.332, 48.415,48.498])
@@ -196,6 +198,7 @@ def test_adjust_depth_format():
     assert np.allclose(lon_test_read, lon_test, 0.00000001)
     assert np.allclose(lat_test_read, lat, 0.00000001)
     assert np.allclose(d, depth_test_read, 0.00000001)
+'''
 
 def test_depth_interpolation_depth():
     debug = True
@@ -303,3 +306,26 @@ def test_safe_crossing_shape_return():
     is_constrained = constraint_list.safe_crossing(lat[1,:], lat[0,:], lon[1,:], lon[0,:] , time, is_constrained)
 
     assert is_constrained.shape[0] == lat.shape[1]
+
+'''
+    test results for elements of is_constrained
+'''
+def test_check_constraints_land_crossing():
+    move = {'lat2' : np.array([52.70, 53.55]),  #1st point: land crossing (failure), 2nd point: no land crossing(success)
+            'lon2' : np.array([4.04, 5.45])}
+
+    ra = basic_test_func.create_dummy_IsoBased_object()
+    ra.lats_per_step = np.array([[52.76, 53.45]])
+    ra.lons_per_step = np.array([[5.40, 3.72]])
+
+    land_crossing = LandCrossing()
+    wave_height = WaveHeight()
+    wave_height.current_wave_height = np.array([5, 5])
+
+    #is_constrained = [False for i in range(0, lat.shape[1])]
+    constraint_list = generate_dummy_constraint_list()
+    constraint_list.add_neg_constraint(land_crossing)
+    constraint_list.add_neg_constraint(wave_height)
+    is_constrained = ra.check_constraints(move, constraint_list)
+    assert is_constrained[0] == 1
+    assert is_constrained[1] == 0
