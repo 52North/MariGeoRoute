@@ -116,9 +116,9 @@ class DownloaderOpendap(DownloaderBase):
 
     def open_dataset(self):
         if type(self.filename_or_obj) == list:
-            self.dataset = xarray.open_mfdataset(self.filename_or_obj)
+            self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
         else:
-            self.dataset = xarray.open_dataset(self.filename_or_obj)
+            self.dataset = xarray.open_dataset(self.filename_or_obj, decode_coords="all")
         # ToDO: use cache=False here or in _transform?
         # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
 
