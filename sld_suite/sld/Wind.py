@@ -1,4 +1,7 @@
-class Windbarbs:
+from .Class import BaseSLD
+
+
+class Windbarbs(BaseSLD):
     layerName = 'wind_world'
     layerStyle = 'wind_spd_dir'
     scale = 0.05
@@ -23,10 +26,6 @@ class Windbarbs:
         circleSize=circleSize,
         circleFill=circleFill
     )
-
-    def initvals(self):
-        print(self._vals)
-        return (self._vals)
 
     def createSld(self):
         barbString = f"""sqrt(({self.u} * {self.u}) + {self.v} * {self.v}))"""
@@ -103,12 +102,3 @@ class Windbarbs:
   </NamedLayer>
 </StyledLayerDescriptor>
         """)
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)

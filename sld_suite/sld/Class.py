@@ -1,4 +1,6 @@
-class Class:
+import os
+
+class BaseSLD:
     layerName = ''
     layerStyle = ''
     _vals = dict(
@@ -15,13 +17,13 @@ class Class:
         return "\n".join(res)
 
     def createSld(self):
-        return
+        raise NotImplementedError("This function has to be implemented by the child class!")
 
     def printSld(self):
         print(self.createSld())
 
-    def writeSld(self, outfile=None):
+    def writeSld(self, outfolder='./xml', outfile=None):
         sld = self.createSld()
 
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
+        with open(os.path.join(outfolder, f'{outfile or self.layerName}.xml'), 'w+') as file:
             file.write(sld)

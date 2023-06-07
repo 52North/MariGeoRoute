@@ -1,4 +1,7 @@
-class WaveDir:
+from .Class import BaseSLD
+
+
+class WaveDir(BaseSLD):
     layerName = 'wave_dir'
     layerStyle = 'wave_dir'
     scale = 0.01
@@ -18,10 +21,6 @@ class WaveDir:
         strokeWidth=strokeWidth,
         markSize=markSize
     )
-
-    def initvals(self):
-        print(self._vals)
-        return (self._vals)
 
     def createSld(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -93,12 +92,3 @@ class WaveDir:
           </NamedLayer>
         </StyledLayerDescriptor>
 """
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)

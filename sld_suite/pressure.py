@@ -1,5 +1,6 @@
 from sld import Pressure
 
-press = Pressure()
-press.propertyName = 'Pressure_reduced_to_MSL_msl'
-press.writeSld()
+def create_xml(outfolder='./xml'):
+    press = Pressure()
+    press.propertyName = 'press'
+    press.writeSld(outfolder=outfolder)

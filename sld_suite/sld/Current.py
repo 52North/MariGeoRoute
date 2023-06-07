@@ -1,4 +1,7 @@
-class Current:
+from .Class import BaseSLD
+
+
+class Current(BaseSLD):
     layerName = 'current_world'
     styleName = 'current_dir'
     scale = 0.01
@@ -42,10 +45,6 @@ class Current:
                  strokeWidth=strokeWidth,
                  strokeCol=strokeCol,
                  markSize=markSize)
-
-    def initvals(self):
-        print(self._vals)
-        return (self._vals)
 
     @staticmethod
     def categorize(catNums, catColors):
@@ -149,12 +148,3 @@ class Current:
           </NamedLayer>
         </StyledLayerDescriptor>
             """)
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)

@@ -1,4 +1,7 @@
-class DepthLine:
+from .Class import BaseSLD
+
+
+class DepthLine(BaseSLD):
     layerName = 'sea_depth_line'
     layerStyle = 'sea_depth_line'
     propertyName = 'z'
@@ -12,10 +15,6 @@ class DepthLine:
         depth=depth,
         strokeWidth=strokeWidth
     )
-
-    def initvals(self):
-        print(self._vals)
-        return (self._vals)
 
     def createSld(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -58,12 +57,3 @@ class DepthLine:
 </StyledLayerDescriptor>
 
                 """
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)

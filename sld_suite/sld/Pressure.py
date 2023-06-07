@@ -1,4 +1,7 @@
-class Pressure:
+from .Class import BaseSLD
+
+
+class Pressure(BaseSLD):
     layerName = 'pressure_world'
     layerStyle = 'contour_mbar'
     propertyName = 'press'
@@ -38,10 +41,6 @@ class Pressure:
         maxDisplacement=maxDisplacement,
         maxAngleDelta=maxAngleDelta
     )
-
-    def initvals(self):
-        print(self._vals)
-        return (self._vals)
 
     def createSld(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -124,12 +123,3 @@ class Pressure:
           </NamedLayer>
         </StyledLayerDescriptor>
         """
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)

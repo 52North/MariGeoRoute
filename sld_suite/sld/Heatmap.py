@@ -1,19 +1,18 @@
-class Heatmap:
+from .Class import BaseSLD
+
+
+class Heatmap(BaseSLD):
     def __init__(self, layerName, styleName, catNums, catColors):
         self.layerName = layerName
         self.styleName = styleName
         self.catNums = catNums
         self.catColors = catColors
-
-    def initvals(self, layerName, styleName, catNums, catColors):
-        _vals = dict(
+        self._vals = dict(
             layerName=layerName,
             styleName=styleName,
             catNums=catNums,
             catColors=catColors
         )
-        print(_vals)
-        return (_vals)
 
     @staticmethod
     def categorize(catColors, catNums):
@@ -45,12 +44,3 @@ class Heatmap:
           </NamedLayer>
         </StyledLayerDescriptor>   
         """)
-
-    def printSld(self):
-        print(self.createSld())
-
-    def writeSld(self, outfile=None):
-        sld = self.createSld()
-
-        with open(f'./xml/{outfile or self.layerName}.xml', 'w+') as file:
-            file.write(sld)
