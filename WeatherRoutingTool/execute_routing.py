@@ -13,6 +13,7 @@ from ship.ship import *
 from weather import *
 from constraints.constraints import *
 from algorithms.routingalg_factory import *
+from utils.maps import Map
 
 def merge_figures_to_gif(path, nof_figures):
     graphics.merge_figs(path, nof_figures)
@@ -54,12 +55,11 @@ if __name__ == "__main__":
     start = (r_la1, r_lo1)
     finish = (r_la2, r_lo2)
     start_time = dt.datetime.strptime(config.START_TIME, '%Y%m%d%H')
+    map = Map(lat1,lon1,lat2,lon2)
 
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    # boat.init_hydro_model_single_pars()
-    # boat.init_hydro_model(windfile)
     boat.init_hydro_model_Route(windfile, coursesfile)
     boat.set_boat_speed(config.BOAT_SPEED)
     # boat.calibrate_simple_fuel()
@@ -67,70 +67,58 @@ if __name__ == "__main__":
     # boat.test_power_consumption_per_course()
     # boat.test_power_consumption_per_speed()
 
-    # boat = SailingBoat(filepath=boatfile)
-
     # *******************************************
     # initialise weather
     wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
-    wt.set_map_size(lat1, lon1, lat2, lon2)
-    #wt.add_depth_to_EnvData(depthfile)
-    # wt = WeatherCondNCEP(windfile, model, start_time, hours, 3)
-    # wt.check_ds_format()
+    wt.set_map_size(map)
     wt.init_wind_functions()
     wt.init_wind_vectors()
-    # vct_winds = wt.read_wind_vectors(model, hours, lat1, lon1, lat2, lon2)
 
     # *******************************************
     # initialise constraints
     pars = ConstraintPars()
     land_crossing = LandCrossing()
-    water_depth = WaterDepth(wt)
-    water_depth.set_drought(config.BOAT_DROUGHT)
+    water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
-    #over_waypoint = PositiveConstraintPoint(55.796111, 3.100278)   #Route 1, good weather
-    #over_waypoint = PositiveConstraintPoint(54.608889, 6.179722)   #Route 1, ok weather
-    #over_waypoint = PositiveConstraintPoint(55.048333, 5.130000)   #Route 1, bad weather
-    #over_waypoint  = PositiveConstraintPoint(48.67, -5.28)          #Route 2, intermediate weather
-    #over_waypoint1 = PositiveConstraintPoint(45.715, -5.502222)    #Route 2, good weather WP2
-    #over_waypoint1 = PositiveConstraintPoint(46.923056, -4.176667) #Route 2, ok weather WP2
-    #over_waypoint1 = PositiveConstraintPoint(47.358611, -3.617778)  #Route 2, bad weather WP3
 
     #Simulationsstudie 2, Thames <-> Gothenburg
     #over_waypoint1 = PositiveConstraintPoint(51.128497, 1.700607)
     #over_waypoint2 = PositiveConstraintPoint(51.753670, 2.600120)
     #over_waypoint3 = PositiveConstraintPoint(53.121505, 2.722398)
+
     #over_waypoint4 = PositiveConstraintPoint(55.796111, 3.100278)  # good weather
-    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
+    #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)  # ok weather
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
 
     #Simulationsstudie 2, Thames <-> Bordeaux
-    #over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
+    over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
-    #over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
-    #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
+    over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
+    over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
-    #over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)  # good weather
+    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
     #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
-    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
+    #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)   # bad weather
 
 
     constraint_list = ConstraintsList(pars)
     constraint_list.add_neg_constraint(land_crossing)
     constraint_list.add_neg_constraint(on_map)
+    constraint_list.add_neg_constraint(water_depth)
 
-    #constraint_list.add_pos_constraint(over_waypoint1)
+    constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
-    #constraint_list.add_pos_constraint(over_waypoint3)
-    #constraint_list.add_pos_constraint(over_waypoint4)
+    constraint_list.add_pos_constraint(over_waypoint3)
+    constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
     # *******************************************
     # initialise rout
     route_factory = RoutingAlgFactory()
     min_fuel_route = route_factory.get_routing_alg('ISOFUEL')
-    #min_fuel_route.init_fig(wt)
+    min_fuel_route.init_fig(water_depth, map)
 
     # *******************************************
     # routing

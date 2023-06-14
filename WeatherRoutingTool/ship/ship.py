@@ -286,7 +286,7 @@ class Tanker(Boat):
         lons = [lons[index] for index in sorted(lon_ind)]
         time_reshape = time.reshape(ds['lat'].shape[0], ds['it'].shape[0])[:,0]
 
-        print('Request power calculation for ' + str(courses.shape) + ' courses, consequently ' + str(courses.shape[0]/len(lons)) + ' requests to mariPower')
+        print('Request power calculation for ' + str(courses.shape) + ' courses and ' + str(len(lons)) + ' coordinates')
 
         ds["lon"] = (['lat'], lons)
         ds["time"] = (['lat'], time_reshape)
@@ -347,7 +347,11 @@ class Tanker(Boat):
     #
     def get_fuel_netCDF(self):
         ship = mariPower.ship.CBT()
+
+        #start_time = time.time()
         mariPower.__main__.PredictPowerOrSpeedRoute(ship, self.courses_path, self.environment_path)
+        #form.print_current_time('time for mariPower request:', start_time)
+
 
         ds_read = xr.open_dataset(self.courses_path)
         return ds_read
@@ -361,7 +365,8 @@ class Tanker(Boat):
     # courses per space-time point and will then be replaced by Tanker.get_fuel_netCDF()
     def get_fuel_netCDF_loop(self):
         debug = False
-        filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
+       # filename_single = '/home/kdemmich/MariData/Code/MariGeoRoute/Isochrone/CoursesRouteSingle.nc'
+        filename_single = 'C:/Users/Maneesha/Documents/GitHub/MariGeoRoute/WeatherRoutingTool/CoursesRouteSingle.nc'
         ds = xr.load_dataset(self.courses_path)
         n_vars = ds['it'].shape[0]
         ds_merged = xr.Dataset()
@@ -404,8 +409,9 @@ class Tanker(Boat):
     # main function for communication with mariPower package (see documentation above)
     def get_fuel_per_time_netCDF(self, courses, lats, lons, time, wind):
         self.write_netCDF_courses(courses, lats, lons, time)
-        ds = self.get_fuel_netCDF_loop()
+        #ds = self.get_fuel_netCDF_loop()
         #ds = self.get_fuel_netCDF_dummy(ds, courses, wind)
+        ds = self.get_fuel_netCDF()
         ship_params = self.extract_params_from_netCDF(ds)
         ds.close()
 
