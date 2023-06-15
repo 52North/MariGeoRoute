@@ -23,7 +23,6 @@ SLDs.
 
 ## ToDos:
 
-- wind_world style: problem with minus sign in sld file; rename to u and v in sld AND in geoserver layer (needs to be automatized)
 - wave_dir_light_mode/wave_dir_dark_mode style: rename band to "Mean wave direction from (Mdir)" in geoserver layer
 - pressure_heatmap style: set lower boundary to zero (or very small)
 - check existing styles before doing POST request
