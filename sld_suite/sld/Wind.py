@@ -4,7 +4,7 @@ from .Class import BaseSLD
 class Windbarbs(BaseSLD):
     layerName = 'wind_world'
     layerStyle = 'wind_spd_dir'
-    scale = 0.05
+    scale = 0.005
     u = 'u'
     v = 'v'
     barbStroke = '#676b70'

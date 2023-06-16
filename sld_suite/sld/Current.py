@@ -8,7 +8,7 @@ class Current(BaseSLD):
     u = 'uo'
     v = 'vo'
     # needed for largenumber-nan (-9999)
-    filterCutoff = 3
+    filterCutoff = 2.5
     # len colors has to be 1 bigger than len nums
     catNums = [
         0.5,

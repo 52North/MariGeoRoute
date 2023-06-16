@@ -1,5 +1,6 @@
 from sld import Heatmap
 
+
 def create_xml(outfolder='./xml'):
     #
     # WAVE HEIGHT
@@ -49,7 +50,7 @@ def create_xml(outfolder='./xml'):
     gust = Heatmap(
         layerName='wind_gust_heatmap',
         styleName='wind_gust_heatmap',
-        catNums=[-1, 3, 5, 7],
+        catNums=[-1, 6, 12, 17],
         catColors=[
             '#1ce3ed',
             '#148818',
@@ -58,3 +59,39 @@ def create_xml(outfolder='./xml'):
         ]
     )
     gust.writeSld(outfolder=outfolder)
+
+    #
+    # Wave Peak Period (VTPK)
+    #
+
+    vtpk = Heatmap(
+        layerName='wave_peak_period',
+        styleName='wave_peak_period',
+        catNums=[5, 10, 15, 17],
+        catColors=[
+            '#1ce3ed',
+            '#148818',
+            '#d66604',
+            '#ba0e02'
+        ]
+    )
+    vtpk.writeSld(outfolder=outfolder)
+
+    #
+    # surface_temp
+    #
+
+    surface_temp = Heatmap(
+        layerName='surface_temp',
+        styleName='surface_temp',
+        catNums=[250, 260, 270, 280, 290, 300, 310],
+        catColors=['#9d219d',
+                   '#4B369D',
+                   '#487DE7',
+                   '#79C314',
+                   '#FAEB36',
+                   '#FFA500',
+                   '#E81416']
+
+    )
+    surface_temp.writeSld(outfolder=outfolder)
