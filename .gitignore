@@ -4,3 +4,4 @@
 .env
 data/zarr/datacube-zarr
 /data/zarr/zarr/*
+**/__pycache__/
