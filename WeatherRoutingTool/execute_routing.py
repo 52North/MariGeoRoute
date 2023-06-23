@@ -69,10 +69,11 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    wt = WeatherCondCMEMS(windfile, model, start_time, hours, 3)
+    #wt = WeatherCondFromFile(model, start_time, hours, 3)
+    wt = WeatherCondODC(model, start_time,hours,3)
     wt.set_map_size(map)
-    wt.init_wind_functions()
-    wt.init_wind_vectors()
+    wt.read_dataset()
+    #wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
     # initialise constraints
@@ -93,12 +94,12 @@ if __name__ == "__main__":
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)  # bad weather
 
     #Simulationsstudie 2, Thames <-> Bordeaux
-    over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
+    #over_waypoint1 = PositiveConstraintPoint(51.098903, 1.549883)
     #over_waypoint2 = PositiveConstraintPoint(50.600152, 0.609062)
     over_waypoint3 = PositiveConstraintPoint(49.988757, -2.915933)
-    over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
+    #over_waypoint4 = PositiveConstraintPoint(48.850777, -5.870688)
     
-    over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
+    #over_waypoint4 = PositiveConstraintPoint(45.715, -5.502222)      # good weather
     #over_waypoint4 = PositiveConstraintPoint(54.608889, 6.179722)   # ok weather
     #over_waypoint4 = PositiveConstraintPoint(55.048333, 5.130000)   # bad weather
 
@@ -108,10 +109,10 @@ if __name__ == "__main__":
     constraint_list.add_neg_constraint(on_map)
     constraint_list.add_neg_constraint(water_depth)
 
-    constraint_list.add_pos_constraint(over_waypoint1)
+    #constraint_list.add_pos_constraint(over_waypoint1)
     #constraint_list.add_pos_constraint(over_waypoint2)
     constraint_list.add_pos_constraint(over_waypoint3)
-    constraint_list.add_pos_constraint(over_waypoint4)
+    #constraint_list.add_pos_constraint(over_waypoint4)
     constraint_list.print_settings()
 
     # *******************************************
