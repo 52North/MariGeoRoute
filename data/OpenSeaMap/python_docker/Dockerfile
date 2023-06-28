@@ -31,8 +31,8 @@ RUN if [ ! -f /tmp/data.osm ]; then \
 
 COPY . . 
 
-COPY app/ /app
+#COPY app/ /app
 
 
-CMD ["python", "./app.py"]
+CMD ["python", "./app/app.py"]
 

@@ -8,9 +8,18 @@ import geopandas as gpd
 from sqlalchemy import create_engine
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy import inspect
+import logging
 
 
-#load_dotenv()
+# Configure the logger
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s [%(levelname)s] %(message)s')
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
+
+# load_dotenv()
+
 # Retrieve the metadata from the Geofabrik portal
 response = requests.get('https://download.geofabrik.de/index-v1-nogeom.json')
 metadata = response.json()
@@ -19,7 +28,7 @@ features = metadata['features']
 # Print the URLs for the first 25 dataset files
 for feature in features[:25]:
     urls = feature['properties']['urls']
-    #print(urls['pbf'])
+    # print(urls['pbf'])
 
 # Print the URLs for European countries
 #print('\nChecking the list of the dataset url for european countries\n')
@@ -31,7 +40,7 @@ for feature in features:
         len(urls['pbf'].split('/')) == 5 and
             properties['id'] not in ('dach', 'alps', 'britain-and-ireland')):
         european_urls.append(urls['pbf'])
-        #print(urls['pbf'])
+        # print(urls['pbf'])
 
 
 # Download the European country dataset files
@@ -81,12 +90,12 @@ print(seamarks_list1)
 
 
 def check_for_schema():
-    #print(os.environ("POSTGIS_PASSWORD"))
+    # print(os.environ("POSTGIS_PASSWORD"))
     conn = psycopg2.connect(
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["POSTGRES_USER"],
         password=os.environ["POSTGRES_PASSWORD"],
-        host= 'db',
+        host='db',
         port='5432'
     )
     cur = conn.cursor()
@@ -96,17 +105,20 @@ def check_for_schema():
 
 
     sql_files = glob.glob("/osmosis/script/*pgsnapshot_schema_0.6*.sql")
-    desired_substrings = ['pgsnapshot_schema_0.6.sql', 'pgsnapshot_schema_0.6_action.sql', 'pgsnapshot_schema_0.6_linestring.sql']
+    desired_substrings = ['pgsnapshot_schema_0.6.sql',
+                          'pgsnapshot_schema_0.6_action.sql', 'pgsnapshot_schema_0.6_linestring.sql']
 
-    desired_files = [s for s in sql_files if s.endswith(tuple(desired_substrings))]
-    
+    desired_files = [s for s in sql_files if s.endswith(
+        tuple(desired_substrings))]
+
     for file_path in desired_files:
         with open(file_path, "r") as file:
-            sql_query = file.read()   
+            sql_query = file.read()
         cur = conn.cursor()
-        #print(sql_query)
+        # print(sql_query)
         cur.execute(sql_query)
         conn.commit()
+
 
 def read_pbf_files(seamark_list2):
     # Loop through the list of seamarks files
@@ -118,7 +130,7 @@ def read_pbf_files(seamark_list2):
         seamark = 'seamark:type=*'
         xml = smk[:-4]
         db = os.environ["POSTGRES_DB"]
-        user =os.environ["POSTGRES_USER"]
+        user = os.environ["POSTGRES_USER"]
         password = os.environ["POSTGRES_PASSWORD"]
 
         cmd = f'{osmosis_path} --read-pbf {pbf} --tag-filter {filter_tag_way} --tag-filter {filter_tag} {seamark}  --tag-filter accept-relations --write-pgsql  host="db" database={db} user={user} password={password} validateSchemaVersion=no'
@@ -136,6 +148,7 @@ def download_world_seamarks():
         f.write(response.content)
         print(f'Downloading file {seamarks_world_url} completed')
 
+
 def read_xml_files(filenames):
 
     for filename in filenames:
@@ -144,82 +157,99 @@ def read_xml_files(filenames):
         tag = 'seamark:type=*'
         tf = '--tag-filter'
         db = os.environ["POSTGRES_DB"]
-        user =os.environ["POSTGRES_USER"]
+        user = os.environ["POSTGRES_USER"]
         password = os.environ["POSTGRES_PASSWORD"]
-        
+
         cmd = f'{osmosis_path} --read-xml {xml} {tf} {filter_tags[0]} {tf} {filter_tags[1]} {tf} {filter_tags[2]} {tag} --write-pgsql  host="db" database={db} user={user} password={password} validateSchemaVersion=no'
         print(cmd)
         os.system(cmd)
-        
-def save_shp_coastlines_water():
-    
-    # Set up the database connection
-    engine = create_engine(f'postgresql://{os.environ["POSTGRES_USER"]}:{os.environ["POSTGRES_PASSWORD"]}@db:5432/mydatabase')
 
-     # Create an inspector object for the engine
+
+def save_shp_coastlines_water():
+
+    logger.info("saving shapefiles of land polygons and water polygons")
+
+    # Set up the database connection
+    engine = create_engine(
+        f'postgresql://{os.environ["POSTGRES_USER"]}:{os.environ["POSTGRES_PASSWORD"]}@db:5432/mydatabase')
+
+    # Create an inspector object for the engine
     inspector = inspect(engine)
 
     #inspector = Inspector.from_engine(engine)
-    
+
     # Define the URL to download the data from
-    coast_url = 'https://osmdata.openstreetmap.de/download/coastlines-split-4326.zip'
-    water_url='https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip'
+    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-split-4326.zip'
+    water_url = 'https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip'
 
+    url = [land_url, water_url]
+    name = ['land_polygons', 'water_polygons']
+    folder = ['land-polygons-split-4326', 'water-polygons-split-4326']
 
-    url=[coast_url,water_url]
-    name=['coastlines','water_polygons']
-    folder = ['coastlines-split-4326','water-polygons-split-4326']
-
-    for x,y,z in zip(name,url,folder):
+    for x, y, z in zip(name, url, folder):
         # Check if the unzipped directory already exists in the current directory
-        if not os.path.isdir(f'{x}'):
+        if not os.path.exists(f'{x}'):
             # Check if the file already exists in the current directory
-            if not os.path.isfile(f'{x}.zip'):
+            logger.info(
+                f"Checking if the {x} zip file already exists in the current directory...")
+            if not os.path.exists(f'{x}.zip'):
                 # Send a request to the URL and save the response
+                logger.info(
+                    f"Sending a request to and saving the url response...")
                 response = requests.get(y)
 
                 # Write the contents of the response to a file
                 with open(f'{x}.zip', 'wb') as f:
+                    logger.info(f'writing the content to {x} file..')
                     f.write(response.content)
 
             # Unzip the downloaded file
             with zipfile.ZipFile(f'{x}.zip', 'r') as zip_ref:
+                logger.info(f'Unzipping the downloaded file{x}.zip file...')
                 zip_ref.extractall()
 
             # Rename the unzipped directory to 'table names'
             os.replace(z, f'{x}')
-            
+
             # Delete the zip file
             os.remove(f'{x}.zip')
-            
-        else: 
-            print(f"Directory {x} already exists. No need to download or unzip.")
-            if  os.path.isdir(f'{x}.zip'):
-            # Delete the zip file
+
+        else:
+            logger.info(
+                f"Directory {x} already exists. No need to download or unzip.")
+            if os.path.isdir(f'{x}.zip'):
+                # Delete the zip file
                 os.remove(f'{x}.zip')
 
-    files=['/app/coastlines/lines.shp','/app/water_polygons/water_polygons.shp']
-    table= ['coastlines','water_polygons']
-    
+    files = ['/app/land_polygons/land_polygons.shp',
+             '/app/water_polygons/water_polygons.shp']
+    table = ['land_polygons', 'water_polygons']
 
-    for file,table in zip(files,table):
-        # Read the shapefile into a GeoDataFrame
-        gdf = gpd.read_file(file)
+    for file, table in zip(files, table):
 
-    # Check if the table already exists in the database
-    if table in inspector.get_table_names(schema="PUBLIC"):
-        print(f'Table {table} already exists in the database. Skipping...')
-    else:
-        # Write the GeoDataFrame to the database
-        gdf.to_postgis(table, engine, if_exists='replace')
-        print(f'Saved {table} to PostGIS')
-        
-        
-check_for_schema() # run pgsnapshot schema
+        # Check if the table already exists in the database
+        logger.info(
+            f'Inspecting the table {table} and saving the tables to the database....')
+        if table in inspector.get_table_names(schema="public"):
+            logger.info(
+                f'{table} table already exists in the database. Skipping...')
+        else:
 
-## Downloading the osm data from geofabrik portal in pbf format
-#download_files(european_urls)
-#read_pbf_files(seamarks_list1)
+            # Read the shapefile into a GeoDataFrame
+            logger.info(
+                f'Reading the {file} and saving to the table {table}....')
+            gdf = gpd.read_file(file)
+
+            # Write the GeoDataFrame to the database
+            gdf.to_postgis(table, engine, if_exists='replace')
+            logger.info(f'Saved {table} to PostGIS')
+
+
+check_for_schema()  # run pgsnapshot schema
+
+# Downloading the osm data from geofabrik portal in pbf format
+# download_files(european_urls)
+# read_pbf_files(seamarks_list1)
 
 
 # check if the file 'world.osm' exists in the current directory
@@ -228,6 +258,6 @@ if os.path.exists("/tmp/data.osm"):
 else:
     print("world.osm does not exist in current directory. Downloading...")
     download_world_seamarks()
-    
+
 read_xml_files(['/tmp/data.osm'])
 save_shp_coastlines_water()

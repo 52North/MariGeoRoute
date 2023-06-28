@@ -9,6 +9,7 @@ from pydap.cas.get_cookies import setup_session
 from xarray.backends import NetCDF4DataStore
 
 from maridatadownloader.base import DownloaderBase
+from maridatadownloader.utils import parse_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -48,47 +49,51 @@ class DownloaderOpendap(DownloaderBase):
         References:
          - https://docs.xarray.dev/en/stable/user-guide/indexing.html
         """
-        # ToDo: add implicit resampling?
+        # Copy the sel/isel dicts because key-value pairs might be deleted from them
         if sel_dict:
             assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
+            sel_dict_copy = dict(sel_dict)
+            isel_dict_copy = None
         if isel_dict:
             assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
+            isel_dict_copy = dict(isel_dict)
+            sel_dict_copy = None
 
         try:
-            dataset = self._preprocessing(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict)
+            dataset = self._preprocessing(parameters=parameters, sel_dict=sel_dict_copy, isel_dict=isel_dict_copy)
         except NotImplementedError:
             dataset = self.dataset
 
         # Parameter and coordinate subsetting
         if parameters:
-            if sel_dict:
+            if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict.keys()):
+                for key in list(sel_dict_copy.keys()):
                     if key not in dataset[parameters].coords:
-                        del sel_dict[key]
-                dataset_sub = dataset[parameters].sel(**sel_dict)
-            elif isel_dict:
+                        del sel_dict_copy[key]
+                dataset_sub = dataset[parameters].sel(**sel_dict_copy)
+            elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict.keys()):
+                for key in list(isel_dict_copy.keys()):
                     if key not in dataset[parameters].coords:
-                        del isel_dict[key]
-                dataset_sub = dataset[parameters].isel(**isel_dict)
+                        del isel_dict_copy[key]
+                dataset_sub = dataset[parameters].isel(**isel_dict_copy)
             else:
                 dataset_sub = dataset[parameters]
         else:
             # all parameters
-            if sel_dict:
+            if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict.keys()):
+                for key in list(sel_dict_copy.keys()):
                     if key not in dataset.coords:
-                        del sel_dict[key]
-                dataset_sub = dataset.sel(**sel_dict)
-            elif isel_dict:
+                        del sel_dict_copy[key]
+                dataset_sub = dataset.sel(**sel_dict_copy)
+            elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict.keys()):
+                for key in list(isel_dict_copy.keys()):
                     if key not in dataset.coords:
-                        del isel_dict[key]
-                dataset_sub = dataset.isel(**isel_dict)
+                        del isel_dict_copy[key]
+                dataset_sub = dataset.isel(**isel_dict_copy)
             else:
                 dataset_sub = dataset
 
@@ -111,9 +116,9 @@ class DownloaderOpendap(DownloaderBase):
 
     def open_dataset(self):
         if type(self.filename_or_obj) == list:
-            self.dataset = xarray.open_mfdataset(self.filename_or_obj)
+            self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
         else:
-            self.dataset = xarray.open_dataset(self.filename_or_obj)
+            self.dataset = xarray.open_dataset(self.filename_or_obj, decode_coords="all")
         # ToDO: use cache=False here or in _transform?
         # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
 
@@ -157,6 +162,7 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         super().__init__('gfs', username=username, password=password, **kwargs)
 
     def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, **kwargs):
+        # ToDo: add support for array indexer
         if sel_dict:
             if 'time' in sel_dict:
                 time = sel_dict['time']
@@ -167,25 +173,21 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             else:
                 time = None
             if time:
-                assert type(time) == slice, "'time' has to be a slice object"
-                try:
-                    time_start = datetime.strptime(time.start, '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
-                    time_end = datetime.strptime(time.stop, '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
-                except Exception as err:
-                    print(f"Unexpected {err=}, {type(err)=}")
-                    raise
-                assert time_start <= time_end, "Start time must be smaller than end time"
+                if type(time) == str:
+                    time_start = time_end = parse_datetime(time)
+                elif type(time) == slice:
+                    time_start = parse_datetime(time.start)
+                    time_end = parse_datetime(time.stop)
+                else:
+                    raise ValueError(f"Unsupported indexer type '{type(time)}'")
+                assert time_start <= time_end, "Start time must be smaller or equal to end time"
                 if time_end < (datetime.now(timezone.utc) - timedelta(days=3)):
                     print("Access archived GFS data")
                     return self._download_archived_data(time_start, time_end, parameters=parameters,
                                                         sel_dict=sel_dict, isel_dict=isel_dict,
                                                         file_out=file_out, **kwargs)
-                else:
-                    return super().download(parameters=parameters, sel_dict=sel_dict,
-                                            isel_dict=isel_dict, file_out=file_out, **kwargs)
-        else:
-            return super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict,
-                                    file_out=file_out, **kwargs)
+        return super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict,
+                                file_out=file_out, **kwargs)
 
     def get_filename_or_obj(self, **kwargs):
         return 'https://thredds.ucar.edu/thredds/dodsC/grib/NCEP/GFS/Global_0p25deg/Best'
@@ -273,11 +275,11 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         It seems that for the same parameters sometimes coordinate 'time' is used, and sometimes 'time1' ...
         """
         if 'time1' in dataset.coords and 'time' not in dataset.coords:
-            dataset = dataset.rename({'time1': 'time', 'reftime1': 'reftime'})
+            dataset = dataset.rename({'time1': 'time'})
+        if 'reftime1' in dataset.coords and 'reftime' not in dataset.coords:
+            dataset = dataset.rename({'reftime1': 'reftime'})
         if 'height_above_ground2' in dataset.coords and 'height_above_ground' not in dataset.coords:
             dataset = dataset.rename({'height_above_ground2': 'height_above_ground'})
-        if 'reftime' in dataset.coords:
-            dataset = dataset.drop('reftime')
         return dataset
 
 
