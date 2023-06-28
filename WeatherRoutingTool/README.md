@@ -20,14 +20,15 @@ package mariPower. All other dependencies are installed automatically.
   <li>
     For standalone execution, download weather data for the required time period from [here](https://maridata.dev.52north.org/EnvDataAPI/) in netCDF format. The parameters that need to be selected for the routing procedure are the following:
     <ul>
-      <li> u-component_of_wind_sigma (u-component of wind @ sigma level) </li>
-      <li> v-component_of_wind_sigma (v-component of wind @ sigma level) </li>
+      <li> u-component_of_wind_height_above_ground (u-component of wind @ Specified height level above ground) </li>
+      <li> v-component_of_wind_height_above_ground (v-component of wind @ Specified height level above ground) </li>
       <li> vo (northward velocity) </li>
       <li> uo (eastward velocity) </li>
       <li> VHMO (wave significant height @ sea surface)</li>
       <li> VMDR (wave direction @ sea surface)</li>
       <li> thetao (potential temperature) </li>
       <li> Pressure_surface (pressure at the water surface) </li>
+      <li> Temperature_surface (temperature at the water surface) </li>
       <li> so (salinity) </li>
     </ul>
   </li>
