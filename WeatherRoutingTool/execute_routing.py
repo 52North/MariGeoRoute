@@ -60,7 +60,7 @@ if __name__ == "__main__":
     # *******************************************
     # initialise boat
     boat = Tanker(-99)
-    boat.init_hydro_model_Route(windfile, coursesfile)
+    boat.init_hydro_model_Route(windfile, coursesfile, depthfile)
     boat.set_boat_speed(config.BOAT_SPEED)
     # boat.calibrate_simple_fuel()
     # boat.write_simple_fuel()
@@ -69,10 +69,10 @@ if __name__ == "__main__":
 
     # *******************************************
     # initialise weather
-    #wt = WeatherCondFromFile(model, start_time, hours, 3)
-    wt = WeatherCondODC(model, start_time,hours,3)
+    wt = WeatherCondFromFile(model, start_time, hours, 3)
+    #wt = WeatherCondODC(model, start_time,hours,3)
     wt.set_map_size(map)
-    wt.read_dataset()
+    wt.read_dataset(windfile)
     #wt.write_data('/home/kdemmich/MariData/Code/Data/WheatherFiles')
 
     # *******************************************
@@ -80,6 +80,7 @@ if __name__ == "__main__":
     pars = ConstraintPars()
     land_crossing = LandCrossing()
     water_depth = WaterDepth(config.DEPTH_DATA, config.BOAT_DROUGHT, map)
+    #water_depth.write_reduced_depth_data('/home/kdemmich/MariData/Code/Data/DepthFiles/ETOPO_renamed.nc')
     # water_depth.plot_depth_map_from_file(depthfile, lat1, lon1, lat2, lon2)
     on_map = StayOnMap()
     on_map.set_map(lat1, lon1, lat2, lon2)
@@ -125,8 +126,8 @@ if __name__ == "__main__":
     # routing
     min_fuel_route = min_fuel_route.execute_routing(boat, wt, constraint_list)
     min_fuel_route.print_route()
-    min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
-    min_fuel_route.return_route_to_API(routepath + str(min_fuel_route.route_type) + "route.json")
+    #min_fuel_route.write_to_file(str(min_fuel_route.route_type) + "route.json")
+    min_fuel_route.return_route_to_API(routepath + '/' + str(min_fuel_route.route_type) + ".json")
 
     # *******************************************
     # plot route in constraints
