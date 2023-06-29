@@ -2,15 +2,15 @@ from .Class import BaseSLD
 
 
 class Current(BaseSLD):
-    layerName = 'current_world'
-    styleName = 'current_dir'
+    layer_name = 'current_world'
+    style_name = 'current_dir'
     scale = 0.01
     u = 'uo'
     v = 'vo'
     # needed for largenumber-nan (-9999)
-    filterCutoff = 2.5
+    filter_cut_off = 2.5
     # len colors has to be 1 bigger than len nums
-    catNums = [
+    cat_nums = [
         0.5,
         0.75,
         1,
@@ -20,7 +20,7 @@ class Current(BaseSLD):
         2,
         2.5
     ]
-    catColors = [
+    cat_colors = [
         '#ffffff',
         '#1ce3ed',
         '#2040f7',
@@ -31,28 +31,28 @@ class Current(BaseSLD):
         '#f73620',
         '#000000'
     ]
-    strokeWidth = 0.6
-    strokeCol = '#ffffff'
-    markSize = 25
-    _vals = dict(layerName=layerName,
-                 styleName=styleName,
+    stroke_width = 0.6
+    stroke_col = '#ffffff'
+    mark_size = 25
+    _vals = dict(layer_name=layer_name,
+                 style_name=style_name,
                  scale=scale,
                  u=u,
                  v=v,
-                 filterCutoff=filterCutoff,
-                 catNums=catNums,
-                 catColors=catColors,
-                 strokeWidth=strokeWidth,
-                 strokeCol=strokeCol,
-                 markSize=markSize)
+                 filter_cut_off=filter_cut_off,
+                 cat_nums=cat_nums,
+                 cat_colors=cat_colors,
+                 stroke_width=stroke_width,
+                 stroke_col=stroke_col,
+                 mark_size=mark_size)
 
     @staticmethod
-    def categorize(catNums, catColors):
-        res = [f"<ogc:Literal>{x}</ogc:Literal>" for y in zip(catColors, catNums) for x in y] + [
-            f"<ogc:Literal>{catColors[-1]}</ogc:Literal>"]
+    def categorize(cat_nums, cat_colors):
+        res = [f"<ogc:Literal>{x}</ogc:Literal>" for y in zip(cat_colors, cat_nums) for x in y] + [
+            f"<ogc:Literal>{cat_colors[-1]}</ogc:Literal>"]
         return "\n".join(res)
 
-    def createSld(self):
+    def create_sld(self):
         return (f"""<?xml version="1.0" encoding="UTF-8"?>
         <StyledLayerDescriptor xmlns="http://www.opengis.net/sld"
           xmlns:ogc="http://www.opengis.net/ogc"
@@ -60,10 +60,10 @@ class Current(BaseSLD):
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sld
          http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd" version="1.0.0">
           <NamedLayer>
-            <Name>{self.layerName}</Name>
+            <Name>{self.layer_name}</Name>
             <UserStyle>
               <FeatureTypeStyle>
-                <Title>{self.styleName}</Title>
+                <Title>{self.style_name}</Title>
                 <Transformation>
                   <ogc:Function name="ras:RasterAsPointCollection">
                     <ogc:Function name="parameter">
@@ -95,7 +95,7 @@ class Current(BaseSLD):
                           </ogc:Mul>
                         </ogc:Add>
                       </ogc:Function>
-                      <ogc:Literal>{self.filterCutoff}</ogc:Literal>
+                      <ogc:Literal>{self.filter_cut_off}</ogc:Literal>
                     </ogc:PropertyIsLessThan>
                   </ogc:Filter>
 
@@ -121,17 +121,17 @@ class Current(BaseSLD):
                                   </ogc:Mul>
                                 </ogc:Add>
                               </ogc:Function>
-                             {self.categorize(self.catNums, self.catColors)}
+                             {self.categorize(self.cat_nums, self.cat_colors)}
                             </ogc:Function >
 
                           </CssParameter>
                         </Fill>
                         <Stroke>
-                          <CssParameter name="stroke-width">{self.strokeWidth}</CssParameter>
-                          <CssParameter name="stroke">{self.strokeCol}</CssParameter>
+                          <CssParameter name="stroke-width">{self.stroke_width}</CssParameter>
+                          <CssParameter name="stroke">{self.stroke_col}</CssParameter>
                         </Stroke>
                       </Mark>
-                      <Size>{self.markSize}</Size>
+                      <Size>{self.mark_size}</Size>
                       <Rotation>
                         <ogc:Function name="toDegrees">
                           <ogc:Function name="atan2">

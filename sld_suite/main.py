@@ -84,15 +84,15 @@ def put_slds(path, url='http://localhost/geoserver/rest', username='admin', pass
     for filepath in filepaths:
         # FIXME: check if style already exists
         # check for exceptions
-        styleName = os.path.splitext(os.path.basename(filepath))[0]
+        style_name = os.path.splitext(os.path.basename(filepath))[0]
         post = requests.post(url=f"{url}/styles",
-                             data=f"<style><name>{styleName}</name><filename>{styleName}.sld</filename></style>",
+                             data=f"<style><name>{style_name}</name><filename>{style_name}.sld</filename></style>",
                              auth=(username, password),
                              headers={'content-type': 'application/xml'})
 
         with open(filepath) as f:
             sld_data = f.read()
-            put = requests.put(url=f"{url}/styles/{styleName}",
+            put = requests.put(url=f"{url}/styles/{style_name}",
                                data=sld_data,
                                auth=(username, password),
                                headers={'content-type': 'application/vnd.ogc.sld+xml'},

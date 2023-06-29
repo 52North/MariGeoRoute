@@ -9,13 +9,13 @@ colors = dict(
 def create_xml(outfolder='./xml'):
     for col in colors.items():
         wave_dir = WaveDir()
-        wave_dir.layerName = f'wave_dir_{col[0]}'
+        wave_dir.layer_name = f'wave_dir_{col[0]}'
         wave_dir.fill = col[1]
         wave_dir.stroke = col[1]
-        wave_dir.propertyName = 'GRAY_INDEX'
-        wave_dir.writeSld(outfolder=outfolder)
+        wave_dir.property_name = 'GRAY_INDEX'
+        wave_dir.write_sld(outfolder=outfolder)
 
     current = Current()
     current.u = "utotal"
     current.v = "vtotal"
-    current.writeSld(outfolder=outfolder)
+    current.write_sld(outfolder=outfolder)

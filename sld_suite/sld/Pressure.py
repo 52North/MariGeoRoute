@@ -2,47 +2,47 @@ from .Class import BaseSLD
 
 
 class Pressure(BaseSLD):
-    layerName = 'pressure_world'
-    layerStyle = 'contour_mbar'
-    propertyName = 'press'
-    filterIntervals = 500
-    lineStroke = "#000000"
-    lineStrokeWidth = 1
-    fontFamily = 'Arial'
-    fontFamilyStyle = 'Normal'
-    fontFamilySize = 15
-    fontFill = '#000000'
-    haloRadius = 2.8
-    haloFill = "#FFFFFF"
-    haloFillOpacity = 1
+    layer_name = 'pressure_world'
+    layer_style = 'contour_mbar'
+    property_name = 'press'
+    filter_intervals = 500
+    line_stroke = "#000000"
+    line_stroke_width = 1
+    font_family = 'Arial'
+    font_family_style = 'Normal'
+    font_family_size = 15
+    font_fill = '#000000'
+    halo_radius = 2.8
+    halo_fill = "#FFFFFF"
+    halo_fill_opacity = 1
     priority = 2000
-    followLine = 'true'
+    follow_line = 'true'
     repeat = 10000
-    maxDisplacement = 0
-    maxAngleDelta = 50
+    max_displacement = 0
+    max_angle_delta = 50
 
     _vals = dict(
-        layerName=layerName,
-        layerStyle=layerStyle,
-        propertyName=propertyName,
-        filterIntervals=filterIntervals,
-        lineStroke=lineStroke,
-        lineStrokeWidth=lineStrokeWidth,
-        fontFamily=fontFamily,
-        fontFamilyStyle=fontFamilyStyle,
-        fontFamilySize=fontFamilySize,
-        fontFill=fontFill,
-        haloRadius=haloRadius,
-        haloFill=haloFill,
-        haloFillOpacity=haloFillOpacity,
+        layer_name=layer_name,
+        layer_style=layer_style,
+        property_name=property_name,
+        filter_intervals=filter_intervals,
+        line_stroke=line_stroke,
+        line_stroke_width=line_stroke_width,
+        font_family=font_family,
+        font_family_style=font_family_style,
+        font_family_size=font_family_size,
+        font_fill=font_fill,
+        halo_radius=halo_radius,
+        halo_fill=halo_fill,
+        halo_fill_opacity=halo_fill_opacity,
         priority=priority,
-        followLine=followLine,
+        follow_line=follow_line,
         repeat=repeat,
-        maxDisplacement=maxDisplacement,
-        maxAngleDelta=maxAngleDelta
+        max_displacement=max_displacement,
+        max_angle_delta=max_angle_delta
     )
 
-    def createSld(self):
+    def create_sld(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
         <StyledLayerDescriptor xmlns="http://www.opengis.net/sld"
           xmlns:ogc="http://www.opengis.net/ogc"
@@ -50,10 +50,10 @@ class Pressure(BaseSLD):
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sld
          http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd" version="1.0.0">
           <NamedLayer>
-            <Name>{self.layerName}</Name>
+            <Name>{self.layer_name}</Name>
             <UserStyle>
               <FeatureTypeStyle>
-                <Title>{self.layerStyle}</Title>
+                <Title>{self.layer_style}</Title>
         
                 <Rule>
                   <Name>rule1</Name>
@@ -62,9 +62,9 @@ class Pressure(BaseSLD):
                     <ogc:PropertyIsEqualTo>
                       <ogc:Function name="IEEERemainder">
                         <ogc:Function name="int2ddouble">
-                          <ogc:PropertyName>{self.propertyName}</ogc:PropertyName>
+                          <ogc:PropertyName>{self.property_name}</ogc:PropertyName>
                         </ogc:Function>
-                        <ogc:Literal>{self.filterIntervals}</ogc:Literal>
+                        <ogc:Literal>{self.filter_intervals}</ogc:Literal>
                       </ogc:Function>
                       <ogc:Literal>0</ogc:Literal>
                     </ogc:PropertyIsEqualTo>
@@ -73,8 +73,8 @@ class Pressure(BaseSLD):
         
                   <LineSymbolizer>
                     <Stroke>
-                      <CssParameter name="stroke">{self.lineStroke}</CssParameter>
-                      <CssParameter name="stroke-width">{self.lineStrokeWidth}</CssParameter>
+                      <CssParameter name="stroke">{self.line_stroke}</CssParameter>
+                      <CssParameter name="stroke-width">{self.line_stroke_width}</CssParameter>
         
                     </Stroke>
                   </LineSymbolizer>
@@ -92,29 +92,29 @@ class Pressure(BaseSLD):
         
                     </Label>
                     <Font>
-                      <CssParameter name="font-family">{self.fontFamily}</CssParameter>
-                      <CssParameter name="font-style">{self.fontFamilyStyle}</CssParameter>
-                      <CssParameter name="font-size">{self.fontFamilySize}</CssParameter>
+                      <CssParameter name="font-family">{self.font_family}</CssParameter>
+                      <CssParameter name="font-style">{self.font_family_style}</CssParameter>
+                      <CssParameter name="font-size">{self.font_family_size}</CssParameter>
         
                     </Font>
                     <Halo>
                       <Radius>
-                        <ogc:Literal>{self.haloRadius}</ogc:Literal>
+                        <ogc:Literal>{self.halo_radius}</ogc:Literal>
                       </Radius>
                       <Fill>
-                        <CssParameter name="fill">{self.haloFill}</CssParameter>
-                        <CssParameter name="fill-opacity">{self.haloFillOpacity}</CssParameter>
+                        <CssParameter name="fill">{self.halo_fill}</CssParameter>
+                        <CssParameter name="fill-opacity">{self.halo_fill_opacity}</CssParameter>
                       </Fill>
                     </Halo>
                     <Fill>
-                      <CssParameter name="fill">{self.fontFill}</CssParameter>
+                      <CssParameter name="fill">{self.font_fill}</CssParameter>
                     </Fill>
                     <Priority>{self.priority}</Priority>
-                    <VendorOption name="followLine">{self.followLine}</VendorOption>
+                    <VendorOption name="followLine">{self.follow_line}</VendorOption>
                     <VendorOption name="repeat">{self.repeat}</VendorOption>
-                    <VendorOption name="maxDisplacement">{self.maxDisplacement}</VendorOption>
+                    <VendorOption name="maxDisplacement">{self.max_displacement}</VendorOption>
         
-                    <VendorOption name="maxAngleDelta">{self.maxAngleDelta}</VendorOption>
+                    <VendorOption name="maxAngleDelta">{self.max_angle_delta}</VendorOption>
                   </TextSymbolizer>
                 </Rule>
         
