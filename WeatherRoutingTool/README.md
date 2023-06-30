@@ -88,7 +88,7 @@ lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1
 
 ### Communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
-
+    
 ```sh
 Dimensions:                    (it_pos: 2, it_course: 3)
 Coordinates:
