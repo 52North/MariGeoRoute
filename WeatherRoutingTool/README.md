@@ -58,7 +58,7 @@ written to the file which is specified by the environment variable 'PERFORMANCE_
 ## Isofuel Algorithm
 
 ### General concept
-For the isofuel algorithm the routing process is divided in separate routing steps. For every step, the ship has a specified amount of fuel availabe for traveling and it is supposed to travel as far as possible with constant speed. The algorithm is the following:
+The routing process is divided into individual routing steps. For every step, it is calculated how far the ship can travel with a specified amount of fuel and constant speed. The algorithm is the following:
 
 1. From the start coordinates, imagine traveling with different courses at constant ship speed. The courses are centered around the grand circle route from the start coordinates towards the destination.
 2. Calculate the fuel rate *f/t* that is necessary for keeping courses and speed using the mariPower package. 
