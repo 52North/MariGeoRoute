@@ -1,9 +1,9 @@
 from .Class import BaseSLD
 
 
-class Current(BaseSLD):
-    layer_name = 'current_world'
-    style_name = 'current_dir'
+class Currents(BaseSLD):
+    layer_name = 'currents_world'
+    style_name = 'currents_dir'
     scale = 0.01
     u = 'uo'
     v = 'vo'

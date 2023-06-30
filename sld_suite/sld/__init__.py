@@ -1,4 +1,4 @@
-from sld.Current import Current
+from sld.Currents import Currents
 from sld.Heatmap import Heatmap
 from sld.Wind import Windbarbs
 from sld.Pressure import Pressure

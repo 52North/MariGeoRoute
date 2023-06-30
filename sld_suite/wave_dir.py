@@ -1,5 +1,5 @@
 from sld import WaveDir
-from sld import Current
+from sld import Currents
 
 colors = dict(
     dark_mode='#c7c7c7',
@@ -15,7 +15,7 @@ def create_xml(outfolder='./xml'):
         wave_dir.property_name = 'GRAY_INDEX'
         wave_dir.write_sld(outfolder=outfolder)
 
-    current = Current()
-    current.u = "utotal"
-    current.v = "vtotal"
-    current.write_sld(outfolder=outfolder)
+    currents = Currents()
+    currents.u = "utotal"
+    currents.v = "vtotal"
+    currents.write_sld(outfolder=outfolder)
