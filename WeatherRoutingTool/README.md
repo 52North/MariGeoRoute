@@ -59,7 +59,7 @@ written to the file which is specified by the environment variable 'PERFORMANCE_
 ## Isofuel Algorithm
 
 ### General concept
-The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
 
 The algorithm is the following:
 
@@ -71,22 +71,18 @@ The algorithm is the following:
 
 Obviously, the amount of fuel *f<sub>max</sub>* that is provided to the algorithm determines the step width of the final route: the larger *f<sub>max</sub>*, the longer the route segments and the more edgy the final route. The number *n<sub>courses</sub>* of courses that is considered for every coordinate pair defines the resolution with which the area is searched for optimal routes. Thus, the smaller *n<sub>courses</sub>*, the larger the likelihood that more optimal routes exist than the final route provided. On the other hand, the larger *n<sub>courses</sub>* the larger is the calculation power. Further settings that can be defined are the area that is considered for the pruning as well as the number *n<sub>prune</sub>* of pruning segments. The later specifies the number of end points that are passed from one routing step to the next. The relation of *n<sub>courses</sub>* and *n<sub>prune</sub>* defines the degree of optimisation.
 
-### Parameter definitions for configuration
-pruning = the process of chosing the route that maximises the distance for one routing segment
-heading/course/azimuth/variants = the angular distance towards North on the grand circle route 
-route segment = distance of one starting point of the routing step to one end point
+### Parameter and variable definitions
 
-ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process
-ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)
-ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step
-ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments
+ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process</br>
+ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)</br>
+ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step</br>
+ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments</br>
 
-
-### Variable definitions
-lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
+heading/course/azimuth/variants = the angular distance towards North on the grand circle route </br>
+lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-### Communication between mariPower and the WRT
+## Communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
