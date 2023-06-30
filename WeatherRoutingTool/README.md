@@ -59,17 +59,15 @@ written to the file which is specified by the environment variable 'PERFORMANCE_
 ## Isofuel Algorithm
 
 ### General concept
-The routing process is divided into individual routing steps. For every step, it is calculated how far the ship can travel with a specified amount of fuel and constant speed. The algorithm is the following:
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
 
-1. From the start coordinates, imagine traveling with different courses at constant ship speed. The courses are centered around the grand circle route from the start coordinates towards the destination.
-2. Calculate the fuel rate *f/t* that is necessary for keeping courses and speed using the mariPower package. 
-3. Based on the fuel rate, calulate the distance that can be traveled for every course that is considered.
-4. divide the full angular region into regular segments
-5. For every pruning segment, the routing segment that maximises the distance is selected for the next routing step. 
+The algorithm is the following:
 
-
-This is tested for different courses the ship can take. To select the route that minimises fuel, all route segments that are considered are divided into different angular sectors, the pruning segments. For every pruning segment, the route segment that maximises the distance 
-The isofuel algorithm is based on the same concept as the modified isochrone algorithm that is described in XXX. However, instead of assuming constant 
+1. Define the amount of fuel *f<sub>max</sub>* that the ship can consume for every single routing step.
+2. Consider *n<sub>courses</sub>* courses outgoing from the start coordinate pair. For every course, calculate the fuel rate *f/t* thas is necessary to keep the ship speed and course.
+3. Based on *f/t*, *f<sub>max</sub>* and the ship speed, calulate the distance that is traveled for every route segment.
+4. Divide the angular region into equally-sized segments -- the *pruning segments*. For every pruning segment, the route segment that maximises the distance is passed as new starting point to the next routing step.
+5. Repeat steps 2. to 4. until the distance of any route from the starting coordinates towards the destination is smaller than the length of the route segment from the current routing step.
 
 ### Parameter definitions for configuration
 pruning = the process of chosing the route that maximises the distance for one routing segment
