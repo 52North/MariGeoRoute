@@ -73,6 +73,14 @@ Obviously, the amount of fuel *f<sub>max</sub>* that is provided to the algorith
 
 ### Parameter and variable definitions
 
+<figure>
+  <p align="center">
+  <img src="figures_readme/isofuel_definitions.jpg" width="500" " />
+  </p>
+  <figcaption> Fig.2: Schema for the definition of the most inportant variables and parameters for the isofuel algorithm.</figcaption>
+</figure>
+<br>
+
 ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process</br>
 ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)</br>
 ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step</br>
