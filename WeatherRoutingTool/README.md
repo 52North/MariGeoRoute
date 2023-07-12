@@ -91,7 +91,7 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-## Communication between mariPower and the WRT
+## Fuel estimation -- The communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
@@ -136,6 +136,30 @@ The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordi
 
 
 Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. 2). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. 3).
+
+## The constraints module
+
+### The input parameters
+As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Several routing segments can be processed in only one request to the constraint module. This means that for the genetic algorithm, only one request needs to be performed for every route during one generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this
+```
+   safe_crossing(lat_start, lat_end, lon_start, lon_end)
+```
+then, the arguments ```lat_start```, ```lat_end```, ```lon_start``` and ```lon_end``` correspond to arrays and the size of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following. <br>
+
+Let's consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that would be passed to the constraints module for the first routing step in this example are the latitudes and longitudes corresponding to the routing segments a to e which are
+
+    - lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>)
+    - lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)
+    - lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)
+    - lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)
+
+i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.<br>
+The form of the parameters sent for the second routing step is a bit more complex_
+
+    - lat_start = (lat_start<sub>&Alpha&Beta&Gamma</sub>, lat_start<sub>&Alpha&Beta&Gamma</sub>,lat_start<sub>&Alpha&Beta&Gamma</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>, lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>)
+    - -> i.e. latitudes of the end points from the previous routing steps will now be the start coordinates of the next routing step
+
+
 
 ## References
 - https://github.com/omdv/wind-router
