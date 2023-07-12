@@ -59,36 +59,32 @@ written to the file which is specified by the environment variable 'PERFORMANCE_
 ## Isofuel Algorithm
 
 ### General concept
-The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
+The routing process is divided into individual routing steps. For every step, the distance is calculated that the ship can travel following different courses with a specified amount of fuel and constant speed. Only those routes that maximise the travel distance for a constant amount of fuel are selected for the next routing step. This optimisation process is refered to as *pruning*. The distance between the start coordinates at the beginning of the routing step and the end coordinates after the step is refered to as *route segment*. 
 
 The algorithm is the following:
 
 1. Define the amount of fuel *f<sub>max</sub>* that the ship can consume for every single routing step.
-2. Consider a selection of courses outgoing from the start coordinate pair. For every course, calculate the fuel rate *f/t* thas is necessary to keep the ship speed and course.
+2. Consider a selection of courses outgoing from the start coordinate pair. For every course, calculate the fuel rate *f/t* (the amount of fuel consumed per time interval) that is necessary to keep the ship speed and course.
 3. Based on *f/t*, *f<sub>max</sub>* and the ship speed, calulate the distance that is traveled for every route segment.
-4. Divide the angular region into equally-sized segments -- the *pruning segments*. For every pruning segment, the route segment that maximises the distance is passed as new starting point to the next routing step.
+4. Divide the angular region into equally-sized segments -- the *pruning segments*. For every pruning segment, the end point of the route segment that maximises the distance is passed as a new starting point to the next routing step.
 5. Repeat steps 2. to 4. until the distance of any route from the starting coordinates towards the destination is smaller than the length of the route segment from the current routing step.
 
 Obviously, the amount of fuel *f<sub>max</sub>* that is provided to the algorithm determines the step width of the final route: the larger *f<sub>max</sub>*, the longer the route segments and the more edgy the final route. The number *n<sub>courses</sub>* of courses that is considered for every coordinate pair defines the resolution with which the area is searched for optimal routes. Thus, the smaller *n<sub>courses</sub>*, the larger the likelihood that more optimal routes exist than the final route provided. On the other hand, the larger *n<sub>courses</sub>* the larger is the calculation power. Further settings that can be defined are the area that is considered for the pruning as well as the number *n<sub>prune</sub>* of pruning segments. The later specifies the number of end points that are passed from one routing step to the next. The relation of *n<sub>courses</sub>* and *n<sub>prune</sub>* defines the degree of optimisation.
 
-### Parameter definitions for configuration
-pruning = the process of chosing the route that maximises the distance for one routing segment
-heading/course/azimuth/variants = the angular distance towards North on the grand circle route 
-route segment = distance of one starting point of the routing step to one end point
+### Parameter and variable definitions
 
-ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process
-ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)
-ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step
-ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments
+ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process</br>
+ISOCHRONE_PRUNE_SECTOR_DEG_HALF = angular range of azimuth angle that is considered for pruning (only one half of it!)</br>
+ROUTER_HDGS_SEGMENTS = total number of courses/azimuths/headings that are considered per coordinate pair for every routing step</br>
+ROUTER_HDGS_INCREMENTS_DEG = angular distance between two adjacent routing segments</br>
 
-
-### Variable definitions
-lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
+heading/course/azimuth/variants = the angular distance towards North on the grand circle route </br>
+lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
 ### Communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
-    
+
 ```sh
 Dimensions:                    (it_pos: 2, it_course: 3)
 Coordinates:
@@ -112,11 +108,25 @@ Data variables:
 
 The coordinates ``` it_pos ``` and ```it_course ``` are iterators for the coordinate pairs and the courses that need to be checked per coordinate pair, respectively. The function in the WRT that writes the route parameters to the netCDF file is called ``` ship.write_netCDF_courses ```. Following up on this, the function ``` get_fuel_netCDF``` in the WRT calls the function ``` PredictPowerOrSpeedRoute ``` in mariPower which itself initiates the calcualation of the ship parameters. The netCDF file is overwritten by the WRT for every routing step s.t. the size of the file is not increasing during the routing process. 
 
-![Fig. 2: Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the isofuel algorithm. All coordinate pairs marked by orange filled circles are send for the second routing step. Coordinate pairs marked with blue filled circles are endpoints after the first routing step that survived the pruning.](figures_readme/fuel_request_isobased.png)
+<figure>
+  <p align="center">
+  <img src="figures_readme/fuel_request_isobased.png" width="500" " />
+  </p>
+  <figcaption> Fig.2 Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the isofuel algorithm. All coordinate pairs marked by orange filled circles are send for the second routing step. Coordinate pairs marked with blue filled circles are endpoints after the first routing step that survived the pruning. </figcaption>
+</figure>
+<br>
+<br>
+<figure>
+  <p align="center">
+  <img src="figures_readme/fuel_request_GA.png" height="500" " />
+  </p>
+  <figcaption> Fig.3 Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the genertic algorithm. All coordinate pairs marked by the same colour are send in one request. </figcaption>
+</figure>
+<br>
+<br>
 
-![Fig. 2: Schema to visualise which coordinate pairs are send in a combined request to mariPower for fuel estimation in case of the genetic algorithm. All coordinate pairs marked by the same colour are send in one request.](figures_readme/fuel_request_GA.png)
 
-Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. XXX). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. XXX).
+Both for the isofuel algorithm and the genetic algorithm the same structure of the netCDF file is used. However, due to the different concepts of the algorithms, the entity of points that is send for calculation in one request differes between both algorithms. For the isofuel algorithm, all coordinate pairs and courses that are considered for a single routing step are passed to mariPower in a single request (see Fig. 2). For the genetic algorithm all points and courses for a closed route are passed in a single request (see Fig. 3).
 
 ## References
 - https://github.com/omdv/wind-router
