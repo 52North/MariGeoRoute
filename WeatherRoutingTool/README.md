@@ -75,10 +75,11 @@ Obviously, the amount of fuel *f<sub>max</sub>* that is provided to the algorith
 
 <figure>
   <p align="center">
-  <img src="figures_readme/isofuel_definitions.jpg" width="500" " />
+  <img src="figures_readme/isofuel_definitions.jpg" width="1000" " />
   </p>
-  <figcaption> Fig.2: Schema for the definition of the most inportant variables and parameters for the isofuel algorithm.</figcaption>
+  <figcaption> Fig.2: Schema for the definition of the most important parameters names for the isofuel algorithm.</figcaption>
 </figure>
+<br>
 <br>
 
 ISOCHRONE_PRUNE_SEGMENTS = number of segments that are used for the pruning process</br>
@@ -90,7 +91,7 @@ heading/course/azimuth/variants = the angular distance towards North on the gran
 lats_per_step: (M,N) array of latitudes for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)</br>
 lons_per_step: (M,N) array of longitude for different routes (shape N=headings+1) and routing steps (shape M=steps,decreasing)
 
-### Communication between mariPower and the WRT
+## Communication between mariPower and the WRT
 Information is transfered via a netCDF file between the WRT and mariPower. The coordinate pairs, courses, the ship speed and the time for which the power estimation needs to be performed are written to this file by the WRT. This information is read by mariPower, the calculation of the ship parameters is performed and the corresponding results are added as separate variables to the xarray dataset. The structure of the xarray dataset after the ship parameters have been written is the following:
 
 ```sh
