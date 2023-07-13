@@ -180,11 +180,11 @@ def save_shp_coastlines_water():
 
     # Define the URL to download the data from
     coast_url = 'https://osmdata.openstreetmap.de/download/coastlines-split-4326.zip'
-    water_url = 'https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip'
+    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-split-4326.zip'
 
-    url = [coast_url, water_url]
-    name = ['coastlines', 'water_polygons']
-    folder = ['coastlines-split-4326', 'water-polygons-split-4326']
+    url = [coast_url, land_url]
+    name = ['coastlines', 'land_polygons']
+    folder = ['coastlines-split-4326', 'land-polygons-split-4326']
 
     for x, y, z in zip(name, url, folder):
         # Check if the unzipped directory already exists in the current directory
@@ -222,8 +222,8 @@ def save_shp_coastlines_water():
                 os.remove(f'{x}.zip')
 
     files = ['/app/coastlines/lines.shp',
-             '/app/water_polygons/water_polygons.shp']
-    table = ['coastlines', 'water_polygons']
+             '/app/land_polygons/land_polygons.shp']
+    table = ['coastlines', 'land_polygons']
 
     for file, table in zip(files, table):
 
