@@ -140,29 +140,29 @@ Both for the isofuel algorithm and the genetic algorithm the same structure of t
 ## The constraints module
 
 ### The input parameters
-As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Several routing segments can be processed in only one request to the constraint module. This means that for the genetic algorithm, only one request needs to be performed for every route during one generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this
+As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Thereby, several routing segments can be processed in only one request. This means that for the genetic algorithm, only one request needs to be performed for every route that is considered in a single generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this
 ```
    safe_crossing(lat_start, lat_end, lon_start, lon_end)
 ```
-then, the arguments ```lat_start```, ```lat_end```, ```lon_start``` and ```lon_end``` correspond to arrays and the size of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following. <br>
+then, the arguments ```lat_start```, ```lat_end```, ```lon_start``` and ```lon_end``` correspond to arrays for which every element characterises a different routing segment. Thus the length of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following. <br>
 
-Let's consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that would be passed to the constraints module for the first routing step in this example are the latitudes and longitudes corresponding to the routing segments a to e which are
-<li>
+Let's consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that are passed to the constraints module for the first routing step are the latitudes and longitudes of start and end points for the routing segments _a_ to _e_ which are
+<ul>
     <li> lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>) </li>
     <li> lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)</li>
     <li> lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)</li>
     <li> lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)</li>
-</li>
+</ul>
 
 i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.<br>
-The form of the parameters sent for the second routing step is a bit more complex_
-<li>
+The arguments that are passed for the second routing step are the start and end coordinates of the routing segments &#945 to &#950:
+<ul>
     <li> lat_start = (lat_start<sub>&#945&#946&#947</sub>, lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#948&#949&#950</sub>, lat_start<sub>&#948&#949&#950</sub>,lat_start<sub>&#948&#949&#950</sub>)</li>
     <li> lat_end = (lat_end<sub>&#945</sub>, lat_end<sub>&#946</sub>,lat_end<sub>&#947</sub>,lat_end<sub>&#948</sub>, lat_end<sub>&#949</sub>,lat_end<sub>&#950</sub>)</li>
     <li> lon_start = (lon_start<sub>&#945&#946&#947</sub>, lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#948&#949&#950</sub>, lon_start<sub>&#948&#949&#950</sub>,lon_start<sub>&#948&#949&#950</sub>)</li>
-    <li> lon_end = (lon_end<sub>&#945&#946&#947</sub>, lon_end<sub>&#945&#946&#947</sub>,lon_end<sub>&#945&#946&#947</sub>,lon_end<sub>&#948&#949&#950</sub>, lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>)</li>
-</li>
-i.e. latitudes of the end points from the previous routing steps will now be the start coordinates of the next routing step.
+    <li> lon_end =  (lon_end<sub>&#945</sub>, lon_end<sub>&#946</sub>,lon_end<sub>&#947</sub>,lon_end<sub>&#948</sub>, lon_end<sub>&#949</sub>,lon_end<sub>&#950</sub>)</li>
+</ul>
+i.e. the latitudes of the end points from the first routing step are now the start coordinates of the current routing step. In contrast to the first routing step, the start coordinates of the second routing step differ for several route segments.
 
 
 
