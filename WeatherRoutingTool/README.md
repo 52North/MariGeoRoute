@@ -147,17 +147,22 @@ As described above [ToDo], the constraint module can be used to check constraint
 then, the arguments ```lat_start```, ```lat_end```, ```lon_start``` and ```lon_end``` correspond to arrays and the size of the arrays is equal to the number of routing segments that are to be checked. While for the genetic algorithm, the separation of a closed route into different routing segments is rather simple, the separation for the isofuel algorithm is more complex. This is, why the passing of the latitudes and longitudes shall be explained in more detail for the isofuel algorithm in the following. <br>
 
 Let's consider only two routing steps of the form that is sketched in Fig. XXX. The parameters that would be passed to the constraints module for the first routing step in this example are the latitudes and longitudes corresponding to the routing segments a to e which are
-
-    - lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>)
-    - lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)
-    - lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)
-    - lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)
+<li>
+    <li> lat_start = (lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>, lat_start<sub>abcde</sub>) </li>
+    <li> lat_end = (lat_end<sub>a</sub>, latend<sub>b</sub>, latend<sub>c</sub>, latend<sub>d</sub>, latend<sub>e</sub>)</li>
+    <li> lon_start = (lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>, lon_start<sub>abcde</sub>)</li>
+    <li> lon_end = (lon_end<sub>a</sub>, lon_end<sub>b</sub>, lon_end<sub>c</sub>, lon_end<sub>d</sub>, lon_end<sub>e</sub>)</li>
+</li>
 
 i.e. since the start coordinates are matching for all routing segments, the elements for the start latitudes and longitudes are all the same.<br>
 The form of the parameters sent for the second routing step is a bit more complex_
-
-    - lat_start = (lat_start<sub>&Alpha&Beta&Gamma</sub>, lat_start<sub>&Alpha&Beta&Gamma</sub>,lat_start<sub>&Alpha&Beta&Gamma</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>, lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>,lat_start<sub>&Delta&Epsilon&Theta</sub>)
-    - -> i.e. latitudes of the end points from the previous routing steps will now be the start coordinates of the next routing step
+<li>
+    <li> lat_start = (lat_start<sub>&#945&#946&#947</sub>, lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#945&#946&#947</sub>,lat_start<sub>&#948&#949&#950</sub>, lat_start<sub>&#948&#949&#950</sub>,lat_start<sub>&#948&#949&#950</sub>)</li>
+    <li> lat_end = (lat_end<sub>&#945</sub>, lat_end<sub>&#946</sub>,lat_end<sub>&#947</sub>,lat_end<sub>&#948</sub>, lat_end<sub>&#949</sub>,lat_end<sub>&#950</sub>)</li>
+    <li> lon_start = (lon_start<sub>&#945&#946&#947</sub>, lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#945&#946&#947</sub>,lon_start<sub>&#948&#949&#950</sub>, lon_start<sub>&#948&#949&#950</sub>,lon_start<sub>&#948&#949&#950</sub>)</li>
+    <li> lon_end = (lon_end<sub>&#945&#946&#947</sub>, lon_end<sub>&#945&#946&#947</sub>,lon_end<sub>&#945&#946&#947</sub>,lon_end<sub>&#948&#949&#950</sub>, lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>,lon_end<sub>&#948&#949&#950</sub>)</li>
+</li>
+i.e. latitudes of the end points from the previous routing steps will now be the start coordinates of the next routing step.
 
 
 
