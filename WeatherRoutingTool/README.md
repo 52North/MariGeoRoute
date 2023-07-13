@@ -140,6 +140,16 @@ Both for the isofuel algorithm and the genetic algorithm the same structure of t
 ## The constraints module
 
 ### The input parameters
+
+<figure>
+  <p align="center">
+  <img src="figures_readme/constraint_arguments.png" height="500" " />
+  </p>
+  <figcaption> Fig.4 Figure for illustrating the concept of passing the information on the routing segments that are to be checked by the constraint module to the respective function. Variable names printed in orange correspond to the naming scheme for the first routing step while variables printed in blue correspond to the naming scheme for the second routing step. </figcaption>
+</figure>
+<br>
+<br>
+
 As described above [ToDo], the constraint module can be used to check constraints for a complete routing segment. Thereby, several routing segments can be processed in only one request. This means that for the genetic algorithm, only one request needs to be performed for every route that is considered in a single generation and for the isofuel algorithm, only one request needs to be performed for every single routing step. This implementation minimises computation time and is achieved by passing arrays of latitudes and longitudes to the constraint module i.e. if the constraint module is called like this
 ```
    safe_crossing(lat_start, lat_end, lon_start, lon_end)
