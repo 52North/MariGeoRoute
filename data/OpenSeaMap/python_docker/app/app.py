@@ -167,7 +167,7 @@ def read_xml_files(filenames):
 
 def save_shp_coastlines_water():
 
-    logger.info("saving shapefiles of coastlines and water polygons")
+    logger.info("saving shapefiles of land polygons and water polygons")
 
     # Set up the database connection
     engine = create_engine(
@@ -179,12 +179,12 @@ def save_shp_coastlines_water():
     #inspector = Inspector.from_engine(engine)
 
     # Define the URL to download the data from
-    coast_url = 'https://osmdata.openstreetmap.de/download/coastlines-split-4326.zip'
-    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-split-4326.zip'
+    coast_url = 'https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip'
+    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip'
 
     url = [coast_url, land_url]
-    name = ['coastlines', 'land_polygons']
-    folder = ['coastlines-split-4326', 'land-polygons-split-4326']
+    name = ['water_polygons', 'land_polygons']
+    folder = ['water-polygons-split-4326', 'land-polygons-complete-4326']
 
     for x, y, z in zip(name, url, folder):
         # Check if the unzipped directory already exists in the current directory
@@ -221,9 +221,9 @@ def save_shp_coastlines_water():
                 # Delete the zip file
                 os.remove(f'{x}.zip')
 
-    files = ['/app/coastlines/lines.shp',
+    files = ['/app/water_polygons/water_polygons.shp',
              '/app/land_polygons/land_polygons.shp']
-    table = ['coastlines', 'land_polygons']
+    table = ['water_polygons', 'land_polygons']
 
     for file, table in zip(files, table):
 
