@@ -179,12 +179,13 @@ def save_shp_coastlines_water():
     #inspector = Inspector.from_engine(engine)
 
     # Define the URL to download the data from
-    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-split-4326.zip'
+
+    land_url = 'https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip'
     water_url = 'https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip'
 
     url = [land_url, water_url]
     name = ['land_polygons', 'water_polygons']
-    folder = ['land-polygons-split-4326', 'water-polygons-split-4326']
+    folder = ['land-polygons-complete-4326', 'water-polygons-split-4326']
 
     for x, y, z in zip(name, url, folder):
         # Check if the unzipped directory already exists in the current directory
