@@ -2,27 +2,27 @@ from .Class import BaseSLD
 
 
 class WaveDir(BaseSLD):
-    layerName = 'wave_dir'
-    layerStyle = 'wave_dir'
+    layer_name = 'wave_dir'
+    layer_style = 'wave_dir'
     scale = 0.01
-    propertyName = 'Mean wave direction from (Mdir)'
+    property_name = 'Mean wave direction from (Mdir)'
     fill = '#000000'
     stroke = '#000000'
-    strokeWidth = 0.6
-    markSize = 25
+    stroke_width = 0.6
+    mark_size = 25
 
     _vals = dict(
-        layerName=layerName,
-        layerStyle=layerStyle,
+        layer_name=layer_name,
+        layer_style=layer_style,
         scale=scale,
-        propertyName=propertyName,
+        property_name=property_name,
         fill=fill,
         stroke=stroke,
-        strokeWidth=strokeWidth,
-        markSize=markSize
+        stroke_width=stroke_width,
+        mark_size=mark_size
     )
 
-    def createSld(self):
+    def create_sld(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
         <StyledLayerDescriptor xmlns="http://www.opengis.net/sld"
           xmlns:ogc="http://www.opengis.net/ogc"
@@ -30,10 +30,10 @@ class WaveDir(BaseSLD):
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sld
          http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd" version="1.0.0">
           <NamedLayer>
-            <Name>{self.layerName}</Name>
+            <Name>{self.layer_name}</Name>
             <UserStyle>
               <FeatureTypeStyle>
-                <Title>{self.layerStyle}</Title>
+                <Title>{self.layer_style}</Title>
                 <Transformation>
                   <ogc:Function name="ras:RasterAsPointCollection">
                     <ogc:Function name="parameter">
@@ -52,11 +52,11 @@ class WaveDir(BaseSLD):
                   <ogc:Filter>
                     <ogc:And>
                     <ogc:PropertyIsGreaterThan>
-                     <ogc:PropertyName>{self.propertyName}</ogc:PropertyName>
+                     <ogc:PropertyName>{self.property_name}</ogc:PropertyName>
                       <ogc:Literal>0</ogc:Literal>
                     </ogc:PropertyIsGreaterThan>
                     <ogc:PropertyIsLessThan>
-                     <ogc:PropertyName>{self.propertyName}</ogc:PropertyName>
+                     <ogc:PropertyName>{self.property_name}</ogc:PropertyName>
                       <ogc:Literal>360</ogc:Literal>
                     </ogc:PropertyIsLessThan>
                       </ogc:And>
@@ -74,14 +74,14 @@ class WaveDir(BaseSLD):
                           </CssParameter>
                         </Fill>
                         <Stroke>
-                          <CssParameter name="stroke-width">{self.strokeWidth}</CssParameter>
+                          <CssParameter name="stroke-width">{self.stroke_width}</CssParameter>
                           <CssParameter name="stroke">{self.stroke}</CssParameter>
                         </Stroke>
                       </Mark>
-                      <Size>{self.markSize}</Size>
+                      <Size>{self.mark_size}</Size>
                       <Rotation>
               
-                        <ogc:PropertyName>{self.propertyName}</ogc:PropertyName>
+                        <ogc:PropertyName>{self.property_name}</ogc:PropertyName>
     
                       </Rotation>
                     </Graphic>
