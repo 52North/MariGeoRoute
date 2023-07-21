@@ -12,6 +12,10 @@ jobs:
   lint:
 
     runs-on: ubuntu-latest
+    env:
+      WEATHER_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_weather.nc'
+      DEPTH_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_depth.nc'
+      BASE_PATH: '${{ github.workspace }}/WeatherRoutingTool'
     strategy:
       matrix:
         python-version: ["3.9"]
@@ -30,6 +34,7 @@ jobs:
           python -m pip install --upgrade pip
           cd WeatherRoutingTool
           if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
+          pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader
       #- name: Install flake8
       #  run: pip install flake8
 #      - name: Run flake8
@@ -49,9 +54,3 @@ jobs:
       #   with:
       #     options: "--check --line-length 120 --verbose --diff"
       #     src: "WeatherRoutingTool/WeatherRoutingTool"
-      # - name: Install pytest
-      #   run: |
-      #     pip install pytest
-      # - name: Test with pytest
-      #   run: |
-      #     pytest WeatherRoutingTool/tests/
