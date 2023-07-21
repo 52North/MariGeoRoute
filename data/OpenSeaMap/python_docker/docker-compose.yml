@@ -12,15 +12,16 @@ services:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
+      POSTGRES_HOST: db
     restart: on-failure
     volumes:
       - ./data:/data
-      
     depends_on:
       - db
 
   db:
     image: postgis/postgis:latest
+    shm_size: 1g
     container_name: db_${COMPOSE_PROJECT_NAME}
     environment:
       POSTGRES_DB: mydatabase
@@ -29,7 +30,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - ./dbdata:/var/lib/postgresql/data
+      - dbdata:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -44,3 +45,7 @@ services:
       - 5051:80
     # volumes:
     #   - ./pgadmin-data:/pgadmin
+
+volumes:
+  dbdata:
+    name: ${COMPOSE_PROJECT_NAME}-dbdata
