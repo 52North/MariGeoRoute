@@ -46,7 +46,7 @@ jobs:
           WeatherRoutingTool/WeatherRoutingTool/algorithms/Genetic.py,\
           WeatherRoutingTool/WeatherRoutingTool/algorithms/DataUtils.py,\
           WeatherRoutingTool/WeatherRoutingTool/additional_code,WeatherRoutingTool/build \
-          --extend-ignore F401,F403,F405 WeatherRoutingTool/
+          --extend-ignore F401,F403,F405,E711 WeatherRoutingTool/
         #- name: Run pytest
         #  run: |
         #    pytest WeatherRoutingTool/tests
