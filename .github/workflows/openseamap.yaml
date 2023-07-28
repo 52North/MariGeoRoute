@@ -43,6 +43,4 @@ jobs:
         with:
           context: ./data/OpenSeaMap/docker
           push: ${{ github.event_name != 'pull_request' }}
-          secrets: |
-            GH_TOKEN=${{ secrets.GH_TOKEN }}
           tags: ${{ steps.meta.outputs.tags }}"
