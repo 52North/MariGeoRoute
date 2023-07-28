@@ -1,0 +1,48 @@
+name: OpenSeaMap workflow
+
+on:
+  # push:
+  #   branches:
+  #     - 'main'
+  #   paths:
+  #     - 'data/OpenSeaMap/docker/**'
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Please provide the Docker Image tag, e.g. v1.0.0'
+        required: true
+        type: string
+
+jobs:
+  push_to_registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildkit env
+        uses: docker/setup-buildx-action@v2
+
+      - name: Extract metadata (tags) for tagging Docker Image
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: 52north/openseamap-importer
+          tags: |
+            type=match,pattern=v(.*),group=1,value=${{ github.event.inputs.tags }}
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./data/OpenSeaMap/docker
+          push: ${{ github.event_name != 'pull_request' }}
+          secrets: |
+            GH_TOKEN=${{ secrets.GH_TOKEN }}
+          tags: ${{ steps.meta.outputs.tags }}"
