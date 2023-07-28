@@ -1,5 +1,11 @@
 FROM ubuntu:latest
 
+LABEL "org.opencontainers.image.authors=Martin Pontius <m.pontius@52north.org>"
+LABEL "org.opencontainers.image.vendor=52°North GmbH"
+LABEL "org.opencontainers.image.description=Docker Image for importing OpenSeaMap data into a PostgreSQL database"
+LABEL "org.opencontainers.image.title=OpenSeaMap importer"
+LABEL "org.opencontainers.image.url=https://github.com/52North/MariGeoRoute/tree/main/data/OpenSeaMap/docker"
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV POSTGRES_HOST=
