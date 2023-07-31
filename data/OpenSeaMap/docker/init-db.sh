@@ -13,9 +13,15 @@ EOF
 echo "${POSTGRES_HOST}:${POSTGRES_PORT}:${POSTGRES_DB}:${POSTGRES_USER}:${POSTGRES_PASSWORD}" > ~/.pgpass && chmod 0600 ~/.pgpass
 
 # Wait until postgres service is running
+counter=0
 until psql -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB} -P "pager=off" -c '\l'; do
+  if [[ ${counter} -ge ${MAX_RETRIES} ]]; then
+    echo "Postgres is unavailable and max retries is reached - exiting"
+    exit
+  fi
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 1
+  ((counter++))
 done
 
 # -------------------------------------------------------- #
