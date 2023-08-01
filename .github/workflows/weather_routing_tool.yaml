@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           # install dependencies required by cartopy
-          apt-get update && apt-get -y install libproj-dev proj-data proj-bin libgeos-dev
+          sudo apt-get update && sudo apt-get -y install libproj-dev proj-data proj-bin libgeos-dev
           python -m pip install --upgrade pip
           cd WeatherRoutingTool
           if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
