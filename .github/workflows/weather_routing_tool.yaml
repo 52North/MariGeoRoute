@@ -12,8 +12,7 @@ on:
        - 'main'
      paths:
        - 'WeatherRoutingTool/**'
-
-  workflow_dispatch:
+   workflow_dispatch:
 
 jobs:
   lint:
