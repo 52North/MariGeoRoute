@@ -7,7 +7,7 @@ on:
      paths:
        - 'WeatherRoutingTool/**'
 
-   pull:
+   pull_request:
      branches:
        - 'main'
      paths:
