@@ -1,12 +1,19 @@
 name: Weather Routing Tool Workflow
 
 on:
-  # push:
-  #   branches:
-  #     - 'MakeWRTImportable'
-  #   paths:
-  #     - 'WeatherRoutingTool/**'
-  workflow_dispatch:
+   push:
+     branches:
+       - 'main'
+     paths:
+       - 'WeatherRoutingTool/**'
+
+   pull:
+     branches:
+       - 'main'
+     paths:
+       - 'WeatherRoutingTool/**'
+
+workflow_dispatch:
 
 jobs:
   lint:
