@@ -19,11 +19,10 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      WEATHER_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_weather.nc'
-      DEPTH_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_depth.nc'
-      BASE_PATH: '${{ github.workspace }}/WeatherRoutingTool'
+      WRT_WEATHER_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_weather.nc'
+      WRT_DEPTH_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_depth.nc'
+      WRT_BASE_PATH: '${{ github.workspace }}/WeatherRoutingTool'
       GL_TOKEN: '${{ secrets.GL_TOKEN }}'
-      GL_USER: '${{ secrets.GL_USER }}'
     strategy:
       matrix:
         python-version: [ "3.9" ]
@@ -43,7 +42,7 @@ jobs:
           cd WeatherRoutingTool
           if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
           pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader
-          pip install git+https://${GL_USER}:${GL_TOKEN}@collaborating.tuhh.de/ces1314/maripower.git
+          pip install git+https://git:${GL_TOKEN}@collaborating.tuhh.de/ces1314/maripower.git
       - name: Install flake8
         run: pip install flake8
       - name: Run flake8
