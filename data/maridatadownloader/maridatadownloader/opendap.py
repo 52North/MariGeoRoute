@@ -209,8 +209,8 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             dataset_merged.to_netcdf(file_out)
         return dataset_merged
 
-    def _get_url(self, datetime_obj):
-        """E.g. https://rda.ucar.edu/thredds/dodsC/files/g/ds084.1/2023/20230501/gfs.0p25.2023050100.f000.grib2"""
+    def _get_url(self, datetime_obj):  
+        """E.g. https://thredds.rda.ucar.edu/thredds/catalog/dodsC/files/g/ds084.1/2023/20230501/gfs.0p25.2023050100.f000.grib2"""
         year = f'{datetime_obj.year}'
         month = f'{datetime_obj.month:02d}'
         day = f'{datetime_obj.day:02d}'
@@ -231,7 +231,7 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             forecast_time = 'f003'
         else:
             raise Exception()
-        url = 'https://rda.ucar.edu/thredds/dodsC/files/g/ds084.1/' + \
+        url = 'https://thredds.rda.ucar.edu/thredds/dodsC/files/g/ds084.1/' + \
               year + '/' + year + month + day + '/' + 'gfs.0p25.' + \
               year + month + day + hour + '.' + forecast_time + '.grib2'
         return url
