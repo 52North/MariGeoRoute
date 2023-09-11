@@ -1,4 +1,4 @@
-from maridatadownloader.opendap import DownloaderOpendapCMEMS, DownloaderOpendapGFS
+from maridatadownloader.opendap import DownloaderOpendapCMEMS, DownloaderOpendapGFS, DownloaderOpendapETOPONCEI
 
 
 class DownloaderFactory:
@@ -16,6 +16,8 @@ class DownloaderFactory:
                 assert username, "username is required for platform=cmems"
                 assert password, "password is required for platform=cmems"
                 return DownloaderOpendapCMEMS(kwargs['product'], kwargs['product_type'], username, password)
+            elif platform.lower() == 'etoponcei':
+                return DownloaderOpendapETOPONCEI()
             else:
                 raise ValueError(platform)
         else:

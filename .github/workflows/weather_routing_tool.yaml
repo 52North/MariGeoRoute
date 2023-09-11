@@ -1,0 +1,71 @@
+name: Weather Routing Tool Workflow
+
+on:
+   push:
+     branches:
+       - 'main'
+     paths:
+       - 'WeatherRoutingTool/**'
+
+   pull_request:
+     branches:
+       - 'main'
+     paths:
+       - 'WeatherRoutingTool/**'
+   workflow_dispatch:
+
+jobs:
+  lint:
+
+    runs-on: ubuntu-latest
+    env:
+      WRT_WEATHER_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_weather.nc'
+      WRT_DEPTH_DATA: '${{ github.workspace }}/WeatherRoutingTool/tests/data/reduced_testdata_depth.nc'
+      WRT_BASE_PATH: '${{ github.workspace }}/WeatherRoutingTool'
+      GL_TOKEN: '${{ secrets.GL_TOKEN }}'
+    strategy:
+      matrix:
+        python-version: [ "3.9" ]
+        #python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          # install dependencies required by cartopy
+          sudo apt-get update && sudo apt-get -y install libproj-dev proj-data proj-bin libgeos-dev
+          python -m pip install --upgrade pip
+          cd WeatherRoutingTool
+          if [ -f requirements.test.txt ]; then pip install -r requirements.test.txt; fi
+          pip install git+https://github.com/52North/MariGeoRoute#subdirectory=data/maridatadownloader
+          pip install git+https://git:${GL_TOKEN}@collaborating.tuhh.de/ces1314/maripower.git
+      - name: Install flake8
+        run: pip install flake8
+      - name: Run flake8
+        run: |
+          flake8 --max-line-length=120  \
+          --exclude WeatherRoutingTool/WeatherRoutingTool/algorithms/RunGenetic.py,\
+          WeatherRoutingTool/WeatherRoutingTool/algorithms/Optimize.py,\
+          WeatherRoutingTool/WeatherRoutingTool/algorithms/GeneticUtils.py,\
+          WeatherRoutingTool/WeatherRoutingTool/algorithms/Genetic.py,\
+          WeatherRoutingTool/WeatherRoutingTool/algorithms/DataUtils.py,\
+          WeatherRoutingTool/WeatherRoutingTool/additional_code,WeatherRoutingTool/build \
+          --extend-ignore F401,F403,F405,E711 WeatherRoutingTool/
+      - name: Run pytest
+        run: |
+          pytest WeatherRoutingTool/tests
+        # uses: suo/flake8-github-action@releases/v1
+        # with:
+        #   # NOTE: this needs to be the same as the job name
+        #   checkName: 'lint'
+      # - name: Lint with Black
+      #   #uses: psf/black@stable
+      #   # available black versions: 23.1.0 -> 23.3.0 -> 23.7.0 <- latest
+      #   uses: psf/black@23.3.0
+      #   with:
+      #     options: "--check --line-length 120 --verbose --diff"
+      #     src: "WeatherRoutingTool/WeatherRoutingTool"

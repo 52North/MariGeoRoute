@@ -13,6 +13,7 @@ from maridatadownloader.utils import parse_datetime
 
 logger = logging.getLogger(__name__)
 
+
 # Currently only OPeNDAP is supported, however, the considered data providers CMEMS and GFS (NCEI) offer further
 # data access mechanisms like FTP, WCS (Web Coverage Service) or NCSS (NetCDF Subset Service).
 
@@ -50,6 +51,9 @@ class DownloaderOpendap(DownloaderBase):
          - https://docs.xarray.dev/en/stable/user-guide/indexing.html
         """
         # Copy the sel/isel dicts because key-value pairs might be deleted from them
+        isel_dict_copy = None
+        sel_dict_copy = None
+
         if sel_dict:
             assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
             sel_dict_copy = dict(sel_dict)
@@ -118,9 +122,9 @@ class DownloaderOpendap(DownloaderBase):
         if type(self.filename_or_obj) == list:
             self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
         else:
-            self.dataset = xarray.open_dataset(self.filename_or_obj, decode_coords="all")
-        # ToDO: use cache=False here or in _transform?
-        # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
+            self.dataset = xarray.open_dataset(self.filename_or_obj,
+                                               decode_coords="all")  # ToDO: use cache=False here or in _transform?
+            # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
 
     def release_resources(self):
         """Release resources from dataset using xarray.Dataset.close()"""
@@ -150,7 +154,8 @@ class DownloaderOpendapGFS(DownloaderOpendap):
     OPeNDAP downloader class for the Global Forecast System (GFS)
 
     By default, this class provides access to the GFS weather forecast data (-2 days up to +16 days).
-    If access to archived forecast data is desired, the user must provide a time window (e.g., {'time': ('2023-05-01T00:00:00', '2023-05-02T12:00:00')}) when instantiating the class.
+    If access to archived forecast data is desired, the user must provide a time window (e.g., {'time': (
+    '2023-05-01T00:00:00', '2023-05-02T12:00:00')}) when instantiating the class.
 
     References:
      - https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php
@@ -183,11 +188,10 @@ class DownloaderOpendapGFS(DownloaderOpendap):
                 assert time_start <= time_end, "Start time must be smaller or equal to end time"
                 if time_end < (datetime.now(timezone.utc) - timedelta(days=3)):
                     print("Access archived GFS data")
-                    return self._download_archived_data(time_start, time_end, parameters=parameters,
-                                                        sel_dict=sel_dict, isel_dict=isel_dict,
-                                                        file_out=file_out, **kwargs)
-        return super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict,
-                                file_out=file_out, **kwargs)
+                    return self._download_archived_data(time_start, time_end, parameters=parameters, sel_dict=sel_dict,
+                                                        isel_dict=isel_dict, file_out=file_out, **kwargs)
+        return super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict, file_out=file_out,
+                                **kwargs)
 
     def get_filename_or_obj(self, **kwargs):
         return 'https://thredds.ucar.edu/thredds/dodsC/grib/NCEP/GFS/Global_0p25deg/Best'
@@ -210,7 +214,8 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         return dataset_merged
 
     def _get_url(self, datetime_obj):
-        """E.g. https://rda.ucar.edu/thredds/dodsC/files/g/ds084.1/2023/20230501/gfs.0p25.2023050100.f000.grib2"""
+        """E.g. https://thredds.rda.ucar.edu/thredds/catalog/dodsC/files/g/ds084.1/2023/20230501/gfs.0p25.2023050100
+        .f000.grib2"""
         year = f'{datetime_obj.year}'
         month = f'{datetime_obj.month:02d}'
         day = f'{datetime_obj.day:02d}'
@@ -231,9 +236,8 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             forecast_time = 'f003'
         else:
             raise Exception()
-        url = 'https://rda.ucar.edu/thredds/dodsC/files/g/ds084.1/' + \
-              year + '/' + year + month + day + '/' + 'gfs.0p25.' + \
-              year + month + day + hour + '.' + forecast_time + '.grib2'
+        url = ('https://thredds.rda.ucar.edu/thredds/dodsC/files/g/ds084.1/' + year + '/' + year + month + day + '/' +
+               'gfs.0p25.' + year + month + day + hour + '.' + forecast_time + '.grib2')
         return url
 
     def _get_urls_time_window(self, time_start, time_end):
@@ -323,3 +327,24 @@ class DownloaderOpendapCMEMS(DownloaderOpendap):
         self.product_type = product_type
         self.filename_or_obj = self.get_filename_or_obj()
         self.open_dataset()
+
+
+class DownloaderOpendapETOPONCEI(DownloaderOpendap):
+    """
+    OPeNDAP downloader class for topology and bathymetrie data from NCEI
+
+    References:
+        -  https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset
+        =globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc
+    """
+
+    def __init__(self, **kwargs):
+        """
+        :param kwargs:
+        """
+        super().__init__('etoponcei', **kwargs)
+
+    def get_filename_or_obj(self, **kwargs):
+        url = ('https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/30s/30s_bed_elev_netcdf'
+               '/ETOPO_2022_v1_30s_N90W180_bed.nc')
+        return url

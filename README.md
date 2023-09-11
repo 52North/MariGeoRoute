@@ -7,6 +7,10 @@ Collection of tools and prototypes for the [MariData project](https://maridata.o
 - [maridatadownloader](https://github.com/52North/MariGeoRoute/tree/main/data/maridatadownloader)
 - [WeatherRoutingTool](https://github.com/52North/MariGeoRoute/tree/main/WeatherRoutingTool)
 
+## Docker Images
+
+- [OpenSeaMap importer](https://github.com/52North/MariGeoRoute/tree/main/data/OpenSeaMap/docker)
+
 ## Funding
 
 | Project/Logo | Description |

@@ -12,6 +12,12 @@ import pressure
 AVAILABLE_GROUPS = ['depths', 'heatmaps', 'pressure', 'wave_dir', 'wind']
 
 
+def none_or_str(value):
+    if value == 'None':
+        return None
+    return value
+
+
 def parse_parameter() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Create sld files and optionally upload them to GeoServer.')
     parser.add_argument('-f', '--folder',
@@ -32,6 +38,9 @@ def parse_parameter() -> argparse.Namespace:
     parser.add_argument('-p', '--password',
                         help="GeoServer password. Defaults to 'geoserver'.",
                         required=False, type=str, default='geoserver')
+    parser.add_argument('--workspace',
+                        help="GeoServer workspace. Defaults to 'geonode'.",
+                        required=False, type=none_or_str, default='geonode')
 
     args = parser.parse_args()
 
@@ -73,26 +82,35 @@ def parse_parameter() -> argparse.Namespace:
     url         : '{}'
     user        : '{}'
     pass        : '{}'
-    """.format(args.groups, args.folder, args.upload, args.url, args.user, len(args.password) * '*'))
+    workspace   : '{}'
+    """.format(args.groups, args.folder, args.upload, args.url, args.user, len(args.password) * '*', args.workspace))
 
     return args
 
 
-def put_slds(path, url='http://localhost/geoserver/rest', username='admin', password='geoserver'):
+def put_slds(path, url='http://localhost/geoserver/rest', username='admin', password='geoserver', workspace='geonode'):
     filepaths = [os.path.join(path, file) for file in os.listdir(path)]
 
     for filepath in filepaths:
         # FIXME: check if style already exists
         # check for exceptions
-        styleName = os.path.splitext(os.path.basename(filepath))[0]
-        post = requests.post(url=f"{url}/styles",
-                             data=f"<style><name>{styleName}</name><filename>{styleName}.sld</filename></style>",
+        style_name = os.path.splitext(os.path.basename(filepath))[0]
+        if workspace:
+            request_url = f"{url}/workspaces/{workspace}/styles"
+        else:
+            request_url = f"{url}/styles"
+        post = requests.post(url=request_url,
+                             data=f"<style><name>{style_name}</name><filename>{style_name}.sld</filename></style>",
                              auth=(username, password),
                              headers={'content-type': 'application/xml'})
 
         with open(filepath) as f:
             sld_data = f.read()
-            put = requests.put(url=f"{url}/styles/{styleName}",
+            if workspace:
+                request_url = f"{url}/workspaces/{workspace}/styles/{style_name}"
+            else:
+                request_url = f"{url}/styles/{style_name}"
+            put = requests.put(url=request_url,
                                data=sld_data,
                                auth=(username, password),
                                headers={'content-type': 'application/vnd.ogc.sld+xml'},
@@ -118,7 +136,8 @@ def main():
         put_slds(path=args.folder,
                  username=args.user,
                  password=args.password,
-                 url=args.url)
+                 url=args.url,
+                 workspace=args.workspace)
 
 
 if __name__ == '__main__':

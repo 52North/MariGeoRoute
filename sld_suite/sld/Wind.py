@@ -2,33 +2,33 @@ from .Class import BaseSLD
 
 
 class Windbarbs(BaseSLD):
-    layerName = 'wind_world'
-    layerStyle = 'wind_spd_dir'
-    scale = 0.05
+    layer_name = 'wind_world'
+    layer_style = 'wind_spd_dir'
+    scale = 0.005
     u = 'u'
     v = 'v'
-    barbStroke = '#676b70'
-    barbStrokeWidth = 3
-    # maybe tie bar-and cricleSize together eg cS = round(bS/10)
-    barbSize = 50
-    circleSize = 4
-    circleFill = '#000000'
+    barb_stroke = '#676b70'
+    barb_stroke_width = 3
+    # maybe tie barb_size cand circle_size together e.g. circle_size = round(barb_size/10)
+    barb_size = 50
+    circle_size = 4
+    circle_fill = '#000000'
 
     _vals = dict(
-        layerName=layerName,
-        layerStyle=layerStyle,
+        layer_name=layer_name,
+        layer_style=layer_style,
         scale=scale,
         u=u,
         v=v,
-        barbStroke=barbStroke,
-        barbStrokeWidth=barbStrokeWidth,
-        barbSize=barbSize,
-        circleSize=circleSize,
-        circleFill=circleFill
+        barb_stroke=barb_stroke,
+        barb_stroke_width=barb_stroke_width,
+        barb_size=barb_size,
+        circle_size=circle_size,
+        circle_fill=circle_fill
     )
 
-    def createSld(self):
-        barbString = f"""sqrt(({self.u} * {self.u}) + {self.v} * {self.v}))"""
+    def create_sld(self):
+        barb_string = f"""{{sqrt(({self.u} * {self.u}) + ({self.v} * {self.v}))}}"""
         return (f"""<?xml version="1.0" encoding="UTF-8"?>
 <StyledLayerDescriptor xmlns="http://www.opengis.net/sld"
   xmlns:ogc="http://www.opengis.net/ogc"
@@ -36,10 +36,10 @@ class Windbarbs(BaseSLD):
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sld
  http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd" version="1.0.0">
   <NamedLayer>
-    <Name>{self.layerName}</Name>
+    <Name>{self.layer_name}</Name>
     <UserStyle>
       <FeatureTypeStyle>
-        <Title>{self.layerStyle}</Title>
+        <Title>{self.layer_style}</Title>
         <Transformation>
           <ogc:Function name="ras:RasterAsPointCollection">
             <ogc:Function name="parameter">
@@ -60,16 +60,16 @@ class Windbarbs(BaseSLD):
             <Graphic>
               <Mark>
                 <WellKnownName>
-                windbarbs://default(${barbString})[m/s]               
+                windbarbs://default(${barb_string})[m/s]               
                 </WellKnownName>
 
                 <Stroke>
-                  <CssParameter name="stroke">{self.barbStroke}</CssParameter>
-                  <CssParameter name="stroke-width">{self.barbStrokeWidth}</CssParameter>
+                  <CssParameter name="stroke">{self.barb_stroke}</CssParameter>
+                  <CssParameter name="stroke-width">{self.barb_stroke_width}</CssParameter>
                 </Stroke>
 
               </Mark>
-              <Size>{self.barbSize}</Size>
+              <Size>{self.barb_size}</Size>
               <Rotation>
                 <ogc:Add>
                   <ogc:Function name="toDegrees">
@@ -89,7 +89,7 @@ class Windbarbs(BaseSLD):
                 <WellKnownName>circle</WellKnownName>
                 <Fill>
                   <CssParameter name="fill">
-                    <ogc:Literal>{self.circleFill}</ogc:Literal>
+                    <ogc:Literal>{self.circle_fill}</ogc:Literal>
                   </CssParameter>
                 </Fill>
               </Mark>

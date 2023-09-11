@@ -2,5 +2,5 @@ from sld import Pressure
 
 def create_xml(outfolder='./xml'):
     press = Pressure()
-    press.propertyName = 'press'
-    press.writeSld(outfolder=outfolder)
+    press.property_name = 'press'
+    press.write_sld(outfolder=outfolder)

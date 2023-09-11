@@ -1,29 +1,29 @@
 import os
 
 class BaseSLD:
-    layerName = ''
-    layerStyle = ''
+    layer_name = ''
+    layer_style = ''
     _vals = dict(
 
     )
 
     def initvals(self):
         print(self._vals)
-        return (self._vals)
+        return self._vals
 
     @staticmethod
-    def categorize(catColors, catNums):
-        res = [f"""<ColorMapEntry color = {col} quantity = '{catNums[i]}'/>""" for i, col in enumerate(catColors)]
+    def categorize(cat_colors, cat_nums):
+        res = [f"""<ColorMapEntry color = {col} quantity = '{cat_nums[i]}'/>""" for i, col in enumerate(cat_colors)]
         return "\n".join(res)
 
-    def createSld(self):
+    def create_sld(self):
         raise NotImplementedError("This function has to be implemented by the child class!")
 
-    def printSld(self):
-        print(self.createSld())
+    def print_sld(self):
+        print(self.create_sld())
 
-    def writeSld(self, outfolder='./xml', outfile=None):
-        sld = self.createSld()
+    def write_sld(self, outfolder='./xml', outfile=None):
+        sld = self.create_sld()
 
-        with open(os.path.join(outfolder, f'{outfile or self.layerName}.xml'), 'w+') as file:
+        with open(os.path.join(outfolder, f'{outfile or self.layer_name}.xml'), 'w+') as file:
             file.write(sld)

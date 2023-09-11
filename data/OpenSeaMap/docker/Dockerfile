@@ -1,12 +1,31 @@
 FROM ubuntu:latest
 
+LABEL "org.opencontainers.image.authors"="Martin Pontius <m.pontius@52north.org>"
+LABEL "org.opencontainers.image.vendor"="52°North GmbH"
+LABEL "org.opencontainers.image.description"="Docker Image for importing OpenSeaMap data into a PostgreSQL database"
+LABEL "org.opencontainers.image.title"="OpenSeaMap importer"
+LABEL "org.opencontainers.image.url"="https://github.com/52North/MariGeoRoute/tree/main/data/OpenSeaMap/docker"
+
 ARG DEBIAN_FRONTEND=noninteractive
 
+ENV POSTGRES_HOST=
+ENV POSTGRES_PORT=
 ENV POSTGRES_DB=
+ENV POSTGRES_SCHEMA=
 ENV POSTGRES_USER=
 ENV POSTGRES_PASSWORD=
+ENV MAX_RETRIES=15
 
-RUN apt-get update && apt-get install wget openjdk-11-jre-headless postgresql -y
+ENV SEAMARKS_FILE=/tmp/world.osm
+ENV SEAMARKS_URL=https://tiles.openseamap.org/seamark/world.osm
+ENV LAND_POLYGON_SHP=/tmp/land-polygons-complete-4326/land_polygons.shp
+ENV LAND_POLYGON_URL=https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip
+ENV LAND_POLYGON_ZIP=/tmp/land_polygons.zip
+ENV WATER_POLYGON_SHP=/tmp/water-polygons-split-4326/water_polygons.shp
+ENV WATER_POLYGON_URL=https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip
+ENV WATER_POLYGON_ZIP=/tmp/water_polygons.zip
+
+RUN apt-get update && apt-get install wget unzip openjdk-11-jre-headless postgresql gdal-bin -y
 
 # Install osmosis (https://wiki.openstreetmap.org/wiki/Osmosis/Installation#Linux)
 RUN wget https://github.com/openstreetmap/osmosis/releases/download/0.48.3/osmosis-0.48.3.tgz && \
@@ -16,15 +35,6 @@ RUN wget https://github.com/openstreetmap/osmosis/releases/download/0.48.3/osmos
     tar xvfz osmosis-0.48.3.tgz && \
     rm osmosis-0.48.3.tgz && \
     chmod a+x bin/osmosis
-
-# Downloaded from https://download.geofabrik.de/europe/iceland.html
-# COPY ./data/iceland-latest.osm.pbf /tmp/data.osm.pbf
-# Downloaded from https://tiles.openseamap.org/seamark/world.osm
-# COPY ./data/world.osm /tmp/data.osm
-
-RUN if [ ! -f /tmp/data.osm ]; then \
-        wget http://tiles.openseamap.org/seamark/world.osm -O /tmp/data.osm; \
-    fi
 
 COPY ./init-db.sh /init-db.sh
 
