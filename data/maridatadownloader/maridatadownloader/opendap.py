@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime, timezone, timedelta, time
 
 # import dask
@@ -19,7 +18,21 @@ logger = logging.getLogger(__name__)
 
 
 class DownloaderOpendap(DownloaderBase):
-    """OPeNDAP downloader class"""
+    """
+    OPeNDAP downloader class based on xarray
+
+    The download method provides a convenient way to download data via an OPeNDAP connection including some checks
+    to add robustness and the possibility to apply preprocessing and postprocessing.
+    If it doesn't suit the requirements of the use case, it is also possible to directly work on the xarray.Dataset
+    (self.dataset) and use all the methods provided by xarray directly
+    (https://docs.xarray.dev/en/latest/generated/xarray.Dataset.html#xarray.Dataset).
+
+    Coordinate subsetting with xarray can be done in different ways, e.g.:
+     - by value or by index
+     - allowing only exact matches or inexact matches (including different methods for inexact matches)
+     - allowing off-grid subsetting using interpolation (including different interpolation methods)
+    The download method can be used in all the aforementioned ways. For details check the method documentation.
+    """
 
     def __init__(self, platform, username=None, password=None, **kwargs):
         super().__init__('opendap', username=username, password=password, **kwargs)
@@ -35,72 +48,73 @@ class DownloaderOpendap(DownloaderBase):
         except Exception:
             return False
 
-    def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, **kwargs):
+    def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, interpolate=False, **kwargs):
         """
-        :param sel_dict: dict
-            value selection, e.g. {'longitude': slice(10.25, 20.75)} or {'longitude': 10.25}
-        :param isel_dict: dict
-            index selection e.g. {'longitude': slice(0, 10)} or {'longitude': 0}
         :param parameters: str or list
+        :param sel_dict: dict
+            Coordinate selection by value, e.g. {'longitude': slice(10.25, 20.75)} or {'longitude': 10.25}
+        :param isel_dict: dict
+            Coordinate selection by index e.g. {'longitude': slice(0, 10)} or {'longitude': 0}
         :param file_out:
-        :param args:
+            File name used to save the dataset as NetCDF file. No file is saved without specifying file_out
+        :param interpolate: bool
+            Set to True if data should be downloaded off-grid so that interpolation is applied. Note that the
+            sel method supports inexact matches but doesn't support actual interpolation (off-grid values).
         :param kwargs:
+            Additional keyword arguments are passed to the corresponding method sel, isel or interp.
+            For details on which arguments can be used check the references below.
         :return: xarray.Dataset
 
         References:
          - https://docs.xarray.dev/en/stable/user-guide/indexing.html
+         - https://docs.xarray.dev/en/latest/generated/xarray.Dataset.sel.html
+         - https://docs.xarray.dev/en/latest/generated/xarray.Dataset.isel.html
+         - https://docs.xarray.dev/en/latest/user-guide/interpolation.html
+         - https://docs.xarray.dev/en/latest/generated/xarray.Dataset.interp.html
         """
-        # Copy the sel/isel dicts because key-value pairs might be deleted from them
-        isel_dict_copy = None
-        sel_dict_copy = None
-
+        # Make a copy of the sel/isel dict because key-value pairs might be deleted from it
+        coord_dict = {}
+        method = None
         if sel_dict:
             assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
-            sel_dict_copy = dict(sel_dict)
-            isel_dict_copy = None
+            coord_dict = dict(sel_dict)
+            method = 'sel'
         if isel_dict:
             assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
-            isel_dict_copy = dict(isel_dict)
-            sel_dict_copy = None
+            coord_dict = dict(isel_dict)
+            method = 'isel'
 
+        if interpolate:
+            assert not isel_dict, "interpolation cannot be applied with index subsetting"
+            method = 'interp'
+
+        # Apply preprocessing
         try:
-            dataset = self._preprocessing(parameters=parameters, sel_dict=sel_dict_copy, isel_dict=isel_dict_copy)
+            dataset = self._preprocessing(parameters=parameters, coord_dict=coord_dict)
         except NotImplementedError:
             dataset = self.dataset
 
-        # Parameter and coordinate subsetting
+        # Apply parameter subsetting
         if parameters:
-            if sel_dict_copy:
-                # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict_copy.keys()):
-                    if key not in dataset[parameters].dims:
-                        del sel_dict_copy[key]
-                dataset_sub = dataset[parameters].sel(**sel_dict_copy)
-            elif isel_dict_copy:
-                # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict_copy.keys()):
-                    if key not in dataset[parameters].dims:
-                        del isel_dict_copy[key]
-                dataset_sub = dataset[parameters].isel(**isel_dict_copy)
-            else:
-                dataset_sub = dataset[parameters]
+            dataset_sub = dataset[parameters]
         else:
-            # all parameters
-            if sel_dict_copy:
-                # Check if the selection keys are valid coordinate names
-                for key in list(sel_dict_copy.keys()):
-                    if key not in dataset.dims:
-                        del sel_dict_copy[key]
-                dataset_sub = dataset.sel(**sel_dict_copy)
-            elif isel_dict_copy:
-                # Check if the selection keys are valid coordinate names
-                for key in list(isel_dict_copy.keys()):
-                    if key not in dataset.dims:
-                        del isel_dict_copy[key]
-                dataset_sub = dataset.isel(**isel_dict_copy)
-            else:
-                dataset_sub = dataset
+            dataset_sub = dataset
 
+        # Check if the selection keys are valid dimension names
+        if coord_dict:
+            for key in list(coord_dict.keys()):
+                if key not in dataset_sub.dims:
+                    del coord_dict[key]
+
+        # Apply coordinate subsetting
+        if method == 'sel':
+            dataset_sub = dataset_sub.sel(**coord_dict, **kwargs)
+        elif method == 'isel':
+            dataset_sub = dataset_sub.isel(**coord_dict, **kwargs)
+        elif method == 'interp':
+            dataset_sub = dataset_sub.interp(**coord_dict, **kwargs)
+
+        # Apply postprocessing
         try:
             dataset_sub = self._postprocessing(dataset_sub)
         except NotImplementedError:
@@ -123,7 +137,8 @@ class DownloaderOpendap(DownloaderBase):
             self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
         else:
             self.dataset = xarray.open_dataset(self.filename_or_obj,
-                                               decode_coords="all")  # ToDO: use cache=False here or in _transform?
+                                               decode_coords="all")
+            # ToDO: use cache=False here or in _preprocessing?
             # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
 
     def release_resources(self):
@@ -140,13 +155,13 @@ class DownloaderOpendap(DownloaderBase):
             self.filename_or_obj = self.get_filename_or_obj()
         self.open_dataset()
 
-    def _preprocessing(self, parameters=None, sel_dict=None, isel_dict=None):
-        """Apply operations on the xarray.Dataset before download, e.g. transform coordinates"""
-        raise NotImplementedError("._preprocessing() can optionally be overridden.")
-
     def _postprocessing(self, dataset):
         """Apply operations on the xarray.Dataset after download, e.g. rename variables"""
         raise NotImplementedError("._postprocessing() can optionally be overridden.")
+
+    def _preprocessing(self, parameters=None, coord_dict=None):
+        """Apply operations on the xarray.Dataset before download, e.g. transform coordinates"""
+        raise NotImplementedError("._preprocessing() can optionally be overridden.")
 
 
 class DownloaderOpendapGFS(DownloaderOpendap):
@@ -166,18 +181,20 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         self.forecast_times = [time(0), time(3), time(6), time(9), time(12), time(15), time(18), time(21)]
         super().__init__('gfs', username=username, password=password, **kwargs)
 
-    def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, **kwargs):
+    def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, interpolate=False, **kwargs):
         # ToDo: add support for array indexer
         if sel_dict:
             if 'time' in sel_dict:
                 time = sel_dict['time']
             elif 'time1' in sel_dict:
                 time = sel_dict['time1']
-            elif 'time2' in kwargs:
+            elif 'time2' in sel_dict:
                 time = sel_dict['time2']
             else:
                 time = None
             if time:
+                # FIXME: support arrays (lists, xarray.DataArrays, numpy.ndarrays?)
+                # FIXME: allow passing datetime objects directly (times have to be offset-aware)
                 if type(time) == str:
                     time_start = time_end = parse_datetime(time)
                 elif type(time) == slice:
@@ -201,11 +218,14 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         self.urls = self._get_urls_time_window(time_start, time_end)
         self.datasets = []
         for url in self.urls:
+            # FIXME: in sel_dict and isel_dict use only the specific time slice?
             self.set_filename_or_obj(url)
             dataset_temp = super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict,
                                             file_out=None, **kwargs)
             self.datasets.append(dataset_temp)
         dataset_merged = self._merge_datasets(self.datasets)
+        # ToDo: add interpolation after merging (buffer needed?)
+        # dataset_merged[parameters].interp(sel_dict)
         # Reset self.filename_or_obj in case actual forecasts are downloaded later
         self.set_filename_or_obj()
         if file_out:
@@ -257,7 +277,7 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         dataset_merged = xarray.concat(datasets, dim="time")
         return dataset_merged
 
-    def _preprocessing(self, parameters=None, sel_dict=None, isel_dict=None):
+    def _preprocessing(self, parameters=None, coord_dict=None):
         """
         GFS (forecast) data come in ranges from 90 to -90 for latitude and from 0 to 360 for longitude.
         Convert dataset globally to ranges (-90, 90) for latitude and (-180, 180) for longitude first
@@ -331,7 +351,7 @@ class DownloaderOpendapCMEMS(DownloaderOpendap):
 
 class DownloaderOpendapETOPONCEI(DownloaderOpendap):
     """
-    OPeNDAP downloader class for topology and bathymetrie data from NCEI
+    OPeNDAP downloader class for topology and bathymetric data from NCEI
 
     References:
         -  https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset
