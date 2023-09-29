@@ -73,13 +73,13 @@ class DownloaderOpendap(DownloaderBase):
             if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
                 for key in list(sel_dict_copy.keys()):
-                    if key not in dataset[parameters].coords:
+                    if key not in dataset[parameters].dims:
                         del sel_dict_copy[key]
                 dataset_sub = dataset[parameters].sel(**sel_dict_copy)
             elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
                 for key in list(isel_dict_copy.keys()):
-                    if key not in dataset[parameters].coords:
+                    if key not in dataset[parameters].dims:
                         del isel_dict_copy[key]
                 dataset_sub = dataset[parameters].isel(**isel_dict_copy)
             else:
@@ -89,13 +89,13 @@ class DownloaderOpendap(DownloaderBase):
             if sel_dict_copy:
                 # Check if the selection keys are valid coordinate names
                 for key in list(sel_dict_copy.keys()):
-                    if key not in dataset.coords:
+                    if key not in dataset.dims:
                         del sel_dict_copy[key]
                 dataset_sub = dataset.sel(**sel_dict_copy)
             elif isel_dict_copy:
                 # Check if the selection keys are valid coordinate names
                 for key in list(isel_dict_copy.keys()):
-                    if key not in dataset.coords:
+                    if key not in dataset.dims:
                         del isel_dict_copy[key]
                 dataset_sub = dataset.isel(**isel_dict_copy)
             else:
