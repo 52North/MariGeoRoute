@@ -1,14 +1,17 @@
 import logging
+from copy import deepcopy
 from datetime import datetime, timezone, timedelta, time
+from math import ceil
 
 # import dask
 import xarray
+from numpy import datetime64, ndarray
 from pydap.client import open_url
 from pydap.cas.get_cookies import setup_session
 from xarray.backends import NetCDF4DataStore
 
 from maridatadownloader.base import DownloaderBase
-from maridatadownloader.utils import parse_datetime
+from maridatadownloader.utils import convert_datetime, parse_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -72,28 +75,63 @@ class DownloaderOpendap(DownloaderBase):
          - https://docs.xarray.dev/en/latest/user-guide/interpolation.html
          - https://docs.xarray.dev/en/latest/generated/xarray.Dataset.interp.html
         """
-        # Make a copy of the sel/isel dict because key-value pairs might be deleted from it
-        coord_dict = {}
-        method = None
-        if sel_dict:
-            assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
-            coord_dict = dict(sel_dict)
-            method = 'sel'
-        if isel_dict:
-            assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
-            coord_dict = dict(isel_dict)
-            method = 'isel'
+        coord_dict, method = self._prepare_download(sel_dict, isel_dict, interpolate)
 
-        if interpolate:
-            assert not isel_dict, "interpolation cannot be applied with index subsetting"
-            method = 'interp'
-
-        # Apply preprocessing
         try:
-            dataset = self._preprocessing(parameters=parameters, coord_dict=coord_dict)
+            dataset = self.preprocessing(self.dataset, parameters=parameters, coord_dict=coord_dict)
         except NotImplementedError:
             dataset = self.dataset
 
+        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, method, **kwargs)
+
+        try:
+            dataset_sub = self.postprocessing(dataset_sub)
+        except NotImplementedError:
+            pass
+
+        if file_out:
+            logger.info(f"Save dataset to '{file_out}'")
+            dataset_sub.to_netcdf(file_out)
+
+        return dataset_sub
+
+    def get_filename_or_obj(self, **kwargs):
+        """Should return either the OPeNDAP url, a list of OPeNDAP urls or a DataStore object
+        (see https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html)
+        """
+        raise NotImplementedError("._get_filename_or_obj() must be overridden.")
+
+    def open_dataset(self):
+        if type(self.filename_or_obj) == list:
+            self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
+        else:
+            self.dataset = xarray.open_dataset(self.filename_or_obj, decode_coords="all")
+            # ToDO: use cache=False here or in preprocessing?
+            # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
+
+    def postprocessing(self, dataset):
+        """Apply operations on the xarray.Dataset after download, e.g. rename variables"""
+        raise NotImplementedError(".postprocessing() can optionally be overridden.")
+
+    def preprocessing(self, dataset, parameters=None, coord_dict=None):
+        """Apply operations on the xarray.Dataset before download, e.g. transform coordinates"""
+        raise NotImplementedError(".preprocessing() can optionally be overridden.")
+
+    def release_resources(self):
+        """Release resources from dataset using xarray.Dataset.close()"""
+        try:
+            self.dataset.close()
+        except Exception:
+            logger.warning("Could not release resources for dataset.")
+
+    def set_filename_or_obj(self, filename_or_obj=None):
+        if filename_or_obj:
+            self.filename_or_obj = filename_or_obj
+        else:
+            self.filename_or_obj = self.get_filename_or_obj()
+        self.open_dataset()
+
+    def _apply_subsetting(self, dataset, parameters=None, coord_dict=None, method=None, **kwargs):
         # Apply parameter subsetting
         if parameters:
             dataset_sub = dataset[parameters]
@@ -114,54 +152,24 @@ class DownloaderOpendap(DownloaderBase):
         elif method == 'interp':
             dataset_sub = dataset_sub.interp(**coord_dict, **kwargs)
 
-        # Apply postprocessing
-        try:
-            dataset_sub = self._postprocessing(dataset_sub)
-        except NotImplementedError:
-            pass
-
-        if file_out:
-            logger.info(f"Save dataset to '{file_out}'")
-            dataset_sub.to_netcdf(file_out)
-
         return dataset_sub
 
-    def get_filename_or_obj(self, **kwargs):
-        """Should return either the OPeNDAP url, a list of OPeNDAP urls or a DataStore object
-        (see https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html)
-        """
-        raise NotImplementedError("._get_filename_or_obj() must be overridden.")
-
-    def open_dataset(self):
-        if type(self.filename_or_obj) == list:
-            self.dataset = xarray.open_mfdataset(self.filename_or_obj, decode_coords="all")
-        else:
-            self.dataset = xarray.open_dataset(self.filename_or_obj,
-                                               decode_coords="all")
-            # ToDO: use cache=False here or in _preprocessing?
-            # self.dataset = xarray.open_dataset(self.filename_or_obj, cache=False)
-
-    def release_resources(self):
-        """Release resources from dataset using xarray.Dataset.close()"""
-        try:
-            self.dataset.close()
-        except Exception:
-            logger.warning("Could not release resources for dataset.")
-
-    def set_filename_or_obj(self, filename_or_obj=None):
-        if filename_or_obj:
-            self.filename_or_obj = filename_or_obj
-        else:
-            self.filename_or_obj = self.get_filename_or_obj()
-        self.open_dataset()
-
-    def _postprocessing(self, dataset):
-        """Apply operations on the xarray.Dataset after download, e.g. rename variables"""
-        raise NotImplementedError("._postprocessing() can optionally be overridden.")
-
-    def _preprocessing(self, parameters=None, coord_dict=None):
-        """Apply operations on the xarray.Dataset before download, e.g. transform coordinates"""
-        raise NotImplementedError("._preprocessing() can optionally be overridden.")
+    def _prepare_download(self, sel_dict=None, isel_dict=None, interpolate=False):
+        # Make a copy of the sel/isel dict because key-value pairs might be deleted from it
+        coord_dict = {}
+        method = None
+        if sel_dict:
+            assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
+            coord_dict = deepcopy(sel_dict)
+            method = 'sel'
+        if isel_dict:
+            assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
+            coord_dict = deepcopy(isel_dict)
+            method = 'isel'
+        if interpolate:
+            assert not isel_dict, "interpolation cannot be applied with index subsetting"
+            method = 'interp'
+        return coord_dict, method
 
 
 class DownloaderOpendapGFS(DownloaderOpendap):
@@ -182,56 +190,136 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         super().__init__('gfs', username=username, password=password, **kwargs)
 
     def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, interpolate=False, **kwargs):
-        # ToDo: add support for array indexer
-        if sel_dict:
+        # Note: we do not support index selection (isel_dict) for archived GFS data by choice
+        # FIXME: if multiple time coordinates (time, time1, ...) are provided, should we extract the longest overall
+        #        time interval?
+        if sel_dict and not isel_dict:
             if 'time' in sel_dict:
-                time = sel_dict['time']
+                time_ = sel_dict['time']
             elif 'time1' in sel_dict:
-                time = sel_dict['time1']
+                time_ = sel_dict['time1']
             elif 'time2' in sel_dict:
-                time = sel_dict['time2']
+                time_ = sel_dict['time2']
             else:
-                time = None
-            if time:
-                # FIXME: support arrays (lists, xarray.DataArrays, numpy.ndarrays?)
-                # FIXME: allow passing datetime objects directly (times have to be offset-aware)
-                if type(time) == str:
-                    time_start = time_end = parse_datetime(time)
-                elif type(time) == slice:
-                    time_start = parse_datetime(time.start)
-                    time_end = parse_datetime(time.stop)
+                time_ = None
+            if time_ is not None:
+                # Note: xarray doesn't support tuples as indexer
+                # FIXME: make sure time_start and time_end are timezone aware (because of "<"-comparison)
+                if type(time_) == str:
+                    time_start = time_end = parse_datetime(time_)
+                elif type(time_) == datetime:
+                    time_start = time_end = time_
+                elif type(time_) == slice:
+                    time_start = time_.start
+                    time_end = time_.stop
+                    if type(time_start) == str:
+                        time_start = parse_datetime(time_start)
+                    if type(time_end) == str:
+                        time_end = parse_datetime(time_end)
+                elif type(time_) == list or type(time_) == ndarray:
+                    time_start = min(time_)
+                    time_end = max(time_)
+                    if type(time_start) == str:
+                        time_start = parse_datetime(time_start)
+                    if type(time_end) == str:
+                        time_end = parse_datetime(time_end)
+                elif type(time_) == xarray.DataArray:
+                    time_start = min(time_).values
+                    time_end = max(time_).values
+                    if type(time_start) == ndarray:
+                        time_start = parse_datetime(time_start.item())
+                    if type(time_end) == ndarray:
+                        time_end = parse_datetime(time_end.item())
+                    if type(time_start) == datetime64:
+                        time_start = convert_datetime(time_start)
+                    if type(time_end) == datetime64:
+                        time_end = convert_datetime(time_end)
                 else:
-                    raise ValueError(f"Unsupported indexer type '{type(time)}'")
+                    raise ValueError(f"Unsupported indexer type '{type(time_)}'")
                 assert time_start <= time_end, "Start time must be smaller or equal to end time"
                 if time_end < (datetime.now(timezone.utc) - timedelta(days=3)):
                     print("Access archived GFS data")
-                    return self._download_archived_data(time_start, time_end, parameters=parameters, sel_dict=sel_dict,
-                                                        isel_dict=isel_dict, file_out=file_out, **kwargs)
-        return super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict, file_out=file_out,
-                                **kwargs)
+                    return self._download_archived_data(time_start, time_end, parameters, sel_dict, file_out,
+                                                        interpolate, **kwargs)
+        return super().download(parameters, sel_dict, isel_dict, file_out, interpolate, **kwargs)
 
     def get_filename_or_obj(self, **kwargs):
         return 'https://thredds.ucar.edu/thredds/dodsC/grib/NCEP/GFS/Global_0p25deg/Best'
 
-    def _download_archived_data(self, time_start, time_end, parameters=None, sel_dict=None, isel_dict=None,
-                                file_out=None, **kwargs):
+    def preprocessing(self, dataset, parameters=None, coord_dict=None):
+        """
+        GFS (forecast) data come in ranges from 90 to -90 for latitude and from 0 to 360 for longitude.
+        Convert dataset globally to ranges (-90, 90) for latitude and (-180, 180) for longitude first
+        to make requests across meridian easier to handle.
+        """
+        if parameters:
+            dataset = dataset[parameters]
+        dataset = dataset.rename({'lat': 'latitude'})
+        dataset = dataset.rename({'lon': 'longitude'})
+        attrs_lon = dataset.longitude.attrs
+        dataset = dataset.reindex(latitude=list(reversed(dataset.latitude)))
+        dataset = dataset.assign_coords(
+            longitude=(((dataset.longitude + 180) % 360) - 180))
+        dataset.longitude.attrs = attrs_lon
+        dataset = dataset.sortby('longitude')
+        return dataset
+
+    def postprocessing(self, dataset):
+        """
+        It seems that for the same parameters sometimes coordinate 'time' is used, and sometimes 'time1' ...
+        """
+        if 'time1' in dataset.coords and 'time' not in dataset.coords:
+            dataset = dataset.rename({'time1': 'time'})
+        if 'time2' in dataset.coords and 'time' not in dataset.coords:
+            dataset = dataset.rename({'time2': 'time'})
+        if 'reftime1' in dataset.coords and 'reftime' not in dataset.coords:
+            dataset = dataset.rename({'reftime1': 'reftime'})
+        if 'reftime2' in dataset.coords and 'reftime' not in dataset.coords:
+            dataset = dataset.rename({'reftime2': 'reftime'})
+        if 'height_above_ground1' in dataset.coords and 'height_above_ground' not in dataset.coords:
+            dataset = dataset.rename({'height_above_ground1': 'height_above_ground'})
+        if 'height_above_ground2' in dataset.coords and 'height_above_ground' not in dataset.coords:
+            dataset = dataset.rename({'height_above_ground2': 'height_above_ground'})
+        return dataset
+
+    def _download_archived_data(self, time_start, time_end, parameters=None, sel_dict={}, file_out=None,
+                                interpolate=False, **kwargs):
+        # Merge datasets from different urls
         self.urls = self._get_urls_time_window(time_start, time_end)
-        self.datasets = []
+        datasets = []
         for url in self.urls:
-            # FIXME: in sel_dict and isel_dict use only the specific time slice?
-            self.set_filename_or_obj(url)
-            dataset_temp = super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict,
-                                            file_out=None, **kwargs)
-            self.datasets.append(dataset_temp)
-        dataset_merged = self._merge_datasets(self.datasets)
-        # ToDo: add interpolation after merging (buffer needed?)
-        # dataset_merged[parameters].interp(sel_dict)
-        # Reset self.filename_or_obj in case actual forecasts are downloaded later
-        self.set_filename_or_obj()
+            dataset_temp = xarray.open_dataset(url)
+            dataset_temp = self.preprocessing(dataset_temp, parameters)
+            dataset_temp = self.postprocessing(dataset_temp)
+            # Is there a significant speed-up if we apply additional subsetting already here?
+            # dataset_temp = self.postprocessing(dataset_temp).isel(height_above_ground=0)
+            datasets.append(dataset_temp)
+        dataset = xarray.concat(datasets, dim="time")
+
+        # Because of possible coordinate renaming in self.postprocessing, we need to make sure that the original
+        # indexers are considered in the subsequent subsetting process
+        if 'time1' in sel_dict and 'time' not in sel_dict:
+            sel_dict['time'] = sel_dict['time1']
+        if 'time2' in sel_dict and 'time' not in sel_dict:
+            sel_dict['time'] = sel_dict['time2']
+        if 'reftime1' in sel_dict and 'reftime' not in sel_dict:
+            sel_dict['reftime'] = sel_dict['reftime1']
+        if 'reftime2' in sel_dict and 'reftime' not in sel_dict:
+            sel_dict['reftime'] = sel_dict['reftime2']
+        if 'height_above_ground1' in sel_dict and 'height_above_ground' not in sel_dict:
+            sel_dict['height_above_ground'] = sel_dict['height_above_ground1']
+        if 'height_above_ground2' in sel_dict and 'height_above_ground' not in sel_dict:
+            sel_dict['height_above_ground'] = sel_dict['height_above_ground2']
+
+        # Download
+        coord_dict, method = self._prepare_download(sel_dict, interpolate=interpolate)
+        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, method, **kwargs)
+
         if file_out:
             logger.info(f"Save dataset to '{file_out}'")
-            dataset_merged.to_netcdf(file_out)
-        return dataset_merged
+            dataset_sub.to_netcdf(file_out)
+
+        return dataset_sub
 
     def _get_url(self, datetime_obj):
         """E.g. https://thredds.rda.ucar.edu/thredds/catalog/dodsC/files/g/ds084.1/2023/20230501/gfs.0p25.2023050100
@@ -267,44 +355,10 @@ class DownloaderOpendapGFS(DownloaderOpendap):
         else:
             return []
         urls = []
-        for n in range(int((time_end - closest_smaller_gfs_datetime) / timedelta(hours=3)) + 1):
+        for n in range(ceil((time_end - closest_smaller_gfs_datetime) / timedelta(hours=3)) + 1):
             time_tmp = closest_smaller_gfs_datetime + n * timedelta(hours=3)
             urls.append(self._get_url(time_tmp))
         return urls
-
-    def _merge_datasets(self, datasets):
-        # for dataset in datasets:
-        dataset_merged = xarray.concat(datasets, dim="time")
-        return dataset_merged
-
-    def _preprocessing(self, parameters=None, coord_dict=None):
-        """
-        GFS (forecast) data come in ranges from 90 to -90 for latitude and from 0 to 360 for longitude.
-        Convert dataset globally to ranges (-90, 90) for latitude and (-180, 180) for longitude first
-        to make requests across meridian easier to handle.
-        """
-        dataset_transformed = self.dataset
-        dataset_transformed = dataset_transformed.rename({'lat': 'latitude'})
-        dataset_transformed = dataset_transformed.rename({'lon': 'longitude'})
-        attrs_lon = dataset_transformed.longitude.attrs
-        dataset_transformed = dataset_transformed.reindex(latitude=list(reversed(dataset_transformed.latitude)))
-        dataset_transformed = dataset_transformed.assign_coords(
-            longitude=(((dataset_transformed.longitude + 180) % 360) - 180))
-        dataset_transformed.longitude.attrs = attrs_lon
-        dataset_transformed = dataset_transformed.sortby('longitude')
-        return dataset_transformed
-
-    def _postprocessing(self, dataset):
-        """
-        It seems that for the same parameters sometimes coordinate 'time' is used, and sometimes 'time1' ...
-        """
-        if 'time1' in dataset.coords and 'time' not in dataset.coords:
-            dataset = dataset.rename({'time1': 'time'})
-        if 'reftime1' in dataset.coords and 'reftime' not in dataset.coords:
-            dataset = dataset.rename({'reftime1': 'reftime'})
-        if 'height_above_ground2' in dataset.coords and 'height_above_ground' not in dataset.coords:
-            dataset = dataset.rename({'height_above_ground2': 'height_above_ground'})
-        return dataset
 
 
 class DownloaderOpendapCMEMS(DownloaderOpendap):
