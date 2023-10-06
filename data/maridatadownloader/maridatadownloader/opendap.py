@@ -5,13 +5,12 @@ from math import ceil
 
 # import dask
 import xarray
-from numpy import datetime64, ndarray
 from pydap.client import open_url
 from pydap.cas.get_cookies import setup_session
 from xarray.backends import NetCDF4DataStore
 
 from maridatadownloader.base import DownloaderBase
-from maridatadownloader.utils import convert_datetime, parse_datetime
+from maridatadownloader.utils import get_start_and_end_time, make_timezone_aware
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +62,8 @@ class DownloaderOpendap(DownloaderBase):
         :param interpolate: bool
             Set to True if data should be downloaded off-grid so that interpolation is applied. Note that the
             sel method supports inexact matches but doesn't support actual interpolation (off-grid values).
+            Also note that xarray.Dataset.interp expects - for interpolation over a datetime-like coordinate -
+            the coordinates to be either datetime strings or datetimes.
         :param kwargs:
             Additional keyword arguments are passed to the corresponding method sel, isel or interp.
             For details on which arguments can be used check the references below.
@@ -75,14 +76,14 @@ class DownloaderOpendap(DownloaderBase):
          - https://docs.xarray.dev/en/latest/user-guide/interpolation.html
          - https://docs.xarray.dev/en/latest/generated/xarray.Dataset.interp.html
         """
-        coord_dict, method = self._prepare_download(sel_dict, isel_dict, interpolate)
+        coord_dict, subsetting_method = self._prepare_download(sel_dict, isel_dict, interpolate)
 
         try:
             dataset = self.preprocessing(self.dataset, parameters=parameters, coord_dict=coord_dict)
         except NotImplementedError:
             dataset = self.dataset
 
-        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, method, **kwargs)
+        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, subsetting_method, **kwargs)
 
         try:
             dataset_sub = self.postprocessing(dataset_sub)
@@ -131,7 +132,8 @@ class DownloaderOpendap(DownloaderBase):
             self.filename_or_obj = self.get_filename_or_obj()
         self.open_dataset()
 
-    def _apply_subsetting(self, dataset, parameters=None, coord_dict=None, method=None, **kwargs):
+    def _apply_subsetting(self, dataset, parameters=None, coord_dict=None, subsetting_method=None, **kwargs):
+        # ToDo: support xarrray.Dataset.interp_like?
         # Apply parameter subsetting
         if parameters:
             dataset_sub = dataset[parameters]
@@ -145,11 +147,11 @@ class DownloaderOpendap(DownloaderBase):
                     del coord_dict[key]
 
         # Apply coordinate subsetting
-        if method == 'sel':
+        if subsetting_method == 'sel':
             dataset_sub = dataset_sub.sel(**coord_dict, **kwargs)
-        elif method == 'isel':
+        elif subsetting_method == 'isel':
             dataset_sub = dataset_sub.isel(**coord_dict, **kwargs)
-        elif method == 'interp':
+        elif subsetting_method == 'interp':
             dataset_sub = dataset_sub.interp(**coord_dict, **kwargs)
 
         return dataset_sub
@@ -157,19 +159,19 @@ class DownloaderOpendap(DownloaderBase):
     def _prepare_download(self, sel_dict=None, isel_dict=None, interpolate=False):
         # Make a copy of the sel/isel dict because key-value pairs might be deleted from it
         coord_dict = {}
-        method = None
+        subsetting_method = None
         if sel_dict:
             assert not isel_dict, "sel_dict and isel_dict are mutually exclusive"
             coord_dict = deepcopy(sel_dict)
-            method = 'sel'
+            subsetting_method = 'sel'
         if isel_dict:
             assert not sel_dict, "sel_dict and isel_dict are mutually exclusive"
             coord_dict = deepcopy(isel_dict)
-            method = 'isel'
+            subsetting_method = 'isel'
         if interpolate:
             assert not isel_dict, "interpolation cannot be applied with index subsetting"
-            method = 'interp'
-        return coord_dict, method
+            subsetting_method = 'interp'
+        return coord_dict, subsetting_method
 
 
 class DownloaderOpendapGFS(DownloaderOpendap):
@@ -203,39 +205,9 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             else:
                 time_ = None
             if time_ is not None:
-                # Note: xarray doesn't support tuples as indexer
-                # FIXME: make sure time_start and time_end are timezone aware (because of "<"-comparison)
-                if type(time_) == str:
-                    time_start = time_end = parse_datetime(time_)
-                elif type(time_) == datetime:
-                    time_start = time_end = time_
-                elif type(time_) == slice:
-                    time_start = time_.start
-                    time_end = time_.stop
-                    if type(time_start) == str:
-                        time_start = parse_datetime(time_start)
-                    if type(time_end) == str:
-                        time_end = parse_datetime(time_end)
-                elif type(time_) == list or type(time_) == ndarray:
-                    time_start = min(time_)
-                    time_end = max(time_)
-                    if type(time_start) == str:
-                        time_start = parse_datetime(time_start)
-                    if type(time_end) == str:
-                        time_end = parse_datetime(time_end)
-                elif type(time_) == xarray.DataArray:
-                    time_start = min(time_).values
-                    time_end = max(time_).values
-                    if type(time_start) == ndarray:
-                        time_start = parse_datetime(time_start.item())
-                    if type(time_end) == ndarray:
-                        time_end = parse_datetime(time_end.item())
-                    if type(time_start) == datetime64:
-                        time_start = convert_datetime(time_start)
-                    if type(time_end) == datetime64:
-                        time_end = convert_datetime(time_end)
-                else:
-                    raise ValueError(f"Unsupported indexer type '{type(time_)}'")
+                time_start, time_end = get_start_and_end_time(time_)
+                time_start = make_timezone_aware(time_start)
+                time_end = make_timezone_aware(time_end)
                 assert time_start <= time_end, "Start time must be smaller or equal to end time"
                 if time_end < (datetime.now(timezone.utc) - timedelta(days=3)):
                     print("Access archived GFS data")
@@ -312,8 +284,8 @@ class DownloaderOpendapGFS(DownloaderOpendap):
             sel_dict['height_above_ground'] = sel_dict['height_above_ground2']
 
         # Download
-        coord_dict, method = self._prepare_download(sel_dict, interpolate=interpolate)
-        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, method, **kwargs)
+        coord_dict, subsetting_method = self._prepare_download(sel_dict, interpolate=interpolate)
+        dataset_sub = self._apply_subsetting(dataset, parameters, coord_dict, subsetting_method, **kwargs)
 
         if file_out:
             logger.info(f"Save dataset to '{file_out}'")

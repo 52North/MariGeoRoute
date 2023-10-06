@@ -22,6 +22,7 @@ setup(
         'pydap',
         'xarray',
         'netCDF4==1.5.8',
-        'numpy'
+        'numpy',
+        'pandas'
     ]
 )
