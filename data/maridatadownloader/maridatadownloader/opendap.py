@@ -394,3 +394,21 @@ class DownloaderOpendapETOPONCEI(DownloaderOpendap):
         url = ('https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/30s/30s_bed_elev_netcdf'
                '/ETOPO_2022_v1_30s_N90W180_bed.nc')
         return url
+
+    def download(self, parameters=None, sel_dict=None, isel_dict=None, file_out=None, interpolate=False, **kwargs):
+
+        # Call parent download method with file_out=None
+        dataset_sub = super().download(parameters=parameters, sel_dict=sel_dict, isel_dict=isel_dict, file_out=None,
+                                       interpolate=interpolate, **kwargs)
+
+        # Approach to fix the error "AttributeError: NetCDF: String match to name in use"
+        # References:
+        #  - https://github.com/pydata/xarray/issues/2822
+        #  - https://github.com/Unidata/netcdf4-python/issues/1020
+        if file_out:
+            logger.info(f"Save dataset to '{file_out}'")
+            if '_NCProperties' in dataset_sub.attrs:
+                del dataset_sub.attrs['_NCProperties']
+            dataset_sub.to_netcdf(file_out)
+
+        return dataset_sub
