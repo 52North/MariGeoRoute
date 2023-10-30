@@ -1,6 +1,6 @@
 import xarray as xr
-import rioxarray as rio
-import matplotlib.pyplot as plt
+#import rioxarray as rio
+#import matplotlib.pyplot as plt
 import math
 import numpy as np
 import datetime
@@ -92,9 +92,8 @@ def func(l):
 
 def manfred(t_start, gens, geo_coords, norm_vecs, nc_array):
     t_delta = datetime.timedelta(hours=3)
-    #TODO das geht besser
-    if len(gens)>36:
-        t_series = [t_start + i * t_delta for i in range(36)]
+    if len(gens)>len(nc_array.time):
+        t_series = [t_start + i * t_delta for i in range(len(nc_array.time)-1)]
     else:
         t_series = [t_start + i * t_delta for i in range(len(gens))]
     print(len(gens))
@@ -151,10 +150,18 @@ def ulmo(gfs, nc_mask, waypoint, point, area, t_start, outfile=None):
 
     return manni
 
-gfs = xr.open_dataset("./daten/env/gfs.nc")
-nc_mask = xr.open_dataset('./daten/mask.nc')
-t_start= datetime.datetime(year=2023, month=10, day=31, hour=3)
+gfs = xr.open_dataset("./simulation/II/daten/env/gfs.nc")
+nc_mask = xr.open_dataset('./simulation/II/daten/mask.nc')
+#t_start= datetime.datetime(year=2023, month=10, day=31, hour=3)
 
-med = ulmo(gfs, nc_mask, (12.789889357194918, 37.09280205794121), (8, 39), 1, t_start)
-indian = ulmo(med, nc_mask, (87.85821706039933, 5.609412749153263), (93, 5), 2, t_start)
-npazific = ulmo(indian, nc_mask, (-127.62806387974446, 39.301657626529675), (-130, 42), 3, t_start, outfile="./magna_mani.nc")
+
+#reduce wind
+gfs["u-component_of_wind_height_above_ground"] = gfs["u-component_of_wind_height_above_ground"]/10
+gfs["v-component_of_wind_height_above_ground"] = gfs["v-component_of_wind_height_above_ground"]/10
+
+med = ulmo(gfs, nc_mask, (12.789889357194918, 37.09280205794121), (8, 39), 1, datetime.datetime(year=2023, month=10, day=31, hour=3))
+indian = ulmo(med, nc_mask, (87.85821706039933, 5.609412749153263), (93, 5), 2, datetime.datetime(year=2023, month=10, day=30, hour=3))
+npazific = ulmo(indian, nc_mask, (-127.62806387974446, 39.301657626529675), (-133, 45), 3, datetime.datetime(year=2023, month=10, day=29, hour=15), outfile="./simulation/II/daten/magna_mani.nc")
+
+#for vis:
+wind_spd = np.sqrt(np.power(npazific["u-component_of_wind_height_above_ground"],2) + np.power(gfs["v-component_of_wind_height_above_ground"],2))
