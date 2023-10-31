@@ -161,7 +161,7 @@ gfs["v-component_of_wind_height_above_ground"] = gfs["v-component_of_wind_height
 
 med = ulmo(gfs, nc_mask, (12.789889357194918, 37.09280205794121), (8, 39), 1, datetime.datetime(year=2023, month=10, day=31, hour=3))
 indian = ulmo(med, nc_mask, (87.85821706039933, 5.609412749153263), (93, 5), 2, datetime.datetime(year=2023, month=10, day=30, hour=3))
-npazific = ulmo(indian, nc_mask, (-127.62806387974446, 39.301657626529675), (-133, 45), 3, datetime.datetime(year=2023, month=10, day=29, hour=15), outfile="./simulation/II/daten/magna_mani.nc")
+npazific = ulmo(indian, nc_mask, (-127.62806387974446, 39.301657626529675), (-137.5, 50.5), 3, datetime.datetime(year=2023, month=10, day=29, hour=21), outfile="./simulation/II/daten/magna_mani.nc")
 
 #for vis:
 wind_spd = np.sqrt(np.power(npazific["u-component_of_wind_height_above_ground"],2) + np.power(gfs["v-component_of_wind_height_above_ground"],2))
