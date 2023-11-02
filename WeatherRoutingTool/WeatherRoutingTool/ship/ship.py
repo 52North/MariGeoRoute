@@ -1,3 +1,4 @@
+import logging
 import math
 import sys
 
@@ -16,6 +17,8 @@ from mariPower import __main__
 from WeatherRoutingTool.utils.unit_conversion import knots_to_mps  # Convert  knot value in meter per second
 from WeatherRoutingTool.ship.shipparams import ShipParams
 from WeatherRoutingTool.weather import WeatherCond
+
+logger = logging.getLogger('WRT.ship')
 
 
 # Boat: Main class for boats. Classes 'Tanker' and 'SailingBoat' derive from it
@@ -77,6 +80,9 @@ class Tanker(Boat):
     def __init__(self, rpm):
         Boat.__init__(self)
         self.rpm = rpm
+
+    def print_init(self):
+        logger.info(form.get_log_step('Boat speed' + str(self.speed), 1))
 
     def init_hydro_model_single_pars(self):
         self.hydro_model = mariPower.ship.CBT()

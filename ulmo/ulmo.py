@@ -230,24 +230,3 @@ med = ulmo_wave(waves_dwnsampled, nc_mask, (12.789889357194918, 37.0928020579412
 indian = ulmo_wave(med, nc_mask, (87.85821706039933, 5.609412749153263), (93, 5), 2, datetime.datetime(year=2023, month=10, day=28, hour=12))
 npazific = ulmo_wave(indian, nc_mask, (-127.62806387974446, 39.301657626529675), (-137, 50), 3, datetime.datetime(year=2023, month=10, day=28, hour=12), outfile="./simulation/II/daten/waves_mani.nc")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-test = xr.open_dataset('./simulation/II/daten/env/bbox/bbox_med_gfs.nc')
-mask = xr.open_dataset('./simulation/II/daten/mask.nc')
-m = mask.where(mask.__xarray_dataarray_variable__ == 1, drop=True)
-
-med = ulmo(test, mask, (12.789889357194918, 37.09280205794121), (8, 39), 1, datetime.datetime(year=2023, month=10, day=31, hour=3))
