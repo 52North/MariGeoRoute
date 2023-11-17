@@ -48,12 +48,7 @@ jobs:
       - name: Run flake8
         run: |
           flake8 --max-line-length=120  \
-          --exclude WeatherRoutingTool/WeatherRoutingTool/algorithms/RunGenetic.py,\
-          WeatherRoutingTool/WeatherRoutingTool/algorithms/Optimize.py,\
-          WeatherRoutingTool/WeatherRoutingTool/algorithms/GeneticUtils.py,\
-          WeatherRoutingTool/WeatherRoutingTool/algorithms/Genetic.py,\
-          WeatherRoutingTool/WeatherRoutingTool/algorithms/DataUtils.py,\
-          WeatherRoutingTool/WeatherRoutingTool/additional_code,WeatherRoutingTool/build \
+          --exclude WeatherRoutingTool/WeatherRoutingTool/additional_code,WeatherRoutingTool/build \
           --extend-ignore F401,F403,F405,E711 WeatherRoutingTool/
       - name: Run pytest
         run: |
