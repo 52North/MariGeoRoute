@@ -380,8 +380,8 @@ class DownloaderOpendapETOPONCEI(DownloaderOpendap):
     OPeNDAP downloader class for topology and bathymetric data from NCEI
 
     References:
-        -  https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset
-        =globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc
+        - https://www.ncei.noaa.gov/products/etopo-global-relief-model
+        - https://www.ngdc.noaa.gov/thredds/catalog/global/ETOPO2022/30s/30s_bed_elev_netcdf/catalog.html?dataset=globalDatasetScan/ETOPO2022/30s/30s_bed_elev_netcdf/ETOPO_2022_v1_30s_N90W180_bed.nc  # noqa
     """
 
     def __init__(self, **kwargs):
@@ -412,3 +412,10 @@ class DownloaderOpendapETOPONCEI(DownloaderOpendap):
             dataset_sub.to_netcdf(file_out)
 
         return dataset_sub
+
+    def preprocessing(self, dataset, parameters=None, coord_dict=None):
+        if parameters:
+            dataset = dataset[parameters]
+        dataset = dataset.rename({'lat': 'latitude'})
+        dataset = dataset.rename({'lon': 'longitude'})
+        return dataset
