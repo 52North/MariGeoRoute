@@ -5,9 +5,11 @@ Downloading tools for environmental/marine/weather data.
 Currently supported platforms/provider:
  - Global Forecast System (GFS)
  - Copernicus Marine Environment Monitoring Service (CMEMS)
+ - Copernicus ERA5 reanalysis Climate Data Store (CDS)
 
 Currently supported access services/APIs:
  - OPeNDAP
+ - Copernicus ERA5 reanalysis CDSapi
 
 ### Installation
 
@@ -80,16 +82,21 @@ sel_dict = {
     'latitude': lats_xr
 }
 ```
-
+To get the settings for the ERA5 CDSapi go to [their website](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form) 
+and select the parameters, time and extent you like to use and click on `show API request` at the bottom of the page.
+<br>
+You want to copy the dictionary within the request as your settings!
 ### Available datasets/downloader
 
-| Platform/Provider | Downloader type | Type of data         | Product                                  | Product type | References |
-|-------------------|-----------------|----------------------|------------------------------------------|--------------|------------|
-| cmems¹            | opendap         | Ocean waves          | cmems_mod_glo_wav_anfc_0.083deg_PT3H-i²  | nrt³         | [1]        |
-| cmems¹            | opendap         | Ocean currents       | cmems_mod_glo_phy_anfc_merged-uv_PT1H-i² | nrt³         | [2]        |
-| cmems¹            | opendap         | Ocean physics        | cmems_mod_glo_phy_anfc_0.083deg_PT1H-m²  | nrt³         | [2]        |
-| gfs               | opendap         | Weather/Atmosphere   | -                                        | -            | [3]        |
+| Platform/Provider | Downloader type | Type of data        | Product                                  | Product type | References |
+|-------------------|-----------------|---------------------|------------------------------------------|--------------|------------|
+| cmems¹            | opendap         | Ocean waves         | cmems_mod_glo_wav_anfc_0.083deg_PT3H-i²  | nrt³         | [1]        |
+| cmems¹            | opendap         | Ocean currents      | cmems_mod_glo_phy_anfc_merged-uv_PT1H-i² | nrt³         | [2]        |
+| cmems¹            | opendap         | Ocean physics       | cmems_mod_glo_phy_anfc_0.083deg_PT1H-m²  | nrt³         | [2]        |
+| gfs               | opendap         | Weather/Atmosphere  | -                                        | -            | [3]        |
 | etoponcei         | opendap         | Topology/Bathymetric | -                                        | -            | [4]        |
+| cds¹              | ERA5 CDS        | Atmosphere/Ocean    | multiple                                 |              | [5]        |
+
 
 ¹Registration needed  
 ²Check the CMEMS product catalog for additional products: https://data.marine.copernicus.eu/products  
@@ -100,3 +107,4 @@ Dataset references:
 - [2] https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description
 - [3] https://thredds.ucar.edu/thredds/catalog/grib/NCEP/GFS/Global_0p25deg/catalog.html
 - [4] https://www.ncei.noaa.gov/products/etopo-global-relief-model
+- [5] https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form

@@ -23,6 +23,9 @@ setup(
         'xarray',
         'netCDF4==1.5.8',
         'numpy',
-        'pandas'
+        'pandas',
+        'cdsapi',
+        'io',
+        'requests'
     ]
 )
