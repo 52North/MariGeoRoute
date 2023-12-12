@@ -88,23 +88,24 @@ and select the parameters, time and extent you like to use and click on `show AP
 You want to copy the dictionary within the request as your settings!
 ### Available datasets/downloader
 
-| Platform/Provider | Downloader type | Type of data        | Product                                  | Product type | References |
-|-------------------|-----------------|---------------------|------------------------------------------|--------------|------------|
-| cmems¹            | opendap         | Ocean waves         | cmems_mod_glo_wav_anfc_0.083deg_PT3H-i²  | nrt³         | [1]        |
-| cmems¹            | opendap         | Ocean currents      | cmems_mod_glo_phy_anfc_merged-uv_PT1H-i² | nrt³         | [2]        |
-| cmems¹            | opendap         | Ocean physics       | cmems_mod_glo_phy_anfc_0.083deg_PT1H-m²  | nrt³         | [2]        |
-| gfs               | opendap         | Weather/Atmosphere  | -                                        | -            | [3]        |
+| Platform/Provider | Downloader type | Type of data         | Product                                  | Product type | References |
+|-------------------|-----------------|----------------------|------------------------------------------|--------------|------------|
+| cmems¹            | opendap         | Ocean waves          | cmems_mod_glo_wav_anfc_0.083deg_PT3H-i²  | nrt³         | [1]        |
+| cmems¹            | opendap         | Ocean currents       | cmems_mod_glo_phy_anfc_merged-uv_PT1H-i² | nrt³         | [2]        |
+| cmems¹            | opendap         | Ocean physics        | cmems_mod_glo_phy_anfc_0.083deg_PT1H-m²  | nrt³         | [2]        |
+| gfs               | opendap         | Weather/Atmosphere   | -                                        | -            | [3]        |
 | etoponcei         | opendap         | Topology/Bathymetric | -                                        | -            | [4]        |
-| cds¹              | ERA5 CDS        | Atmosphere/Ocean    | multiple                                 |              | [5]        |
+| era5¹⁴            | cdsapi          | Atmosphere/Ocean     | -                                        | -            | [5]        |
 
 
 ¹Registration needed  
 ²Check the CMEMS product catalog for additional products: https://data.marine.copernicus.eu/products  
-³nrt = near real-time  
+³nrt = near real-time
+⁴The download interface differs from the interface of the 'opendap' downloader type (ToDo: harmonize)
 
 Dataset references:
 - [1] https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_WAV_001_027/description
 - [2] https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description
 - [3] https://thredds.ucar.edu/thredds/catalog/grib/NCEP/GFS/Global_0p25deg/catalog.html
 - [4] https://www.ncei.noaa.gov/products/etopo-global-relief-model
-- [5] https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form
+- [5] https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels

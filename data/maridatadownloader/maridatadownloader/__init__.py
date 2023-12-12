@@ -1,3 +1,4 @@
+from maridatadownloader.cds import DownloaderCdsapiERA5
 from maridatadownloader.opendap import DownloaderOpendapCMEMS, DownloaderOpendapGFS, DownloaderOpendapETOPONCEI
 
 
@@ -20,5 +21,8 @@ class DownloaderFactory:
                 return DownloaderOpendapETOPONCEI()
             else:
                 raise ValueError(platform)
+        elif downloader_type.lower() == 'cdsapi':
+            if platform.lower() == 'era5':
+                return DownloaderCdsapiERA5(uuid=username, api_key=password)
         else:
             raise ValueError(downloader_type)

@@ -19,13 +19,12 @@ setup(
     author_email='info@52north.org',
     description='Python package for downloading of weather data',
     install_requires=[
+        'cdsapi',
         'pydap',
         'xarray',
         'netCDF4==1.5.8',
         'numpy',
         'pandas',
-        'cdsapi',
-        'io',
         'requests'
     ]
 )
