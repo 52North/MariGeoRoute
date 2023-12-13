@@ -5,11 +5,11 @@ Downloading tools for environmental/marine/weather data.
 Currently supported platforms/provider:
  - Global Forecast System (GFS)
  - Copernicus Marine Environment Monitoring Service (CMEMS)
- - Copernicus ERA5 reanalysis Climate Data Store (CDS)
+ - Copernicus Climate Data Store (CDS) ECMWF ERA5 reanalysis
 
 Currently supported access services/APIs:
  - OPeNDAP
- - Copernicus ERA5 reanalysis CDSapi
+ - Copernicus CDS API
 
 ### Installation
 
@@ -100,7 +100,7 @@ You want to copy the dictionary within the request as your settings!
 
 ¹Registration needed  
 ²Check the CMEMS product catalog for additional products: https://data.marine.copernicus.eu/products  
-³nrt = near real-time
+³nrt = near real-time  
 ⁴The download interface differs from the interface of the 'opendap' downloader type (ToDo: harmonize)
 
 Dataset references:
