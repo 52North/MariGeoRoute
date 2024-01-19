@@ -2,10 +2,13 @@
 
 Collection of tools and prototypes for the [MariData project](https://maridata.org).
 
-## Included Python packages
+## Related Python packages
 
-- [maridatadownloader](https://github.com/52North/MariGeoRoute/tree/main/data/maridatadownloader)
-- [WeatherRoutingTool](https://github.com/52North/MariGeoRoute/tree/main/WeatherRoutingTool)
+- [maridatadownloader](https://github.com/52North/maridatadownloader)
+- [WeatherRoutingTool](https://github.com/52North/WeatherRoutingTool)
+
+Note that maridatadownloader and WeatherRoutingTool were originally part of this GitHub repository but were migrated to
+separate repositories.
 
 ## Docker Images
 
